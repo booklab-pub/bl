@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8" />
+
+<style id="webmakerstyle">
+
+</style>
+</head>
+<body>
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>eGFR 신장 기능 변화 추세 보고서</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
+    <style>
+        :root {
+            --primary-color: #2c3e50;
+            --secondary-color: #3498db;
+            --accent-color: #e74c3c;
+            --bg-color: #f4f7f6;
+            --card-bg: #ffffff;
+        }
+        body {
+            font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, Roboto, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--primary-color);
+            margin: 0;
+            padding: 15px;
+            line-height: 1.6;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: var(--card-bg);
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        h1 {
+            text-align: center;
+            font-size: 1.5rem;
+            color: var(--primary-color);
+            border-bottom: 2px solid var(--secondary-color);
+            padding-bottom: 10px;
+        }
+        .info-box {
+            background-color: #ebf5fb;
+            padding: 15px;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            color: #555;
+            margin-bottom: 20px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 15px;
+        }
+        th, td {
+            padding: 8px;
+            border: 1px solid #eee;
+            text-align: center;
+        }
+        th { background-color: #f8f9fa; font-size: 0.9rem; }
+        input {
+            width: 90%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        .btn-group {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin: 20px 0;
+        }
+        button {
+            padding: 12px 20px;
+            font-size: 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            border: none;
+            font-weight: bold;
+            transition: 0.2s;
+        }
+        .btn-analyze { background-color: var(--secondary-color); color: white; flex: 2; }
+        .btn-clear { background-color: #95a5a6; color: white; flex: 1; }
+        button:hover { opacity: 0.9; }
+        
+        .result-section {
+            margin-top: 25px;
+            padding: 20px;
+            background: #fdfdfd;
+            border: 1px solid #e0e0e0;
+            border-radius: 10px;
+        }
+        .prediction-card {
+            background: white;
+            padding: 12px;
+            margin: 8px 0;
+            border-left: 5px solid var(--secondary-color);
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+        canvas { margin-top: 20px; max-width: 100%; }
+        @media (max-width: 600px) {
+            th:nth-child(1), td:nth-child(1) { display: none; } /* 모바일에서 번호 열 숨김 */
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>eGFR 신장 기능 변화 추세 보고서</h1>
+    
+    <div class="info-box">
+        💡 <b>안내:</b> 입력하신 데이터는 독자님의 스마트폰(또는 PC) 브라우저에만 저장되며 외부로 전송되지 않아 안전합니다. 브라우저를 닫아도 기록은 유지됩니다.
+    </div>
+
+    <table id="inputTable">
+        <thead>
+            <tr>
+                <th>No</th>
+                <th>검사 날짜</th>
+                <th>eGFR 수치</th>
+            </tr>
+        </thead>
+        <tbody id="tableBody">
+            </tbody>
+    </table>
+
+    <div class="btn-group">
+        <button class="btn-analyze" onclick="analyzeData()">분석 및 자동 저장</button>
+        <button class="btn-clear" onclick="clearData()">기록 초기화</button>
+    </div>
+
+    <div id="resultArea" class="result-section" style="display:none;">
+        <h3>📊 분석 결과 요약</h3>
+        <div id="summary"></div>
+        <div id="predictions"></div>
+        <canvas id="trendChart"></canvas>
+    </div>
+</div>
+
+<script>
+    let myChart = null;
+    const MAX_ROWS = 20;
+
+    // 1. 테이블 행 생성 및 초기 데이터 로드
+    window.onload = function() {
+        const tbody = document.getElementById('tableBody');
+        for(let i=1; i<=MAX_ROWS; i++) {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td>${i}</td>
+                <td><input type="date" class="date-input"></td>
+                <td><input type="number" class="val-input" placeholder="0-120" step="0.1"></td>
+            `;
+            tbody.appendChild(row);
+        }
+        loadSavedData();
+    };
+
+    // 2. 로컬 스토리지에서 데이터 불러오기
+    function loadSavedData() {
+        const saved = localStorage.getItem('booklab_gfr_data');
+        if (saved) {
+            const parsed = JSON.parse(saved);
+            const dates = document.querySelectorAll('.date-input');
+            const values = document.querySelectorAll('.val-input');
+            parsed.forEach((item, i) => {
+                if(i < MAX_ROWS) {
+                    dates[i].value = item.date;
+                    values[i].value = item.val;
+                }
+            });
+            analyzeData(false); // 로드 시 자동 분석 (알림 없이)
+        }
+    }
+
+    // 3. 데이터 저장 및 분석
+    function analyzeData(showAlert = true) {
+        const dates = document.querySelectorAll('.date-input');
+        const values = document.querySelectorAll('.val-input');
+        
+        let dataPoints = [];
+        let storageData = [];
+
+        for (let i = 0; i < MAX_ROWS; i++) {
+            if (dates[i].value && values[i].value) {
+                const d = new Date(dates[i].value);
+                const v = parseFloat(values[i].value);
+                dataPoints.push({ x: d, y: v });
+                storageData.push({ date: dates[i].value, val: values[i].value });
+            }
+        }
+
+        // 로컬 스토리지 저장
+        localStorage.setItem('booklab_gfr_data', JSON.stringify(storageData));
+
+        if (dataPoints.length < 2) {
+            if(showAlert) alert("추세를 분석하려면 최소 2개 이상의 날짜와 수치를 입력해야 합니다.");
+            return;
+        }
+
+        dataPoints.sort((a, b) => a.x - b.x);
+        document.getElementById('resultArea').style.display = 'block';
+
+        // 선형 회귀 계산
+        const xValues = dataPoints.map(p => p.x.getTime());
+        const yValues = dataPoints.map(p => p.y);
+        const n = dataPoints.length;
+        let sX=0, sY=0, sXY=0, sXX=0;
+        for(let i=0; i<n; i++){
+            sX += xValues[i]; sY += yValues[i];
+            sXY += xValues[i]*yValues[i]; sXX += xValues[i]*xValues[i];
+        }
+        const slope = (n*sXY - sX*sY) / (n*sXX - sX*sX);
+        const intercept = (sY - slope*sX) / n;
+
+        // 결과 요약 출력
+        const lastVal = yValues[n-1];
+        const slopePerYear = slope * (1000*60*60*24*365.25);
+        document.getElementById('summary').innerHTML = `
+            <p style="font-size:1.1rem;">최근 eGFR 수치: <b>${lastVal}</b></p>
+            <p>연간 변화율: <b style="color:${slopePerYear < 0 ? 'red' : 'blue'}">${slopePerYear.toFixed(2)}</b> ml/min/1.73m²</p>
+        `;
+
+        // 미래 예측
+        function predict(targetY) {
+            const time = (targetY - intercept) / slope;
+            if (slope >= 0 || time <= xValues[n-1]) return "안정적 유지 중";
+            return new Date(time).toLocaleDateString();
+        }
+
+        document.getElementById('predictions').innerHTML = `
+            <div class="prediction-card">신장 기능 3b단계 (eGFR 45) 도달 예상일: <b>${predict(45)}</b></div>
+            <div class="prediction-card">신장 기능 4단계 (eGFR 30) 도달 예상일: <b>${predict(30)}</b></div>
+            <div class="prediction-card">신장 기능 5단계 (eGFR 15) 도달 예상일: <b>${predict(15)}</b></div>
+        `;
+
+        drawChart(dataPoints, slope, intercept);
+    }
+
+    function drawChart(dataPoints, slope, intercept) {
+        const ctx = document.getElementById('trendChart').getContext('2d');
+        if (myChart) myChart.destroy();
+
+        const firstX = dataPoints[0].x.getTime();
+        const lastX = dataPoints[dataPoints.length-1].x.getTime();
+        const futureX = lastX + (1000*60*60*24*365 * 2); // 2년 뒤까지
+
+        myChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                datasets: [{
+                    label: '검사 수치',
+                    data: dataPoints,
+                    borderColor: '#3498db',
+                    backgroundColor: '#3498db',
+                    showLine: true,
+                    tension: 0.1,
+                    pointRadius: 5
+                }, {
+                    label: '미래 예측 추세',
+                    data: [
+                        {x: new Date(firstX), y: slope * firstX + intercept},
+                        {x: new Date(futureX), y: slope * futureX + intercept}
+                    ],
+                    borderColor: '#e74c3c',
+                    borderDash: [5, 5],
+                    fill: false,
+                    pointRadius: 0
+                }]
+            },
+            options: {
+                scales: {
+                    x: { type: 'time', time: { unit: 'month' } },
+                    y: { min: 0, max: 120 }
+                }
+            }
+        });
+    }
+
+    function clearData() {
+        if(confirm("기기에 저장된 모든 검사 기록을 삭제하시겠습니까?")) {
+            localStorage.removeItem('booklab_gfr_data');
+            location.reload();
+        }
+    }
+</script>
+
+</body>
+</html>
+
+
+</body>
+</html>
