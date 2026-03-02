@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8" />
+
+<style id="webmakerstyle">
+
+</style>
+</head>
+<body>
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>진료실 질문 목록표 - 내 상태 기록하기</title>
+    <style>
+        :root {
+            --primary-color: #2c3e50;
+            --secondary-color: #27ae60;
+            --bg-color: #f4f7f6;
+            --card-bg: #ffffff;
+            --border-color: #dcdde1;
+        }
+        body {
+            font-family: 'Pretendard', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--primary-color);
+            margin: 0;
+            padding: 15px;
+            line-height: 1.6;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: var(--card-bg);
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+        }
+        h1 {
+            font-size: 1.4rem;
+            text-align: center;
+            color: var(--primary-color);
+            border-bottom: 3px solid var(--secondary-color);
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+        }
+        .info-text {
+            font-size: 0.85rem;
+            background: #eef9f1;
+            padding: 10px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            color: #444;
+        }
+        .category {
+            margin-bottom: 25px;
+        }
+        .category-title {
+            font-weight: bold;
+            font-size: 1.1rem;
+            color: var(--secondary-color);
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+        }
+        .question-item {
+            background: #fafafa;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 10px;
+        }
+        .question-text {
+            font-weight: 600;
+            display: block;
+            margin-bottom: 8px;
+        }
+        textarea {
+            width: 100%;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            padding: 8px;
+            box-sizing: border-box;
+            font-size: 0.9rem;
+            resize: vertical;
+            min-height: 60px;
+        }
+        .btn-group {
+            position: sticky;
+            bottom: 20px;
+            display: flex;
+            gap: 10px;
+            margin-top: 30px;
+        }
+        button {
+            flex: 1;
+            padding: 15px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+        .btn-save { background-color: var(--secondary-color); color: white; }
+        .btn-clear { background-color: #95a5a6; color: white; }
+        button:hover { opacity: 0.9; }
+
+        @media (max-width: 480px) {
+            h1 { font-size: 1.2rem; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>진료실 질문 목록표</h1>
+    <div class="info-text">
+        💡 <b>메모 기능:</b> 각 항목에 작성한 내용은 브라우저에 자동 저장됩니다. 병원 방문 시 의사 선생님께 보여드리거나 참고하세요.
+    </div>
+
+    <div id="checklist-container">
+        </div>
+
+    <div class="btn-group">
+        <button class="btn-save" onclick="saveNotes()">기록 저장 완료</button>
+        <button class="btn-clear" onclick="clearNotes()">전체 초기화</button>
+    </div>
+</div>
+
+<script>
+    const questions = [
+        {
+            category: "1. 수치 확인",
+            items: [
+                "사구체여과율(eGFR) 수치가 이전과 비교해 어떤가요?",
+                "단백뇨(uACR) 수치가 목표 범위 안에 있나요?",
+                "칼륨, 인, LDL-콜레스테롤 수치는 조절이 잘 되고 있나요?"
+            ]
+        },
+        {
+            category: "2. 약물 조절",
+            items: [
+                "현재 약물 용량을 조절해야 할 필요가 있을까요?",
+                "새로 처방받은 약이 신장에 무리를 주지는 않나요?"
+            ]
+        },
+        {
+            category: "3. 증상 공유",
+            items: [
+                "최근 몸이 붓거나 피로감이 심한데, 합병증 신호인가요?",
+                "가려움증이나 소화 불량 같은 요독 증상이 나타나고 있나요?"
+            ]
+        },
+        {
+            category: "4. 식단 및 생활",
+            items: [
+                "현재 저염·저단백 식단과 수분 섭취량이 적절한가요?",
+                "현재 하고 있는 운동의 강도가 신장에 무리가 되지는 않나요?"
+            ]
+        },
+        {
+            category: "5. 향후 계획",
+            items: [
+                "다음 검사까지 제가 집중해야 할 가장 중요한 목표는 무엇인가요?",
+                "현재 단계(예: 4단계)에서 투석이나 이식을 미리 준비해야 하나요?"
+            ]
+        }
+    ];
+
+    // 질문 목록 렌더링
+    function renderQuestions() {
+        const container = document.getElementById('checklist-container');
+        questions.forEach((group, groupIdx) => {
+            const groupDiv = document.createElement('div');
+            groupDiv.className = 'category';
+            groupDiv.innerHTML = `<div class="category-title">${group.category}</div>`;
+            
+            group.items.forEach((q, qIdx) => {
+                const itemDiv = document.createElement('div');
+                itemDiv.className = 'question-item';
+                const inputId = `q-${groupIdx}-${qIdx}`;
+                itemDiv.innerHTML = `
+                    <label class="question-text" for="${inputId}">${q}</label>
+                    <textarea id="${inputId}" placeholder="메모를 입력하세요..."></textarea>
+                `;
+                groupDiv.appendChild(itemDiv);
+            });
+            container.appendChild(groupDiv);
+        });
+    }
+
+    // 로컬 스토리지 저장
+    function saveNotes() {
+        const textareas = document.querySelectorAll('textarea');
+        const data = {};
+        textareas.forEach(ta => {
+            data[ta.id] = ta.value;
+        });
+        localStorage.setItem('medical_checkup_notes', JSON.stringify(data));
+        alert("기록이 안전하게 저장되었습니다.");
+    }
+
+    // 로컬 스토리지 로드
+    function loadNotes() {
+        const saved = localStorage.getItem('medical_checkup_notes');
+        if (saved) {
+            const data = JSON.parse(saved);
+            for (const id in data) {
+                const el = document.getElementById(id);
+                if (el) el.value = data[id];
+            }
+        }
+    }
+
+    // 기록 삭제
+    function clearNotes() {
+        if (confirm("모든 입력 내용을 지우시겠습니까?")) {
+            localStorage.removeItem('medical_checkup_notes');
+            const textareas = document.querySelectorAll('textarea');
+            textareas.forEach(ta => ta.value = '');
+        }
+    }
+
+    // 초기화 실행
+    renderQuestions();
+    loadNotes();
+</script>
+
+</body>
+</html>
+
+
+</body>
+</html>
