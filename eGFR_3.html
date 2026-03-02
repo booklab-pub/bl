@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8" />
+
+<style id="webmakerstyle">
+
+</style>
+</head>
+<body>
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>eGFR 신장 기능 정밀 분석 보고서</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/moment@2.29.4/moment.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-moment@1.0.1"></script>
+    <style>
+        :root { --primary: #2c3e50; --secondary: #3498db; --danger: #e74c3c; --success: #27ae60; --bg: #f8f9fa; }
+        body { font-family: 'Pretendard', sans-serif; background: var(--bg); color: var(--primary); padding: 15px; }
+        .container { max-width: 800px; margin: 0 auto; background: white; padding: 20px; border-radius: 15px; box-shadow: 0 5px 20px rgba(0,0,0,0.1); }
+        h1 { text-align: center; border-bottom: 3px solid var(--secondary); padding-bottom: 10px; font-size: 1.4rem; }
+        
+        .alert-box { padding: 15px; border-radius: 10px; font-weight: bold; text-align: center; margin: 15px 0; display: none; }
+        .alert-danger { background: #fee2e2; color: var(--danger); border: 1px solid var(--danger); }
+        .alert-stable { background: #dcfce7; color: var(--success); border: 1px solid var(--success); }
+
+        .dashboard { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; }
+        .stat-card { padding: 10px; background: #fff; border: 1px solid #ddd; border-radius: 8px; text-align: center; }
+        
+        .table-wrapper { max-height: 250px; overflow-y: auto; border: 1px solid #eee; margin-bottom: 20px; }
+        table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+        th { position: sticky; top: 0; background: #f4f4f4; padding: 8px; z-index: 10; }
+        td { padding: 5px; border-bottom: 1px solid #eee; text-align: center; }
+        input { width: 85%; padding: 5px; border: 1px solid #ccc; border-radius: 4px; }
+
+        .btn-group { display: flex; gap: 10px; margin-top: 15px; }
+        button { flex: 1; padding: 12px; border-radius: 8px; border: none; font-weight: bold; cursor: pointer; }
+        .btn-main { background: var(--secondary); color: white; }
+        .btn-sub { background: #95a5a6; color: white; }
+        
+        /* ⭐ 중요: 그래프 영역 높이 고정 (무한 증식 방지) */
+        .chart-container { 
+            position: relative; 
+            height: 350px; 
+            width: 100%; 
+            margin-top: 20px;
+        }
+
+        .predict-container { margin-top: 25px; padding: 15px; background: #f0f4f8; border-radius: 10px; border: 1px solid #d1d8e0; }
+        .predict-item { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #d1d8e0; }
+        .predict-item:last-child { border-bottom: none; }
+        .predict-label { font-weight: 600; }
+        .predict-date { color: var(--danger); font-weight: bold; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>eGFR 신장 기능 추세 보고서</h1>
+    <div id="statusAlert" class="alert-box"></div>
+
+    <div class="dashboard">
+        <div class="stat-card"><small>전체 연간 변화율</small><div id="totalSlope" style="font-weight:bold;">-</div></div>
+        <div class="stat-card"><small>최근 5회 변화율</small><div id="recentSlope" style="font-weight:bold;">-</div></div>
+    </div>
+
+    <div class="table-wrapper">
+        <table>
+            <thead><tr><th>No</th><th>검사 날짜</th><th>eGFR 수치</th></tr></thead>
+            <tbody id="tableBody"></tbody>
+        </table>
+    </div>
+
+    <div class="btn-group">
+        <button class="btn-main" onclick="analyzeData()">데이터 분석 및 저장</button>
+        <button class="btn-sub" onclick="clearData()">초기화</button>
+    </div>
+
+    <div id="resultArea" style="display:none;">
+        <div class="chart-container">
+            <canvas id="trendChart"></canvas>
+        </div>
+        
+        <div class="predict-container">
+            <h4 style="margin:0 0 10px 0;">📅 단계별 변화 예측 도달 일시</h4>
+            <div id="predictionList"></div>
+        </div>
+    </div>
+</div>
+
+<script>
+    let myChart = null;
+    const MAX_ROWS = 30;
+
+    window.onload = () => {
+        const tbody = document.getElementById('tableBody');
+        for(let i=1; i<=MAX_ROWS; i++) {
+            tbody.innerHTML += `<tr><td>${i}</td><td><input type="date" class="date-input"></td><td><input type="number" class="val-input" step="0.1"></td></tr>`;
+        }
+        loadSavedData();
+    };
+
+    function loadSavedData() {
+        const saved = localStorage.getItem('gfr_master_final');
+        if (saved) {
+            const parsed = JSON.parse(saved);
+            const dates = document.querySelectorAll('.date-input');
+            const values = document.querySelectorAll('.val-input');
+            parsed.forEach((item, i) => { if(i < MAX_ROWS) { dates[i].value = item.date; values[i].value = item.val; } });
+            if(parsed.length >= 2) analyzeData(false);
+        }
+    }
+
+    function calculateLinearRegression(points) {
+        const n = points.length;
+        let sX=0, sY=0, sXY=0, sXX=0;
+        points.forEach(p => {
+            const x = p.x.getTime();
+            sX += x; sY += p.y; sXY += x * p.y; sXX += x * x;
+        });
+        const slope = (n * sXY - sX * sY) / (n * sXX - sX * sX);
+        const intercept = (sY - slope * sX) / n;
+        return { slope, intercept };
+    }
+
+    function analyzeData(showAlert = true) {
+        const dates = document.querySelectorAll('.date-input');
+        const values = document.querySelectorAll('.val-input');
+        let dataPoints = [];
+        let storageData = [];
+
+        for (let i = 0; i < MAX_ROWS; i++) {
+            if (dates[i].value && values[i].value) {
+                dataPoints.push({ x: new Date(dates[i].value), y: parseFloat(values[i].value) });
+                storageData.push({ date: dates[i].value, val: values[i].value });
+            }
+        }
+        localStorage.setItem('gfr_master_final', JSON.stringify(storageData));
+
+        if (dataPoints.length < 2) {
+            if(showAlert) alert("데이터를 2개 이상 입력해 주세요.");
+            return;
+        }
+
+        dataPoints.sort((a, b) => a.x - b.x);
+        document.getElementById('resultArea').style.display = 'block';
+
+        const { slope, intercept } = calculateLinearRegression(dataPoints);
+        const annualSlope = slope * (1000 * 60 * 60 * 24 * 365.25);
+
+        const recentPoints = dataPoints.slice(-5);
+        const recentRes = calculateLinearRegression(recentPoints);
+        const recentAnnualSlope = recentRes.slope * (1000 * 60 * 60 * 24 * 365.25);
+
+        document.getElementById('totalSlope').innerHTML = annualSlope.toFixed(2);
+        document.getElementById('recentSlope').innerHTML = recentAnnualSlope.toFixed(2);
+
+        function getPredictDate(targetY) {
+            if (slope >= 0) return "안정적 유지 중";
+            const targetTime = (targetY - intercept) / slope;
+            if (targetTime <= dataPoints[dataPoints.length-1].x.getTime()) return "이미 도달함";
+            return new Date(targetTime).toLocaleDateString();
+        }
+
+        document.getElementById('predictionList').innerHTML = `
+            <div class="predict-item"><span class="predict-label">3b단계 (eGFR 45):</span> <span class="predict-date">${getPredictDate(45)}</span></div>
+            <div class="predict-item"><span class="predict-label">4단계 (eGFR 30):</span> <span class="predict-date">${getPredictDate(30)}</span></div>
+            <div class="predict-item"><span class="predict-label">5단계 (eGFR 15):</span> <span class="predict-date">${getPredictDate(15)}</span></div>
+        `;
+
+        const alertBox = document.getElementById('statusAlert');
+        alertBox.style.display = 'block';
+        if (recentAnnualSlope < 0 && (annualSlope >= 0 || recentAnnualSlope <= (annualSlope * 5))) {
+            alertBox.className = "alert-box alert-danger";
+            alertBox.innerHTML = "⚠️ 경고: 최근 하락 속도가 매우 빨라졌습니다!";
+        } else {
+            alertBox.className = "alert-box alert-stable";
+            alertBox.innerHTML = "✅ 안정: 수치 변화가 안정적인 범위 내에 있습니다.";
+        }
+
+        drawChart(dataPoints);
+    }
+
+    function drawChart(dataPoints) {
+        const ctx = document.getElementById('trendChart').getContext('2d');
+        if (myChart) myChart.destroy();
+        
+        myChart = new Chart(ctx, {
+            type: 'line',
+            data: { 
+                datasets: [{ 
+                    label: 'eGFR 수치 추이', 
+                    data: dataPoints, 
+                    borderColor: '#3498db', 
+                    backgroundColor: 'rgba(52, 152, 219, 0.1)', 
+                    fill: true, 
+                    tension: 0.3, 
+                    pointRadius: 5 
+                }] 
+            },
+            options: { 
+                responsive: true, 
+                maintainAspectRatio: false, // 상위 div의 높이를 따르도록 설정
+                scales: { 
+                    x: { type: 'time', time: { unit: 'month' } }, 
+                    y: { min: 0, max: 120 } 
+                } 
+            }
+        });
+    }
+
+    function clearData() {
+        if(confirm("모든 데이터를 삭제하시겠습니까?")) { localStorage.removeItem('gfr_master_final'); location.reload(); }
+    }
+</script>
+</body>
+</html>
+
+
+</body>
+</html>
