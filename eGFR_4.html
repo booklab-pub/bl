@@ -64,7 +64,7 @@
         <h4 style="margin: 0 0 10px 0; color: #2c3e50;">📋 최근 5회 검사결과 요약</h4>
         <table class="summary-table">
             <thead>
-                <tr><th>날짜</th><th>eGFR 수치</th><th>상태</th></tr>
+                <tr><th>날짜</th><th>eGFR 수치</th></tr>
             </thead>
             <tbody id="summaryBody"></tbody>
         </table>
@@ -95,7 +95,8 @@
         <div class="predict-container">
             <h4 style="margin:0 0 10px 0;">📅 단계별 변화 예측 도달 일시</h4>
             <div id="predictionList"></div>
-            <p style="font-size: 0.75rem; color: #7f8c8d; margin-top: 10px;">* 예측 일시는 '전체 평균 기울기'를 바탕으로 산출됩니다.</p>
+            <p style="font-size: 0.75rem; color: #7f8c8d; margin-top: 10px;">* '예측 도달 일시'는 과거의 데이터를 기반으로 미래를 예측해 본 것에 불과하므로, 
+앞으로의 관리 결과에 따라 얼마든지 달라질 수 있습니다. 참고 목적으로만 활용하세요.</p>
         </div>
     </div>
 </div>
@@ -171,8 +172,7 @@
         const recent5 = dataPoints.slice(-5).reverse();
         let summaryHtml = "";
         recent5.forEach(p => {
-            let statusText = p.y >= 60 ? "정상/경증" : (p.y >= 30 ? "중등도" : "중증");
-            summaryHtml += `<tr><td>${p.x.toLocaleDateString()}</td><td><b>${p.y}</b></td><td>${statusText}</td></tr>`;
+            summaryHtml += `<tr><td>${p.x.toLocaleDateString()}</td><td><b>${p.y}</b></td></tr>`;
         });
         document.getElementById('summaryBody').innerHTML = summaryHtml;
 
