@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8" />
+
+<style id="webmakerstyle">
+
+</style>
+</head>
+<body>
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>eGFR 신장 기능 정밀 분석 보고서</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/moment@2.29.4/moment.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-moment@1.0.1"></script>
+    <style>
+        :root { --primary: #2c3e50; --secondary: #3498db; --danger: #e74c3c; --success: #27ae60; --bg: #f8f9fa; }
+        body { font-family: 'Pretendard', sans-serif; background: var(--bg); color: var(--primary); padding: 15px; }
+        .container { max-width: 800px; margin: 0 auto; background: white; padding: 20px; border-radius: 15px; box-shadow: 0 5px 20px rgba(0,0,0,0.1); }
+        h1 { text-align: center; border-bottom: 3px solid var(--secondary); padding-bottom: 10px; font-size: 1.4rem; }
+        
+        .alert-box { padding: 15px; border-radius: 10px; font-weight: bold; text-align: center; margin: 15px 0; display: none; line-height: 1.4; }
+        .alert-danger { background: #fee2e2; color: var(--danger); border: 2px solid var(--danger); }
+        .alert-stable { background: #dcfce7; color: var(--success); border: 1px solid var(--success); }
+
+        .dashboard { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; }
+        .stat-card { padding: 12px; background: #fff; border: 1px solid #ddd; border-radius: 8px; text-align: center; }
+        
+        .summary-section { margin-bottom: 25px; background: #f0f4f8; padding: 15px; border-radius: 10px; border: 1px solid #d1d8e0; }
+        .summary-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; background: white; }
+        .summary-table th, .summary-table td { border: 1px solid #ddd; padding: 8px; text-align: center; }
+        .summary-table th { background: #e2e8f0; }
+
+        .table-wrapper { max-height: 250px; overflow-y: auto; border: 1px solid #eee; margin-bottom: 20px; }
+        table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+        th { position: sticky; top: 0; background: #f4f4f4; padding: 8px; z-index: 10; }
+        td { padding: 5px; border-bottom: 1px solid #eee; text-align: center; }
+        input { width: 85%; padding: 5px; border: 1px solid #ccc; border-radius: 4px; }
+
+        .btn-group { display: flex; gap: 10px; margin-top: 15px; }
+        button { flex: 1; padding: 12px; border-radius: 8px; border: none; font-weight: bold; cursor: pointer; }
+        .btn-main { background: var(--secondary); color: white; }
+        .btn-sub { background: #95a5a6; color: white; }
+        
+        .chart-container { position: relative; height: 320px; width: 100%; margin-top: 20px; }
+        .predict-container { margin-top: 25px; padding: 15px; background: #fff; border-radius: 10px; border: 1px solid #d1d8e0; }
+        .predict-item { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #eee; }
+        .predict-item:last-child { border-bottom: none; }
+        .predict-date { color: var(--danger); font-weight: bold; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>eGFR 신장 기능 추세 보고서</h1>
+    
+    <div id="statusAlert" class="alert-box"></div>
+
+    <div id="recentSummarySection" class="summary-section" style="display:none;">
+        <h4 style="margin: 0 0 10px 0; color: #2c3e50;">📋 최근 5회 검사결과 요약</h4>
+        <table class="summary-table">
+            <thead>
+                <tr><th>날짜</th><th>eGFR 수치</th><th>상태</th></tr>
+            </thead>
+            <tbody id="summaryBody"></tbody>
+        </table>
+    </div>
+
+    <div class="dashboard">
+        <div class="stat-card"><small>전체 연간 변화율</small><div id="totalSlope" style="font-weight:bold; font-size: 1.2rem;">-</div></div>
+        <div class="stat-card"><small>최근 2회 변화율(단기)</small><div id="recentSlope" style="font-weight:bold; font-size: 1.2rem;">-</div></div>
+    </div>
+
+    <div class="table-wrapper">
+        <table>
+            <thead><tr><th>No</th><th>검사 날짜</th><th>eGFR 수치</th></tr></thead>
+            <tbody id="tableBody"></tbody>
+        </table>
+    </div>
+
+    <div class="btn-group">
+        <button class="btn-main" onclick="analyzeData()">데이터 분석 및 저장</button>
+        <button class="btn-sub" onclick="clearData()">초기화</button>
+    </div>
+
+    <div id="resultArea" style="display:none;">
+        <div class="chart-container">
+            <canvas id="trendChart"></canvas>
+        </div>
+        
+        <div class="predict-container">
+            <h4 style="margin:0 0 10px 0;">📅 단계별 변화 예측 도달 일시</h4>
+            <div id="predictionList"></div>
+            <p style="font-size: 0.75rem; color: #7f8c8d; margin-top: 10px;">* 예측 일시는 '전체 평균 기울기'를 바탕으로 산출됩니다.</p>
+        </div>
+    </div>
+</div>
+
+<script>
+    let myChart = null;
+    const MAX_ROWS = 30;
+
+    window.onload = () => {
+        const tbody = document.getElementById('tableBody');
+        for(let i=1; i<=MAX_ROWS; i++) {
+            tbody.innerHTML += `<tr><td>${i}</td><td><input type="date" class="date-input"></td><td><input type="number" class="val-input" step="0.1"></td></tr>`;
+        }
+        loadSavedData();
+    };
+
+    function loadSavedData() {
+        const saved = localStorage.getItem('gfr_master_v5_kor');
+        if (saved) {
+            const parsed = JSON.parse(saved);
+            const dates = document.querySelectorAll('.date-input');
+            const values = document.querySelectorAll('.val-input');
+            parsed.forEach((item, i) => { if(i < MAX_ROWS) { dates[i].value = item.date; values[i].value = item.val; } });
+            if(parsed.length >= 2) analyzeData(false);
+        }
+    }
+
+    function calculateLinearRegression(points) {
+        const n = points.length;
+        let sX=0, sY=0, sXY=0, sXX=0;
+        points.forEach(p => {
+            const x = p.x.getTime();
+            sX += x; sY += p.y; sXY += x * p.y; sXX += x * x;
+        });
+        const slope = (n * sXY - sX * sY) / (n * sXX - sX * sX);
+        const intercept = (sY - slope * sX) / n;
+        return { slope, intercept };
+    }
+
+    function analyzeData(showAlert = true) {
+        const dates = document.querySelectorAll('.date-input');
+        const values = document.querySelectorAll('.val-input');
+        let dataPoints = [];
+        let storageData = [];
+
+        for (let i = 0; i < MAX_ROWS; i++) {
+            if (dates[i].value && values[i].value) {
+                dataPoints.push({ x: new Date(dates[i].value), y: parseFloat(values[i].value) });
+                storageData.push({ date: dates[i].value, val: values[i].value });
+            }
+        }
+        localStorage.setItem('gfr_master_v5_kor', JSON.stringify(storageData));
+
+        if (dataPoints.length < 2) {
+            if(showAlert) alert("데이터를 2개 이상 입력해 주세요.");
+            return;
+        }
+
+        dataPoints.sort((a, b) => a.x - b.x);
+        document.getElementById('resultArea').style.display = 'block';
+        document.getElementById('recentSummarySection').style.display = 'block';
+
+        const totalRes = calculateLinearRegression(dataPoints);
+        const totalAnnualSlope = totalRes.slope * (1000 * 60 * 60 * 24 * 365.25);
+
+        const recent2Points = dataPoints.slice(-2);
+        const recent2Res = calculateLinearRegression(recent2Points);
+        const recent2AnnualSlope = recent2Res.slope * (1000 * 60 * 60 * 24 * 365.25);
+
+        document.getElementById('totalSlope').innerHTML = totalAnnualSlope.toFixed(2);
+        document.getElementById('recentSlope').innerHTML = recent2AnnualSlope.toFixed(2);
+
+        const recent5 = dataPoints.slice(-5).reverse();
+        let summaryHtml = "";
+        recent5.forEach(p => {
+            let statusText = p.y >= 60 ? "정상/경증" : (p.y >= 30 ? "중등도" : "중증");
+            summaryHtml += `<tr><td>${p.x.toLocaleDateString()}</td><td><b>${p.y}</b></td><td>${statusText}</td></tr>`;
+        });
+        document.getElementById('summaryBody').innerHTML = summaryHtml;
+
+        const alertBox = document.getElementById('statusAlert');
+        alertBox.style.display = 'block';
+        const isSharpDrop = (recent2AnnualSlope < 0) && (totalAnnualSlope >= 0 || recent2AnnualSlope <= (totalAnnualSlope * 5));
+
+        if (isSharpDrop) {
+            alertBox.className = "alert-box alert-danger";
+            alertBox.innerHTML = `⚠️ 주의: 최근 하락 속도가 전체 평균보다 5배 이상 가파릅니다. 주치의와 상의하세요.`;
+        } else {
+            alertBox.className = "alert-box alert-stable";
+            alertBox.innerHTML = "✅ 안정: 신장 기능 변화 추세가 안정적인 범위 내에 있습니다.";
+        }
+
+        function getPredictDate(targetY) {
+            if (totalRes.slope >= 0) return "안정적 유지 중";
+            const targetTime = (targetY - totalRes.intercept) / totalRes.slope;
+            if (targetTime <= dataPoints[dataPoints.length-1].x.getTime()) return "이미 도달함";
+            return new Date(targetTime).toLocaleDateString();
+        }
+
+        document.getElementById('predictionList').innerHTML = `
+            <div class="predict-item"><span>3b단계 (eGFR 45) 도달 예정:</span> <span class="predict-date">${getPredictDate(45)}</span></div>
+            <div class="predict-item"><span>4단계 (eGFR 30) 도달 예정:</span> <span class="predict-date">${getPredictDate(30)}</span></div>
+            <div class="predict-item"><span>5단계 (eGFR 15) 도달 예정:</span> <span class="predict-date">${getPredictDate(15)}</span></div>
+        `;
+
+        drawChart(dataPoints);
+    }
+
+    function drawChart(dataPoints) {
+        const ctx = document.getElementById('trendChart').getContext('2d');
+        if (myChart) myChart.destroy();
+        myChart = new Chart(ctx, {
+            type: 'line',
+            data: { 
+                datasets: [{ 
+                    label: 'eGFR 수치 추이', 
+                    data: dataPoints, 
+                    borderColor: '#3498db', 
+                    backgroundColor: 'rgba(52, 152, 219, 0.1)', 
+                    fill: true, 
+                    tension: 0.2, 
+                    pointRadius: 5 
+                }] 
+            },
+            options: { 
+                responsive: true, 
+                maintainAspectRatio: false,
+                scales: { 
+                    x: { 
+                        type: 'time', 
+                        time: { 
+                            unit: 'month',
+                            displayFormats: {
+                                month: 'YY년 MM월', // ⭐ 한글 연월 포맷 적용
+                                quarter: 'YY년 MM월',
+                                year: 'YYYY년'
+                            }
+                        },
+                        ticks: {
+                            maxRotation: 0,
+                            autoSkip: true,
+                            font: { size: 11 }
+                        }
+                    }, 
+                    y: { min: 0, max: 120, title: { display: true, text: 'eGFR' } } 
+                } 
+            }
+        });
+    }
+
+    function clearData() {
+        if(confirm("모든 데이터를 삭제하시겠습니까?")) { localStorage.removeItem('gfr_master_v5_kor'); location.reload(); }
+    }
+</script>
+</body>
+</html>
+
+
+</body>
+</html>
