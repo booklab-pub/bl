@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>북랩 출간 제안서 (개선안)</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&display=swap');
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Noto Sans KR', sans-serif;
+    background: #f0f2f5;
+    display: flex;
+    justify-content: center;
+    padding: 40px 20px;
+    gap: 40px;
+    flex-wrap: wrap;
+  }
+
+  .label-badge {
+    display: inline-block;
+    padding: 4px 10px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    margin-bottom: 8px;
+  }
+  .badge-before {
+    background: #ffdddd;
+    color: #c0392b;
+    border: 1px solid #e74c3c;
+  }
+  .badge-after {
+    background: #d4edda;
+    color: #155724;
+    border: 1px solid #28a745;
+  }
+
+  .card {
+    width: 560px;
+    background: white;
+    border-radius: 2px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.12);
+    overflow: hidden;
+  }
+
+  .card-header {
+    padding: 12px 20px;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.3px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .card-header.before { background: #fff0f0; color: #c0392b; border-bottom: 2px solid #e74c3c; }
+  .card-header.after  { background: #f0fff4; color: #155724; border-bottom: 2px solid #28a745; }
+
+  .card-body { padding: 24px 28px; }
+
+  /* ─── 본문 공통 ─── */
+  .body-text {
+    font-size: 13px;
+    color: #333;
+    line-height: 1.9;
+    margin-bottom: 16px;
+  }
+  .bullet-list {
+    list-style: none;
+    font-size: 12.5px;
+    color: #444;
+    line-height: 1.9;
+    margin-bottom: 20px;
+  }
+  .bullet-list li::before { content: "• "; color: #888; }
+
+  .sign-off {
+    font-size: 13px;
+    color: #333;
+    margin-bottom: 20px;
+    line-height: 1.8;
+  }
+
+  /* ─── BEFORE: 담당자 박스 ─── */
+  .contact-box-before {
+    border: 1px solid #aaa;
+    padding: 12px 14px;
+    font-size: 12.5px;
+    color: #333;
+    line-height: 1.8;
+    margin-bottom: 24px;
+    position: relative;
+  }
+  .contact-box-before::after {
+    content: "⚠️ 눈에 잘 안 띔";
+    position: absolute;
+    top: -10px; right: 8px;
+    background: #fff3cd;
+    border: 1px solid #ffc107;
+    font-size: 10px;
+    padding: 1px 6px;
+    border-radius: 3px;
+    color: #856404;
+  }
+
+  /* ─── AFTER: 담당자 박스 ─── */
+  .contact-box-after {
+    background: #eaf4ff;
+    border: 1.5px solid #2980b9;
+    border-radius: 6px;
+    padding: 14px 16px;
+    font-size: 13px;
+    color: #1a3a55;
+    line-height: 1.9;
+    margin-bottom: 0;
+  }
+  .contact-box-after .contact-name {
+    font-weight: 700;
+    font-size: 14px;
+    color: #1a3a55;
+  }
+  .contact-box-after .contact-role {
+    color: #555;
+    font-size: 12px;
+    margin-bottom: 6px;
+  }
+  .contact-box-after .contact-line {
+    font-size: 12.5px;
+    color: #333;
+  }
+  .contact-box-after .direct-badge {
+    display: inline-block;
+    background: #2980b9;
+    color: white;
+    font-size: 10px;
+    font-weight: 700;
+    padding: 2px 7px;
+    border-radius: 3px;
+    margin-right: 4px;
+    vertical-align: middle;
+  }
+
+  /* ─── CTA 영역 ─── */
+  .cta-section {
+    background: #fafafa;
+    border-top: 1px solid #eee;
+    padding: 20px 28px;
+    text-align: center;
+  }
+  .cta-text {
+    font-size: 13px;
+    color: #333;
+    line-height: 1.7;
+    margin-bottom: 4px;
+  }
+  .cta-text strong { font-weight: 700; }
+  .cta-highlight-before {
+    font-size: 13px;
+    color: #e74c3c;
+    font-weight: 700;
+    margin-bottom: 14px;
+  }
+  .cta-highlight-after {
+    font-size: 12.5px;
+    color: #2980b9;
+    font-weight: 500;
+    margin-bottom: 14px;
+  }
+  .btn-row {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+    margin-bottom: 0;
+  }
+  .btn {
+    padding: 10px 22px;
+    font-size: 13px;
+    font-weight: 700;
+    font-family: 'Noto Sans KR', sans-serif;
+    border: none;
+    border-radius: 3px;
+    cursor: pointer;
+    transition: opacity .15s;
+  }
+  .btn:hover { opacity: .85; }
+  .btn-approve { background: #1a6fba; color: white; }
+  .btn-edit    { background: #888; color: white; }
+  .btn-reject  { background: #444; color: white; }
+
+  /* ─── AFTER CTA 추가 연락처 블록 ─── */
+  .cta-contact-strip {
+    margin-top: 16px;
+    background: #fff8e1;
+    border: 1px solid #f9a825;
+    border-radius: 5px;
+    padding: 10px 14px;
+    font-size: 12px;
+    color: #5d4037;
+    line-height: 1.7;
+    text-align: left;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .cta-contact-strip .icon { font-size: 20px; flex-shrink: 0; }
+  .cta-contact-strip strong { color: #e65100; }
+
+  /* ─── 푸터 ─── */
+  .footer {
+    background: #f5f5f5;
+    border-top: 1px solid #ddd;
+    padding: 14px 28px;
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    font-size: 11px;
+    color: #666;
+    line-height: 1.7;
+  }
+  .footer-logo {
+    font-size: 18px;
+    font-weight: 900;
+    color: #c0392b;
+    flex-shrink: 0;
+    line-height: 1.2;
+  }
+  .footer-logo span { font-size: 10px; display: block; color: #888; font-weight: 400; }
+  .footer-info { flex: 1; }
+  .footer-phone-before { color: #c0392b; font-weight: 700; }
+  .footer-phone-after  { color: #999; font-weight: 400; }
+
+  /* highlight annotation */
+  .annotation {
+    font-size: 11px;
+    color: #777;
+    margin-top: 6px;
+    font-style: italic;
+    text-align: center;
+    padding: 0 10px;
+  }
+  .annotation.good { color: #27ae60; }
+  .annotation.bad  { color: #c0392b; }
+
+  .divider { height: 1px; background: #eee; margin: 16px 0; }
+</style>
+</head>
+<body>
+
+<!-- ════════════════════ BEFORE ════════════════════ -->
+<div>
+  <div class="card-header before" style="border-radius:2px 2px 0 0; background:#fff0f0">
+    ❌ &nbsp;현재 (Before)
+  </div>
+  <div class="card">
+    <div class="card-body">
+      <ul class="bullet-list">
+        <li>면세계산서 발행을 원하는 경우, 사업자등록증 사본을 이메일로 보내주시기 바랍니다.</li>
+        <li>당사 홈페이지에서 온라인 신용카드 결제를 한 경우, 영수증을 따로 발행하지 않습니다.</li>
+        <li>발행한 관련 영수증은 모두 My북랩에서 확인할 수 있습니다.</li>
+        <li>프로그램을 통한 자동 발행이므로 발행한 날의 다음 날 오후 3시 30분 이후에 확인하실 수 있습니다.</li>
+      </ul>
+      <p class="sign-off">위의 내용을 검토하시고 문의 사항이 있으시면 언제든지 연락을 주시기 바랍니다.<br>감사합니다.</p>
+
+      <!-- 담당자 박스 — 묻혀있음 -->
+      <div class="contact-box-before">
+        손화연<br>
+        출판사업팀 팀장<br>
+        Tel. 02-2026-5566 &nbsp;|&nbsp; Mobile. 010-5000-2457 &nbsp;|&nbsp; Email. ok@book.co.kr
+      </div>
+    </div>
+
+    <div class="cta-section">
+      <p class="cta-text">제안서에 대한 의견을 주시면 계약 절차가 원활히 진행되며,<br><strong>고객님께서도 더 빠르게 계약 내용을 확인하실 수 있습니다.</strong></p>
+      <p class="cta-highlight-before">버튼을 클릭해 주세요!</p>
+      <div class="btn-row">
+        <button class="btn btn-approve">제안 승인</button>
+        <button class="btn btn-edit">수정 요청</button>
+        <button class="btn btn-reject">제안 거절</button>
+      </div>
+    </div>
+
+    <div class="footer">
+      <div class="footer-logo">북랩<span>Book Lab</span></div>
+      <div class="footer-info">
+        (주)북랩 &nbsp;|&nbsp; 출판상담: 02-2026-5566 &nbsp;
+        <span class="footer-phone-before">고객센터: 02-2026-5777</span><br>
+        주소: 서울특별시 금천구 가산디지털1로 119 (가산동, 우림라이온스밸리)<br>
+        본사 및 POD센터 B동 B113-115호, 편집부 B동 B111호<br>
+        통신판매업신고: 2011-서울금천-0755 &nbsp;|&nbsp; 대표이사: 순향국 &nbsp;|&nbsp; 개인정보관리책임자: 선일영
+      </div>
+    </div>
+  </div>
+  <p class="annotation bad">⚠ 저자 시선이 버튼 → 푸터 고객센터 번호로 자연스럽게 이동됨</p>
+</div>
+
+
+<!-- ════════════════════ AFTER ════════════════════ -->
+<div>
+  <div class="card-header after" style="border-radius:2px 2px 0 0; background:#f0fff4">
+    ✅ &nbsp;개선안 (After)
+  </div>
+  <div class="card">
+    <div class="card-body">
+      <ul class="bullet-list">
+        <li>면세계산서 발행을 원하는 경우, 사업자등록증 사본을 이메일로 보내주시기 바랍니다.</li>
+        <li>당사 홈페이지에서 온라인 신용카드 결제를 한 경우, 영수증을 따로 발행하지 않습니다.</li>
+        <li>발행한 관련 영수증은 모두 My북랩에서 확인할 수 있습니다.</li>
+        <li>프로그램을 통한 자동 발행이므로 발행한 날의 다음 날 오후 3시 30분 이후에 확인하실 수 있습니다.</li>
+      </ul>
+      <p class="sign-off">위의 내용을 검토하시고 문의 사항이 있으시면 언제든지 연락을 주시기 바랍니다.<br>감사합니다.</p>
+
+      <!-- 담당자 박스 — 강조 -->
+      <div class="contact-box-after">
+        <div class="contact-name">손화연</div>
+        <div class="contact-role">출판사업팀 팀장 · 본 제안서 담당자</div>
+        <div class="contact-line">
+          <span class="direct-badge">직통</span>
+          Mobile. <strong>010-5000-2457</strong>
+          &nbsp;|&nbsp; Tel. 02-2026-5566 &nbsp;|&nbsp; ok@book.co.kr
+        </div>
+      </div>
+    </div>
+
+    <div class="cta-section">
+      <p class="cta-text">제안서에 대한 의견을 주시면 계약 절차가 원활히 진행되며,<br><strong>고객님께서도 더 빠르게 계약 내용을 확인하실 수 있습니다.</strong></p>
+      <p class="cta-highlight-after">아래 버튼으로 답변하거나, 담당자에게 직접 연락 주세요.</p>
+      <div class="btn-row">
+        <button class="btn btn-approve">제안 승인</button>
+        <button class="btn btn-edit">수정 요청</button>
+        <button class="btn btn-reject">제안 거절</button>
+      </div>
+
+      <!-- ★ 핵심 개선: 버튼 바로 아래 담당자 번호 재노출 -->
+      <div class="cta-contact-strip">
+        <span class="icon">📞</span>
+        <div>
+          <strong>담당자 직통 문의</strong> &nbsp;손화연 팀장 &nbsp;|&nbsp; <strong>010-5000-2457</strong><br>
+          <span style="color:#888">버튼 사용이 어려우시면 전화 또는 이메일(ok@book.co.kr)로 연락 주세요.</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer">
+      <div class="footer-logo">북랩<span>Book Lab</span></div>
+      <div class="footer-info">
+        (주)북랩 &nbsp;|&nbsp; 출판상담: 02-2026-5566 &nbsp;
+        <!-- 고객센터 번호 시각적 약화 -->
+        <span class="footer-phone-after">고객센터: 02-2026-5777</span><br>
+        주소: 서울특별시 금천구 가산디지털1로 119 (가산동, 우림라이온스밸리)<br>
+        본사 및 POD센터 B동 B113-115호, 편집부 B동 B111호<br>
+        통신판매업신고: 2011-서울금천-0755 &nbsp;|&nbsp; 대표이사: 순향국 &nbsp;|&nbsp; 개인정보관리책임자: 선일영
+      </div>
+    </div>
+  </div>
+  <p class="annotation good">✓ 의사결정 시점(버튼 근처)에 담당자 번호가 바로 보임</p>
+</div>
+
+</body>
+</html>
