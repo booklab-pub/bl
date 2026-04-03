@@ -1,0 +1,1069 @@
+
+<!doctype html><HTML>
+<HEAD>
+<TITLE>북랩 관리자모드</TITLE>
+<META http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta http-equiv="X-UA-Compatible" content="IE=edge;chrome=1" /> <!-- IE 버전 중 jQuery가 안될 때 -->
+<link rel="shortcut icon" href="/essay_ver2/images/favicon.ico" />
+
+<!-- Noto Sans Korean 211123 -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@500&display=swap" rel="stylesheet">
+
+<link rel="stylesheet" type="text/css" href="/essay_ver2/admin/css/adminrankup.css?v1.1" />
+<link rel="stylesheet" type="text/css" href="/essay_ver2/admin/css/admin_book.css?v1.1" />
+<link rel="stylesheet" type="text/css" href="/essay_ver2/admin/css/admin2nd.css?v4.16" />
+
+<link rel="stylesheet" href="https://code.jquery.com/ui/1.8.18/themes/base/jquery-ui.css" type="text/css" media="all" />
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script>
+<script src="https://code.jquery.com/ui/1.8.18/jquery-ui.min.js"></script>
+
+<script type="text/javascript" src="/_ver2js/cmmn.2nd.js?v3.1.1"></script>
+<script type="text/javascript" src="/_ver2js/outpopup.js?v1.1.1"></script>
+<script language="javascript" src="/essay_ver2/admin/js/admin_common.js?v2.1.1"></script>
+<script language="javascript" src="/essay_ver2/admin/js/popup.js?v3.1"></script>
+
+</head><style type="text/css">
+.b_t {border-top:1px solid #b8d9e1;}
+.b_l {border-left:1px solid #b8d9e1;}
+.b_r {border-right:1px solid #b8d9e1;}
+.b_b {border-bottom:1px solid #b8d9e1;}
+</style>
+<script type="text/javascript" src="/essay_ver2/js/Observe.js"></script> <!-- IE외에서 한글 onKeyUp 처리 가능 -->
+<script type="text/javascript">
+var sEndURL		= "./apply_end.php";
+var iItemsCnt 	= 0;
+var iItemsMax 	= 0;
+var sItemAddr 	= ""; //211018
+var sItemIdx	= "";
+
+
+function item_apply_write_row(sel, obj) {//row 증감
+	if (sel == "1") {//row 추가
+		$("#id_item_table > tbody:last").append(item_apply_write('', ''));
+
+		var i = 0;
+		for (i=0; i<Number($("#max_sales").val()); i++) {
+			if ($("#addr_"+i).length > 0) {
+				eval("new Observe(document.getElementById('addr_"+i+"'))");
+				if (i != sItemIdx && $("#sameaddr").is(":checked") == true) {//체크
+					$("#addr_"+i).val(sItemAddr);
+					$("#addr_"+i).css({"background-color":"#f1f1f1"}).attr("readonly", true);
+				}
+			}
+		}
+	}
+	else if (sel == "2") {//마지막 row 삭제
+		if (Number($("#cnt_sales").val()) <= 1) {
+			alert("1개 이하는 삭제할 수 없습니다.");
+			return;
+		}
+
+		$("#id_item_table > tbody:last > tr:last").remove();
+	}
+	else if (sel == "3") {//해당 row 삭제
+		if (Number($("#cnt_sales").val()) <= 1) {
+			alert("1개 이하는 삭제할 수 없습니다.");
+			return;
+		}
+
+		$(obj).parent().parent().remove();
+	}
+	item_apply_write_no();
+	set_apply_write('amount', '');
+	set_apply_write('item_addridx', '');
+}
+
+function item_apply_write_no() {//No 일련번호
+	var iCnt = $("#id_item_table > tbody").children().length; //폼목 개수
+	var i = 0;
+
+	for (i=1; i<iCnt; i++) {
+		$("#id_item_table").find("tr").eq(i).find("td").eq(0).html(i);
+	}
+	iItemsCnt = iCnt - 1; //상단 메뉴는 제외
+	$("#cnt_sales").val(iItemsCnt);
+}
+
+function item_apply_write(seq, data) {//내역
+	var html 		= "";
+	var arr 		= new Array();
+	var val_no 		= "";
+	var val_item 	= "";
+	var val_isbn 	= "";
+	var val_cost 	= "";
+	var val_qty 	= "";
+	var val_addr 	= "";
+	var val_rece	= "";
+	var val_phone	= "";
+	var val_dlvmthd	= "";
+	var val_memo	= "";
+	var val_file	= "";
+	if (data && data.replace(/|/g, "")) {
+		arr = data.split("|");
+		val_no 		= arr[0];
+		val_item 	= arr[1];
+		val_isbn 	= arr[2];
+		val_cost 	= arr[3];
+		val_qty 	= arr[4];
+		val_addr	= arr[5];
+		val_rece	= arr[6];
+		val_phone	= arr[7];
+		val_dlvmthd	= arr[8];
+		val_memo	= arr[9];
+		val_file	= arr[10];
+	}
+	var nxt 		= 0;
+	var ficon 		= '<span style="margin:0 8px;">&nbsp;</span>';
+	if (val_file) {
+		ficon = '<a href="'+val_file+'" title="파일 다운로드"><img src="/essay_ver2/admin/image/icon_clip_64.png" style="width:22px;" align="absmiddle" /></a>';
+	}
+
+	html += '<tr id="id_item_tr'+iItemsMax+'">';
+	html += '<td class="t_name center b_t b_r" style=""></td>';
+	html += '<td class="t_value center b_t b_r" style="position:relative;">'
+		 +	'	<a href="javascript:;" onClick="alert(\'입력란에 입력한 후 엔터(Enter)키를 클릭하시면 `프로젝트`검색이 됩니다.\');return false;" title="도서명 검색" style="position:absolute;top:50%;left:8px;transform:translateY(-50%);z-index:100;">'
+		 +  '		<svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#888888" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>'
+		 +  '	</a>'
+		 +  '	<input type="text" name="item_{i}" id="item_{i}" style="padding:0 0 0 22px;width:calc(100% - 35px);" class="writeInput" value="'+val_item+'" '
+		 +	'		onKeyPress="if (event.keyCode==13){win_apply_write(\'product\', this, \'myform|item_{i}|isbn_{i}|cost_{i}|stock_{i}|local_{i}|qty_{i}\');event.returnValue=false}" />'
+		 +  '</td>';
+	html += '<td class="t_value center b_t b_r" style="">'
+		 +  '	<input type="hidden" name="no_{i}" id="no_{i}" value="'+val_no+'" />'
+		 +  '	<input type="hidden" name="stock_{i}" id="stock_{i}" value="" /> <!-- ajax 용 -->'
+		 +  '	<input type="hidden" name="local_{i}" id="local_{i}" value="" /> <!-- ajax 용 -->'
+		 +  '	<input type="hidden" name="dlvmthd_{i}" id="dlvmthd_{i}" value="'+val_dlvmthd+'" /> <!-- 변경안함 -->'
+		 +  '	<input type="hidden" name="memo_{i}" id="local_{i}" value="'+val_memo+'" /> <!-- 변경안함 -->'
+		 +  '	<input type="text" name="isbn_{i}" id="isbn_{i}" value="'+val_isbn+'" class="writeInput center" style="width:calc(100% - 15px);background-color:#eeeeee;" readonly="readonly" />'
+		 +  '</td>';
+	html += '<td class="t_value center b_t b_r" style="">';
+	html += '	<input type="text" name="cost_{i}" id="cost_{i}" value="'+val_cost+'" class="writeInput center" style="width:calc(100% - 15px);background-color:#eeeeee;" readonly="readonly" />';
+	html += '</td>';
+	html += '<td class="t_value center b_t b_r" style="">'
+		 +  '	<input type="text" name="qty_{i}" id="qty_{i}" value="'+val_qty+'" class="writeInput center rowbox-qty" '
+		 +  ' 		style="width:calc(100% - 15px);ime-mode:disabled;" onKeydown="cursor_apply_write(event, \'rowbox1_{i}\', \'\');return onlyNumber(event);" onkeyup="removeChar(event);set_apply_write(\'amount\', \'\');" onBlur=""  />'
+		 +  '</td>';
+	html += '<td class="t_value center b_t b_r" style="padding:2px 0;">'
+		 +  '	<div style="display:table;width:100%;table-layout:fixed;">'
+		 +  '	  <div style="display:table-cell;width:45%;text-align:center;border-right:1px solid #b8d9e1;padding:3px 2px;vertical-align:middle;">'
+		 +  '		<input type="text" name="rowbox1_{i}" id="rowbox1_{i}" value="" class="writeInput center rowbox-per" '
+		 +  '			style="width:90%;height:19px;ime-mode:disabled;" placeholder="'+val_qty+'" '
+		 +  '			onKeydown="cursor_apply_write(event, \'addr_{i}\', \'\');return onlyNumber(event);" />'
+		 +  '	  </div>'
+		 +  '	  <div style="display:table-cell;width:30%;text-align:center;border-right:1px solid #b8d9e1;padding:3px 2px;vertical-align:middle;">'
+		 +  '		<input type="text" name="rowbox2_{i}" id="rowbox2_{i}" value="" class="writeInput center" '
+		 +  '			style="width:90%;height:19px;background:#eeeeee;" readonly="readonly" />'
+		 +  '	  </div>'
+		 +  '	  <div style="display:table-cell;width:25%;text-align:center;padding:3px 2px;vertical-align:middle;">'
+		 +  '		<input type="text" name="rowboxtot_{i}" id="rowboxtot_{i}" value="" class="writeInput center" '
+		 +  '			style="width:90%;height:19px;background:#eeeeee;" readonly="readonly" />'
+		 +  '	  </div>'
+		 +  '	</div>'
+		 +  '</td>';
+	html += '<td class="t_value center b_t b_r" style="">'
+		 +	'	<div style="width:100%;padding:4px 2px;">'
+		 +	'	  <div style="float:left;width:75%;text-align:center;">'
+		 +  '		<input type="text" name="addr_{i}" id="addr_{i}" value="'+val_addr+'" class="writeInput" style="width:calc(100% - 8px);" onKeydown="cursor_apply_write(event, \'rece_{i}\', \'\');" '
+		 +	'			onkeyup="change_apply_write(\'item_addr\', \'\');" onBlur=""  />'
+		 +	'	  </div>'
+		 +  '	  <div style="float:left;width:10%;text-align:center;">'
+		 +	'		<input type="text" name="rece_{i}" id="rece_{i}" value="'+val_rece+'" class="writeInput" style="width:calc(100% - 6px);" onKeydown="cursor_apply_write(event, \'phone_{i}\', \'\');" onkeyup="" onBlur=""  />'
+		 +	'	  </div>'
+		 +	'	  <div style="float:left;width:15%;text-align:center;">'
+		 + 	'		<input type="text" name="phone_{i}" id="phone_{i}" value="'+val_phone+'" class="writeInput" '
+		 +	'			style="width:calc(100% - 6px);ime-mode:disabled;" onKeydown="cursor_apply_write(event, \'item_{i1}\', \'1\');return onlyNumber(event);" onkeyup="removeChar(event);set_apply_write(\'phone\', this);" onBlur=""  />'
+		 +	'	  </div>'
+		 +	'	</div>'
+		 +  '</td>';
+	html += '<td class="t_value center b_t" style="vertical-align:middle;">'
+		 +  '	<a href="javascript:;" onClick="item_apply_write_row(\'3\', this)" title="행 삭제" style="display:inline-block;line-height:1;">'
+		 +  '		<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#cc3333" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">'
+		 +  '			<circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/>'
+		 +  '		</svg>'
+		 +  '	</a>'
+		 +  '</td>';
+	html += '</tr>';
+	if (seq) {
+		html = html.replace(/{i}/g, seq);
+		nxt = Number(seq) + 1;
+	}
+	else {
+		html = html.replace(/{i}/g, $("#max_sales").val());
+		nxt = Number($("#max_sales").val()) + 1;
+	}
+	html = html.replace(/{i1}/g, nxt);
+
+	iItemsMax++;
+	$("#max_sales").val(iItemsMax);
+
+	return html;
+}
+
+function calc_row_box(el) {
+	// el: input 요소 또는 인덱스 숫자
+	var idx;
+	if (typeof el === "object" && el.id) {
+		idx = el.id.replace("qty_", "").replace("rowbox1_", "");
+	} else {
+		idx = el;
+	}
+	var qty    = Number($("#qty_"     + idx).val().replace(/,/g, "")) || 0;
+	var perBox = Number($("#rowbox1_" + idx).val().replace(/,/g, "")) || 0;
+	var boxCnt = "";
+	var boxTot = "";
+
+	if (qty > 0 && perBox > 0) {
+		boxCnt = Math.ceil(qty / perBox);
+		boxTot = boxCnt;
+	}
+	$("#rowbox2_"   + idx).val(boxCnt);
+	$("#rowboxtot_" + idx).val(boxTot);
+}
+
+function upload_excel_apply_write(input) {
+	// 기존 로직: mode를 upload로 변경하고 form submit
+	// 실제 서버 처리는 기존 apply_end.php가 담당
+	if (!input.files || !input.files[0]) return;
+	if (!confirm("엑셀 파일을 업로드하여 내용을 불러오겠습니까?")) {
+		input.value = "";
+		return;
+	}
+	$("#mode").val("upload");
+	var frm = document.myform;
+	frm.target = "iframe_exe";
+	frm.action = sEndURL;
+	frm.submit();
+}
+
+function cursor_apply_write(event, curid, pass) {//커서 넘기기
+	event = event || window.event;
+	var keyID = (event.which) ? event.which : event.keyCode;
+	if (keyID == 13) {//엔터키
+		if (pass == "1") {
+			item_apply_write_row('1', '');
+		}
+		$("#"+curid).focus();
+	}
+}
+</script>
+<script language="javascript" type="text/javascript">
+function set_apply_write(sel, obj) {
+	var i = 0;
+	var j = 0;
+	if (sel == "amount") {
+		var amount = 0;
+		for (i=0; i<iItemsMax; i++) {
+			amount += Number($("#qty_"+i).val().replace(/,/g, ""));
+		}
+		$("#amount").val(amount);
+		// 수량 변경 시 각 행 박스 자동 재계산
+		for (i=0; i<iItemsMax; i++) {
+			if ($("#qty_"+i).length > 0) {
+				calc_row_box(i);
+			}
+		}
+	}
+	else if (sel == "phone") {
+		obj.value = _phone_replace(obj.value);
+	}
+	else if (sel == "buymthd") {
+		if (obj.value == "5") {//저자증정본
+			$("#state").val('1');
+		}
+		else {
+			$("#state").val('2');
+		}
+	}
+	else if (sel == "dlvmthd") {//배송방법
+		var bgc = "";
+		var dis = "";
+		if (obj.value == "9" || $("#dlvmthd").val() == "9") {//다마스
+			bgc = "#ffffff";
+			dis = false;
+		}
+		else {
+			bgc = "#f1f1f1";
+			dis = true;
+		}
+		$("#boxqty1").css({"background":bgc}).prop("disabled", dis);
+		$("#boxqty2").css({"background":bgc}).prop("disabled", dis);
+		$("#boxamt1").css({"background":bgc}).prop("disabled", dis);
+		$("#boxamt2").css({"background":bgc}).prop("disabled", dis);
+		$("#boxtot").css({"background":bgc}).prop("disabled", dis);
+	}
+	else if (sel == "box") {
+		if ($("#dlvmthd").val() != "9") {
+			return;
+		}
+		var amount = Number($("#amount").val());
+		var qty1 = Number($("#boxqty1").val());
+		var qty2 = Number($("#boxqty2").val());
+		var amt1 = Number($("#boxamt1").val());
+		var amt2 = Number($("#boxamt2").val());
+		var tot = 0;
+
+		if (qty1 > 0) {
+			if (!amt1) {
+				amt1 = 0;
+			}
+		}
+		if (amount > 0) {
+			qty2 = amount - (qty1 * amt1);
+			if (qty2 > 0) {
+				amt2 = 1;
+			}
+			else {
+				qty2 = "";
+				amt2 = "";
+			}
+			$("#boxqty2").val(qty2);
+			$("#boxamt2").val(amt2);
+		}
+
+		tot = amt1 + amt2;
+		$("#boxtot").val(tot);
+	}
+	else if (sel == "item_addridx") {//기준 주소 찾기
+		var addr = "";
+		for (i=0; i<Number($("#max_sales").val()); i++) {
+			if (!addr && $("#addr_"+i).length > 0) {
+				addr = $("#addr_"+i).val();
+				j = i;
+				break;
+			}
+		}
+		sItemAddr= addr;
+		sItemIdx = j;
+	}
+}
+
+
+function change_apply_write(sel, val) {
+	var i = 0;
+	var j = 0;
+	if (sel == "item_addr") {
+		if ($("#sameaddr").is(":checked") == true) {//체크
+			for (i=0; i<Number($("#max_sales").val()); i++) {
+				if ($("#addr_"+i).length > 0) {
+					sItemIdx = i;
+					break;
+				}
+			}
+			sItemAddr = $("#addr_"+sItemIdx).val();
+			if (sItemAddr) {
+				change_apply_write('sameaddr', '');
+			}
+		}
+	}
+	else if (sel == "sameaddr") {
+		if ($("#sameaddr").is(":checked") == true) {//체크
+			for (i=0; i<Number($("#max_sales").val()); i++) {
+				if ($("#addr_"+i).length > 0) {
+					sItemAddr = $("#addr_"+i).val();
+					sItemIdx = i;
+					break;
+				}
+			}
+			for (i=0; i<Number($("#max_sales").val()); i++) {
+				if (i != sItemIdx && $("#addr_"+i).length > 0) {
+					$("#addr_"+i).val(sItemAddr);
+					$("#addr_"+i).css({"background-color":"#f1f1f1"}).attr("readonly", true);
+				}
+			}
+		}
+		else {//해제
+			for (i=0; i<Number($("#max_sales").val()); i++) {
+				if (i != sItemIdx && $("#addr_"+i).length > 0) {
+					$("#addr_"+i).val('');
+					$("#addr_"+i).css({"background-color":"#ffffff"}).attr("readonly", false);
+				}
+			}
+		}
+	}
+}
+
+
+function submit_apply_write() {//등록
+	var frm = document.myform;
+	var i 	= j = 0;
+	var iCnt = $("#id_item_table > tbody").children().length; //폼목 개수
+
+	if (frm.mode.value != "upload") {//업로드가 아니면..
+		for (i=0; i<iCnt; i++) {
+			if ($.trim($("#item_"+i).val())) {
+				j++;
+			}
+		}
+		if (j <= 0) {
+			alert("도서를 입력해 주세요.");
+			$("#item_0").focus();
+			return;
+		}
+		if (!frm.wrtday.value.replace(/ /g, "")) {
+		   	alert("신청일을 입력해 주세요.");
+		   	frm.wrtday.focus();
+		   	return;
+		}
+		if (!frm.name.value.replace(/ /g, "")) {
+		   	alert("신청자를 입력해 주세요.");
+		   	frm.name.focus();
+		   	return;
+		}
+		if (!frm.amount.value.replace(/ /g, "")) {
+	   		alert("수량을 입력해 주세요.");
+		   	frm.amount.focus();
+		   	return;
+		}
+		if (!frm.duedate.value.replace(/ /g, "")) {
+		   	alert("출고예정일을 입력해 주세요.");
+		   	frm.duedate.focus();
+		   	return;
+		}
+		/*
+		if (!frm.recename.value.replace(/ /g, "")) {
+		   	alert("수취인을 입력해 주세요.");
+		   	frm.recename.focus();
+		   	return;
+		}
+		if (!frm.recephone.value.replace(/ /g, "")) {
+		   	alert("연락처를 입력해 주세요.");
+		   	frm.recephone.focus();
+		   	return;
+		}
+		*/
+	}
+
+	if (frm.mode.value == "modify") {
+		if (!confirm("수정하시겠습니까?")) {
+			return;
+		}
+	}
+
+	frm.target = "iframe_exe";
+	frm.action = sEndURL;
+	frm.submit();
+}
+
+
+function remove_apply_write(no) {//삭제
+	if (confirm("삭제를 하시겠습니까?")) {
+		$("#iframe_exe").attr("src", sEndURL+"?mode=remove&no="+no);
+	}
+}
+
+
+function win_apply_write(sel, obj, objs) {//팝업
+	var param 	= "";
+	var arr 	= new Array();
+	var arr1 	= new Array();
+	var win 	= "";
+	var sword 	= "";
+	sword = obj.value;
+	if (sel == "product" && sword.replace(/ /g, "")) {//품목
+		if (!sword.replace(/ /g, "")) {
+			sword = $("#wp_name").val();
+		}
+		if (!sword) {
+			return;
+		}
+		if ($("#buymthd").val() == "7") {//비매품 190423
+			param = "&xode=&skey=name&sword="+encodeURIComponent(sword);
+			$.post("../project/project_ajax.php", {"mode":"nonsale", "param":param}, function(data) {
+				arr = data.split("@^@");
+				if (Number(arr[0]) > 0) {
+					arr1 = objs.split("|");
+					$("#"+arr1[1]).val(arr[3]);
+					$("#"+arr1[2]).val(arr[2].replace("CODE", ""));
+					$("#"+arr1[3]).val(arr[11]);
+					$("#"+arr1[6]).focus();
+				}
+				else {//
+					alert("검색된 내용이 없습니다.");
+					return;
+				}
+			})
+			.done(function() {
+			    //alert( "second success" );
+			})
+			.fail(function() {
+			    //alert( "error" );
+			})
+			.always(function() {
+			    //alert( "finished" );
+			});
+		}
+		else {
+			param = "&name="+encodeURIComponent(sword); //180307
+			$.post("../project/project_ajax.php", {"mode":"name", "param":param}, function(data) {
+				arr = data.split("@^@");
+				if (Number(arr[0]) == 1) {
+					arr1 = objs.split("|");
+					$("#"+arr1[1]).val(arr[1]);
+					$("#"+arr1[2]).val(arr[16].replace(/-/g, ""));
+					$("#"+arr1[3]).val(arr[15]);
+					$("#"+arr1[6]).focus();
+				}
+				else if (arr[0]) {
+					win = window.open("../webpos/popup/prd_search.php?lnk=script&skey=name&sword="+encodeURI(sword)+"&objs="+objs+"&rtnpage=/essay_ver2/admin/deliver/apply_write.php", "winPrdSearch", "width=700,height=700,scrollbars=yes");
+					if (!win) {
+						alert("팝업 차단기능 혹은 팝업차단 프로그램이 동작중입니다. 팝업 차단 기능을 해제한 후 다시 시도하세요.");
+						return;
+					}
+					win.focus();
+				}
+				else {//
+					alert("검색된 내용이 없습니다.");
+					return;
+				}
+			})
+			.done(function() {
+			    //alert( "second success" );
+			})
+			.fail(function() {
+			    //alert( "error" );
+			})
+			.always(function() {
+			    //alert( "finished" );
+			});
+		}
+	}
+	arr = [];
+	arr1= [];
+}
+
+
+//전화번호 설정
+function _phone_hyphen_remove(str) {//'-' 제거
+	var val = "";
+	var i = 0;
+	for (i=0; i<str.length; i++) {
+	    if (str.charAt(i) != "-") {
+	    	val += str.charAt(i)
+	    }
+	}
+	return val
+}
+
+function _phone_length(str) {// 0-127 1byte, 128~2byte 길이
+	var val = 0;
+	var i = 0;
+    for(i=0; i<str.length; i++) {
+        if (str.charCodeAt(i) > 127) {
+            val += 2;
+        }
+        else {
+            val++;
+        }
+    }
+	return val;
+}
+
+function _phone_replace(str) {//설정
+    var only = _phone_hyphen_remove(str);
+    var val = only;
+
+    if (event.keyCode == 8 ) {
+    	 return str;
+    }
+    if (only.substring(0,2) == 02) { // 서울전화번호일 경우  10자리까지만 나타나교 그 이상의 자리수는 자동삭제
+    	if (_phone_length(only) <= 1) val = only;
+    	if (_phone_length(only) == 2) val = only + "-";
+    	if (_phone_length(only) == 4) val = only.substring(0,2) + "-" + only.substring(2,3);
+    	if (_phone_length(only) == 4) val = only.substring(0,2) + "-" + only.substring(2,4);
+    	if (_phone_length(only) == 5) val = only.substring(0,2) + "-" + only.substring(2,5);
+    	if (_phone_length(only) == 6) val = only.substring(0,2) + "-" + only.substring(2,6);
+    	if (_phone_length(only) == 7) val = only.substring(0,2) + "-" + only.substring(2,5) + "-" + only.substring(5,7);
+    	if (_phone_length(only) == 8) val = only.substring(0,2) + "-" + only.substring(2,6) + "-" + only.substring(6,8);
+    	if (_phone_length(only) == 9) val = only.substring(0,2) + "-" + only.substring(2,5) + "-" + only.substring(5,9);
+    	if (_phone_length(only) == 10) val = only.substring(0,2) + "-" + only.substring(2,6) + "-" + only.substring(6,10);
+    	if (_phone_length(only) == 11) val = only.substring(0,2) + "-" + only.substring(2,6) + "-" + only.substring(6,10);
+    	if (_phone_length(only) == 12) val = only.substring(0,2) + "-" + only.substring(2,6) + "-" + only.substring(6,10);
+    }
+    else if (only.substring(0,2) == 05 ) {  // 05로 시작되는 번호 체크
+        if (only.substring(2,3) == 0 ) {  // 050으로 시작되는지 따지기 위한 조건문
+        	if (_phone_length(only) <= 3) val = only;
+        	if (_phone_length(only) == 4) val = only + "-";
+        	if (_phone_length(only) == 5) val = only.substring(0,4) + "-" + only.substring(4,5);
+        	if (_phone_length(only) == 6) val = only.substring(0,4) + "-" + only.substring(4,6);
+        	if (_phone_length(only) == 7) val = only.substring(0,4) + "-" + only.substring(4,7);
+        	if (_phone_length(only) == 8) val = only.substring(0,4) + "-" + only.substring(4,8);
+        	if (_phone_length(only) == 9) val = only.substring(0,4) + "-" + only.substring(4,7) + "-" + only.substring(7,9);;
+        	if (_phone_length(only) == 10) val = only.substring(0,4) + "-" + only.substring(4,8) + "-" + only.substring(8,10);
+        	if (_phone_length(only) == 11) val = only.substring(0,4) + "-" + only.substring(4,7) + "-" + only.substring(7,11);
+        	if (_phone_length(only) == 12) val = only.substring(0,4) + "-" + only.substring(4,8) + "-" + only.substring(8,12);
+        	if (_phone_length(only) == 13) val = only.substring(0,4) + "-" + only.substring(4,8) + "-" + only.substring(8,12);
+      	}
+      	else {
+            if (_phone_length(only) <= 2) val = only;
+            if (_phone_length(only) == 3) val = only + "-";
+            if (_phone_length(only) == 4) val = only.substring(0,3) + "-" + only.substring(3,4);
+            if (_phone_length(only) == 5) val = only.substring(0,3) + "-" + only.substring(3,5);
+            if (_phone_length(only) == 6) val = only.substring(0,3) + "-" + only.substring(3,6);
+            if (_phone_length(only) == 7) val = only.substring(0,3) + "-" + only.substring(3,7);
+            if (_phone_length(only) == 8) val = only.substring(0,3) + "-" + only.substring(3,6) + "-" + only.substring(6,8);
+            if (_phone_length(only) == 9) val = only.substring(0,3) + "-" + only.substring(3,7) + "-" + only.substring(7,9);
+            if (_phone_length(only) == 10) val = only.substring(0,3) + "-" + only.substring(3,6) + "-" + only.substring(6,10);
+            if (_phone_length(only) == 11) val = only.substring(0,3) + "-" + only.substring(3,7) + "-" + only.substring(7,11);
+            if (_phone_length(only) == 12) val = only.substring(0,3) + "-" + only.substring(3,7) + "-" + only.substring(7,11);
+      	}
+    }
+    else if(only.substring(0,2) == 03 || only.substring(0,2) == 04  || only.substring(0,2) == 06  || only.substring(0,2) == 07  || only.substring(0,2) == 08 ) {//서울전화번호가 아닌 번호일 경우(070,080포함, 050번호가 문제군요)
+    	if (_phone_length(only) <= 2) val = only;
+    	if (_phone_length(only) == 3) val = only + "-";
+    	if (_phone_length(only) == 4) val = only.substring(0,3) + "-" + only.substring(3,4);
+    	if (_phone_length(only) == 5) val = only.substring(0,3) + "-" + only.substring(3,5);
+    	if (_phone_length(only) == 6) val = only.substring(0,3) + "-" + only.substring(3,6);
+    	if (_phone_length(only) == 7) val = only.substring(0,3) + "-" + only.substring(3,7);
+    	if (_phone_length(only) == 8) val = only.substring(0,3) + "-" + only.substring(3,6) + "-" + only.substring(6,8);;
+    	if (_phone_length(only) == 9) val = only.substring(0,3) + "-" + only.substring(3,7) + "-" + only.substring(7,9);
+    	if (_phone_length(only) == 10) val = only.substring(0,3) + "-" + only.substring(3,6) + "-" + only.substring(6,10);
+    	if (_phone_length(only) == 11) val = only.substring(0,3) + "-" + only.substring(3,7) + "-" + only.substring(7,11);
+    	if (_phone_length(only) == 12) val = only.substring(0,3) + "-" + only.substring(3,7) + "-" + only.substring(7,11);
+    }
+    else if(only.substring(0,2) == 01) {//휴대폰일 경우
+        if (_phone_length(only) <= 2) val = only;
+        if (_phone_length(only) == 3) val = only + "-";
+        if (_phone_length(only) == 4) val = only.substring(0,3) + "-" + only.substring(3,4);
+        if (_phone_length(only) == 5) val = only.substring(0,3) + "-" + only.substring(3,5);
+        if (_phone_length(only) == 6) val = only.substring(0,3) + "-" + only.substring(3,6);
+        if (_phone_length(only) == 7) val = only.substring(0,3) + "-" + only.substring(3,7);
+        if (_phone_length(only) == 8) val = only.substring(0,3) + "-" + only.substring(3,7) + "-" + only.substring(7,8);
+        if (_phone_length(only) == 9) val = only.substring(0,3) + "-" + only.substring(3,7) + "-" + only.substring(7,9);
+        if (_phone_length(only) == 10) val = only.substring(0,3) + "-" + only.substring(3,6) + "-" + only.substring(6,10);
+        if (_phone_length(only) == 11) val = only.substring(0,3) + "-" + only.substring(3,7) + "-" + only.substring(7,11);
+        if (_phone_length(only) == 12) val = only.substring(0,3) + "-" + only.substring(3,7) + "-" + only.substring(7,11);
+    }
+	else if(only.substring(0,1) == 1) {//1588, 1688등의 번호일 경우
+        if (_phone_length(only) <= 3) val = only;
+        if (_phone_length(only) == 4) val = only + "-";
+        if (_phone_length(only) == 5) val = only.substring(0,4) + "-" + only.substring(4,5);
+        if (_phone_length(only) == 6) val = only.substring(0,4) + "-" + only.substring(4,6);
+        if (_phone_length(only) == 7) val = only.substring(0,4) + "-" + only.substring(4,7);
+        if (_phone_length(only) == 8) val = only.substring(0,4) + "-" + only.substring(4,8);
+        if (_phone_length(only) == 9) val = only.substring(0,4) + "-" + only.substring(4,8);
+        if (_phone_length(only) == 10) val = only.substring(0,4) + "-" + only.substring(4,8);
+        if (_phone_length(only) == 11) val = only.substring(0,4) + "-" + only.substring(4,8);
+        if (_phone_length(only) == 12) val = only.substring(0,4) + "-" + only.substring(4,8);
+    }
+    return val;
+}
+</script>
+<body style="margin:0;">
+<table width="100%" border="0" cellpadding="0" cellspacing="0">
+	<tr>
+		<td>
+			<div class="headerbar" style="text-align:left;width:100%;height:40px;line-height:40px;background:url('/essay_ver2/admin/image/headbar_bg.gif') repeat-x;letter-spacing:-2px;"><span style="font-family:'Noto Sans KR',sans-serif;font-size:16px;color:#ffffff;letter-spacing:-2px;margin:0 0 0 30px;padding:0px;">택배신청관리</span></div>		</td>
+	</tr>
+</table>
+<table border="0" cellpadding="0" cellspacing="0" width="100%">
+    <tr>
+        <td align="center">
+        	<div class="pagesubject">택배신청 작성</div>
+<form name="myform" id="myform" method="post" style="margin:0" enctype="multipart/form-data">
+	<input type="hidden" name="mode" id="mode" value="new" />
+	<input type="hidden" name="no" id="no" value="" />
+	<input type="hidden" name="var_item_no" id="var_item_no" value="|" /> <!-- 저장된 item no -->
+	<input type="hidden" name="cnt_sales" id="cnt_sales" value="0" /> <!-- 나열된 품목 수 -->
+	<input type="hidden" name="max_sales" id="max_sales" value="0" /> <!-- 계속 증가 -->
+	<input type="hidden" name="recename" value="" />
+	<input type="hidden" name="recephone" value="" />
+	<input type="hidden" name="recezip" value="" />
+	<input type="hidden" name="receaddr" value="" />
+			<table width="95%" border="0" cellpadding="0" cellspacing="0">
+				<tr>
+				    <td align="left">
+				       	<img src="/essay_ver2/admin/image/ics_tit.gif" /> <strong>신청내용</strong>
+				    </td>
+				</tr>
+			</table>
+			<table width="95%" border="0" cellspacing="1" cellpadding="2" class="t_style">
+				<colgroup>
+    				<col style="width:13%;" />
+    				<col style="width:37%;" />
+    				<col style="width:13%;" />
+    				<col style="width:37%;" />
+  				</colgroup>
+  				<tr>
+				    <td class="t_name">분류</td>
+				    <td class="t_value">
+				    	<select name="buymthd" id="buymthd" class="writeSelect" style="width:calc(100% - 25px);" onChange="set_apply_write('buymthd', this);">
+				    		<option value="1">저자구매</option><option value="2">일반구매</option><option value="3">방문구매</option><option value="4">전화구매</option><option value="5">저자증정본</option><option value="6">가제본</option><option value="7">비매품</option><option value="9">기타</option>				    	</select>
+				    </td>
+				    <td class="t_name">배송방법</td>
+				    <td class="t_value">
+				    	<select name="dlvmthd" id="dlvmthd" style="width:calc(100% - 25px);" class="writeSelect" onChange="set_apply_write('dlvmthd', this);">
+				    		<option value="1">택배</option><option value="2">퀵(선불)</option><option value="3">퀵(착불)</option><option value="4">픽업</option><option value="5">해외항공 배송</option><option value="8">해외선박 배송</option><option value="6">오패스코리아 배송</option><option value="7">황금날개</option><option value="9">다마스</option>				    	</select>
+				    </td>
+				</tr>
+				<tr>
+					<td class="t_value center" colspan="4">
+				    	<table width="100%" border="0" cellspacing="0" cellpadding="0" id="id_item_table" class="b_b">
+							<colgroup>
+								<col style="width:3%;" />
+			    				<col style="width:16%;" />
+			    				<col style="width:9%;" />
+			    				<col style="width:6%;" />
+			    				<col style="width:5%;" />
+			    				<col style="width:18%;" />
+			    				<col style="width:38%;" />
+			    				<col style="width:5%;" />
+			  				</colgroup>
+			  				<tr>
+							    <td class="t_name center b_r" style="">No</td>
+							    <td class="t_name center b_r" style="">도서명</td>
+							    <td class="t_name center b_r" style="">ISBN</td>
+							    <td class="t_name center b_r" style="">단가</td>
+							    <td class="t_name center b_r" style="">수량</td>
+							    <td class="t_name center b_r" style="padding:0;">
+							    	<div style="display:table;width:100%;table-layout:fixed;">
+							    		<div style="display:table-cell;width:45%;text-align:center;border-right:1px solid #b8d9e1;padding:3px 0;">각BOX<br/>부수</div>
+							    		<div style="display:table-cell;width:30%;text-align:center;border-right:1px solid #b8d9e1;padding:3px 0;">BOX수</div>
+							    		<div style="display:table-cell;width:25%;text-align:center;padding:3px 0;">총BOX</div>
+							    	</div>
+							    </td>
+							    <td class="t_name center b_r" style="position:relative;">
+							    	<div style="position:absolute;left:1px;bottom:0px;z-index:10;">
+							    		<input type="checkbox" id="sameaddr" onClick="change_apply_write('sameaddr', '');" /><span style="letter-spacing:-1px;color:#888888;">단일 주소지</span>
+							    	</div>
+							    	<div style="float:left;width:75%;text-align:center;">주소</div>
+							    	<div style="float:left;width:10%;text-align:center;">수취인</div>
+							    	<div style="float:left;width:15%;text-align:center;">연락처</div>
+							    </td>
+							    <td class="t_name center" style="">삭제</td>
+							</tr>
+			  				<tbody></tbody>
+						</table>
+						<table width="100%" border="0" cellspacing="0" cellpadding="0" style="margin:4px 0;">
+							<tr>
+								<td style="padding:4px 8px;color:#999999;font-size:12px;">
+									※ 직접 입력: 도서명 입력 후 엔터 → 검색 &nbsp;|&nbsp; 연락처 칸에서 엔터 → 행 추가
+								</td>
+								<td align="right" style="padding:4px 10px;white-space:nowrap;">
+									<label for="excel_upload" style="display:inline-block;cursor:pointer;padding:5px 14px;background:#4a7a6a;color:#fff;border-radius:4px;font-size:12px;font-weight:bold;letter-spacing:-0.5px;line-height:1.8;">
+										<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:4px;margin-top:-2px;"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+										엑셀 업로드
+									</label>
+									<input type="file" name="excel_upload" id="excel_upload" accept=".xlsx,.xls,.csv" style="display:none;" onchange="upload_excel_apply_write(this);" />
+								</td>
+							</tr>
+						</table>
+					</td>
+				</tr>
+				<tr>
+				    <td class="t_name">신청일</td>
+				    <td class="t_value">
+				    	<input type="text" name="wrtday" id="wrtday" class="writeInput center" style="width:80px;" value="2026-04-03" onKeydown="cursor_apply_write(event, 'wrttime', '');" />
+				    	<input type="text" name="wrttime" id="wrttime" class="writeInput center" style="width:70px;" value="13:27:47" onKeydown="cursor_apply_write(event, 'name', '');" />
+				    	<span style="color:#999999;margin:0 0 0 5px;">(00:00:00)</span>
+				    </td>
+				    <td class="t_name">신청자</td>
+				    <td class="t_value">
+				    	<input type="text" name="name" id="name" class="writeInput" style="width:calc(100% - 25px);" value="손형국" onKeydown="cursor_apply_write(event, 'amount', '');" />
+				    </td>
+				</tr>
+				<tr>
+				    <td class="t_name">전체수량</td>
+				    <td class="t_value">
+				    	<input type="text" name="amount" id="amount" value="" class="writeInput" style="width:calc(100% - 25px);ime-mode:disabled;"
+				    	 	onkeyup="removeChar(event);set_apply_write('box', '');" onKeydown="cursor_apply_write(event, 'state', '');return onlyNumber(event);" />
+				    </td>
+				    <td class="t_name" rowspan="2">BOX<br />(다마스)</td>
+				    <td class="t_value center" rowspan="2">
+				    	<table width="100%" border="0" cellspacing="0" cellpadding="0">
+			<colgroup>
+				<col style="width:35%;" />
+				<col style="width:30%;" />
+				<col style="width:35%;" />
+			</colgroup>
+			<tr height="21">
+				<td class="b_b b_r t_c">각 BOX별 부수</td>
+				<td class="b_b b_r t_c">BOX 수량</td>
+				<td class="b_b t_c">총 BOX 수량</td>
+			</tr>
+			<tr height="23">
+				<td class="b_b b_r center">
+					<input type="text" name="boxqty1" id="boxqty1" value="" class="writeInput center" style="width:calc(100% - 25px);height:19px;margin:1px 0 0 0;background:#f1f1f1;ime-mode:disabled;"
+						 onKeydown="return onlyNumber(event);" onkeyup="removeChar(event);set_apply_write('box', '');" disabled="disabled" />
+				</td>
+				<td class="b_b b_r center">
+					<input type="text" name="boxamt1" id="boxamt1" value="" class="writeInput center" style="width:calc(100% - 25px);height:19px;margin:1px 0 0 0;background:#f1f1f1;ime-mode:disabled;"
+						 onKeydown="return onlyNumber(event);" onkeyup="removeChar(event);set_apply_write('box', '');" disabled="disabled" />
+				</td>
+				<td rowspan="2" class="center">
+					<input type="text" name="boxtot" id="boxtot" value="" class="writeInput center" style="width:calc(100% - 15px);background:#f1f1f1;ime-mode:disabled;"
+						 onKeydown="return onlyNumber(event);" onkeyup="removeChar(event);" disabled="disabled" />
+				</td>
+			</tr>
+			<tr height="23">
+				<td class="b_r center">
+					<input type="text" name="boxqty2" id="boxqty2" value="" class="writeInput center" style="width:calc(100% - 25px);height:19px;background:#f1f1f1;ime-mode:disabled;"
+						 onKeydown="return onlyNumber(event);" onkeyup="removeChar(event);set_apply_write('box', '');" disabled="disabled" />
+				</td>
+				<td class="b_r center">
+					<input type="text" name="boxamt2" id="boxamt2" value="" class="writeInput center" style="width:calc(100% - 25px);height:19px;background:#f1f1f1;ime-mode:disabled;"
+						 onKeydown="return onlyNumber(event);" onkeyup="removeChar(event);set_apply_write('box', '');" disabled="disabled" />
+				</td>
+			</tr>
+		</table>				    </td>
+				</tr>
+				<tr>
+				    <td class="t_name">상태</td>
+				    <td class="t_value">
+				    	<select name="state" id="state" class="writeSelect" style="width:20%;min-width:150px;">
+				    		<option value="1">배송접수</option><option value="2" selected="selected">배송준비중</option><option value="3">출고완료</option><option value="4">택배완료</option>				    	</select>
+				    </td>
+				</tr>
+				<tr>
+				    <td class="t_name">출고예정일</td>
+				    <td class="t_value">
+				    	<input type="text" name="duedate" id="duedate" class="writeInput center" style="width:80px;" value="2026-04-03" onKeydown="cursor_apply_write(event, 'finday', '');" />
+				    </td>
+				    <td class="t_name">출고완료일</td>
+				    <td class="t_value">
+				    	<input type="text" name="finday" id="finday" class="writeInput center" style="width:80px;" value="2026-04-03" onKeydown="cursor_apply_write(event, 'fintime', '');" />
+				    	<input type="text" name="fintime" id="fintime" class="writeInput center" style="width:70px;" value="13:27:47" onKeydown="cursor_apply_write(event, 'memo', '');" />
+				    	<span style="color:#999999;margin:0 0 0 5px;">(00:00:00)</span>
+				    </td>
+				</tr>
+				<tr>
+				    <td class="t_name">관리자 메모</td>
+				    <td class="t_value" colspan="3">
+				    	<textarea name="memo" id="memo" style="width:calc(100% - 25px);height:60px;" class="writeTextarea"></textarea>
+				    </td>
+				</tr>
+			</table>
+			<table width="95%" border="0" cellpadding="0" cellspacing="0" style="margin-top:20px;">
+				<tr>
+				    <td align="left">
+				       	<img src="/essay_ver2/admin/image/ics_tit.gif" /> <strong>배송정보</strong>
+				    </td>
+				</tr>
+			</table>
+			<table width="95%" border="0" cellspacing="1" cellpadding="2" class="t_style">
+				<colgroup>
+    				<col style="width:13%;" />
+    				<col style="width:37%;" />
+    				<col style="width:13%;" />
+    				<col style="width:37%;" />
+  				</colgroup>
+				<tr>
+				    <td class="t_name">주문번호</td>
+			    	<td class="t_value" colspan="3">
+			    		<input type="text" name="orderid" id="orderid" class="writeInput" style="width:calc(100% - 25px);" value="" />
+				    	<!-- input type="text" name="orderid" id="orderid" class="writeInput" style="width:calc(100% - 25px);" value="" onKeydown="cursor_apply_write(event, 'recename', '');" / -->
+				    </td>
+				</tr>
+				<!-- tr>
+				    <td class="t_name">수취인</td>
+				    <td class="t_value">
+				    	<input type="text" name="recename" id="recename" class="writeInput" style="width:calc(100% - 25px);" value="" onKeydown="cursor_apply_write(event, 'recephone', '');" />
+				    </td>
+				    <td class="t_name">연락처</td>
+				    <td class="t_value">
+				    	<input type="text" name="recephone" id="recephone" class="writeInput" style="width:calc(100% - 25px);" value="" onkeyup="set_apply_write('phone', this);" onKeydown="cursor_apply_write(event, 'recezip', '');" />
+				    </td>
+				</tr>
+				<tr>
+				    <td class="t_name">우편번호(계약상)</td>
+				    <td class="t_value" colspan="3">
+				    	<input type="text" name="recezip" id="recezip" class="writeInput" style="width:140px;" value="" onKeydown="cursor_apply_write(event, 'receaddr', '');" />
+				    	<a href="javascript:;" onClick="popup_zip_search('2', 'myform|recezip|receaddr');"><img src="/essay_ver2/admin/image/btn_post.gif" border="0" align="absmiddle" alt="검색" /></a>
+				    </td>
+				</tr>
+				<tr>
+				    <td class="t_name">주소(계약상)</td>
+				    <td class="t_value" colspan="3">
+				    	<input type="text" name="receaddr" id="receaddr" class="writeInput" style="width:calc(100% - 25px);" value="" onKeydown="cursor_apply_write(event, 'recememo', '');" />
+				    </td>
+				</tr -->
+				<tr height="80">
+				    <td class="t_name">배송 요청사항</td>
+			    	<td class="t_value" colspan="3">
+				    	<textarea name="recememo" id="recememo" style="width:calc(100% - 25px);height:100px;" class="writeTextarea"></textarea>
+				    </td>
+				</tr>
+			</table>
+			<div style="margin-top:20px;"></div>
+			<table border="0" cellpadding="0" cellspacing="0" width="95%">
+				<tr>
+					<td align="center">
+						<a href="javascript:;" onClick="submit_apply_write()"><img src="/essay_ver2/admin/image/btn_insert_l.gif" alt="등록" align="absmiddle" /></a>&nbsp;&nbsp;
+												<a href="./apply_list.php"><img src="/essay_ver2/admin/image/btn_list_l.gif" alt="목록" align="absmiddle" /></a>
+					</td>
+				</tr>
+			</table>
+</form>
+			<iframe src="" id="iframe_exe" name="iframe_exe" width="0" height="0" style="display:none;"></iframe>
+			<div style="margin-top:50px;"></div>
+		</td>
+	</tr>
+</table>
+</body>
+<script language="javascript" type="text/javascript">
+$(function() {
+    $("#wrtday, #duedate, #finday").datepicker({
+   		changeMonth: true,
+        dayNames: ['일요일', '월요일', '화요일', '수요일', '목요일', '금요일', '토요일'],
+        dayNamesMin: ['일', '월', '화', '수', '목', '금', '토'],
+        monthNamesShort: ['1','2','3','4','5','6','7','8','9','10','11','12'],
+        monthNames: ['1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월'],
+        showButtonPanel: true,
+        currentText: '오늘 날짜',
+        closeText: '닫기',
+        dateFormat: "yy-mm-dd"
+    });
+
+    var html = "";
+	 html += item_apply_write('0', '');
+	$("#id_item_table > tbody:last").append(html);
+	item_apply_write_no();
+
+		$("#buymthd").focus();
+
+	// ── 박스 계산기 이벤트 위임 (계산기 파일 동일 로직) ──
+	$(document).on("keyup change", ".rowbox-qty, .rowbox-per", function() {
+		var id  = this.id;
+		var idx = id.replace("qty_", "").replace("rowbox1_", "");
+		var qty    = parseInt($("#qty_"     + idx).val())  || 0;
+		var perInput = $("#rowbox1_" + idx);
+		// 각BOX부수: 입력값 있으면 사용, 없으면 placeholder(=수량) 사용
+		var perBox = parseInt(perInput.val()) || parseInt(perInput.attr("placeholder")) || 0;
+		// 수량 변경 시 placeholder를 수량으로 갱신
+		if (id.indexOf("qty_") === 0 && qty > 0) {
+			perInput.attr("placeholder", qty);
+			perBox = parseInt(perInput.val()) || qty;
+		}
+		if (qty > 0 && perBox > 0) {
+			var full  = Math.floor(qty / perBox);
+			var total = Math.ceil(qty / perBox);
+			$("#rowbox2_"   + idx).val(full);
+			$("#rowboxtot_" + idx).val(total);
+		} else {
+			$("#rowbox2_"   + idx).val("");
+			$("#rowboxtot_" + idx).val("");
+		}
+	});
+});
+</script>
+
+<div id="id_iframeexetemp"></div>
+
+<script type="text/javascript">
+var iBottomAlert 	= 0;
+var iBottomAlertTot	= 0;
+var iBottomTimer 	= 0;
+var sHeaderbar 		= "";
+
+
+function alert_admin_bottom(val) {
+	var divhtml = "";
+	var arr = new Array();
+
+	if ($(".headerbar").length > 0) {//210302
+		if (val.replace("@^@", "")) {
+			arr = val.split("@^@");
+
+			$(".headerbar").css({"position":"relative"});
+
+			divhtml = '<div id="id_bottomalertlist_1" style="position:absolute;width:calc(100% - 200px);height:34px;top:3px;right:10px;z-index:100;">'
+					+ arr[1]
+					+ '</div>'
+					+ '<div id="id_bottomalertlist_2" style="position:absolute;width:calc(100% - 240px);top:40px;right:10px;padding:5px 20px;background:#ddf2ff;z-index:200;display:none;">'
+					+ arr[2]
+					+ '</div>';
+
+			iBottomAlertTot = Number(arr[0]);
+			set_admin_bottom_start('0');
+		}
+
+		divhtml += sHeaderbar;
+		$(".headerbar").html(divhtml);
+	}
+	arr = [];
+}
+
+
+function set_admin_bottom(sel, val) {
+	if (sel == "oper") {
+		var id = $("#id_icon_"+val+"_oper");
+		if (id.html() == "▶") {
+			set_admin_bottom_start(val);
+			id.html('■');
+		}
+		else {
+			set_admin_bottom_stop();
+			id.html('▶');
+		}
+	}
+	else if (sel == "disp") {
+		var i = 0;
+		var idcss = $("#id_bottomalertlist_2");
+		if (idcss.css("display") == "none") {
+			$("#id_bottomalertlist_2").show();
+			for (i=0; i<iBottomAlertTot; i++) {
+				$("#id_icon_"+i+"_disp").html('∧');
+				$("#id_icon_"+i+"_disp").css({"padding":"0px","font-weight":"bold","font-size":"14px","color":"#ffffff","line-height":"34px"});
+			}
+		}
+		else {
+			$("#id_bottomalertlist_2").hide();
+			for (i=0; i<iBottomAlertTot; i++) {
+				$("#id_icon_"+i+"_disp").html('∨');
+				$("#id_icon_"+i+"_disp").css({"padding":"0px","font-weight":"bold","font-size":"14px","color":"#ffffff","line-height":"34px"});
+
+			}
+		}
+	}
+	else if (sel == "page") {
+		location.href = val+"&BtmAlert=Y"; //알림 바로 실행
+	}
+}
+
+
+function set_admin_bottom_oper() {
+	var i = 0;
+	var mx = 0;
+	for (i=0; i<100; i++) {
+		if ($("#id_icon_"+i).length > 0) {
+			$("#id_icon_"+i).hide();
+		}
+		else if (!mx) {
+			mx = i;
+		}
+	}
+	iBottomAlert++;
+	if ($("#id_icon_"+iBottomAlert).length > 0) {
+		$("#id_icon_"+iBottomAlert).show();
+	}
+	if (iBottomAlert == (mx - 1)) {
+		iBottomAlert = -1;
+	}
+}
+
+function set_admin_bottom_start(val) {
+	iBottomAlert = Number(val);
+	if (iBottomAlertTot > 1) {
+		iBottomTimer = setInterval("set_admin_bottom_oper()", 1000*10); //이후 5초 ~
+	}
+}
+
+function set_admin_bottom_stop() {
+	clearInterval(iBottomTimer);
+}
+
+
+$(function() {
+	if ($(".headerbar").length > 0 && !sHeaderbar) {
+		sHeaderbar = $(".headerbar").html();
+	}
+
+	if ($("#iframe_exe").length > 0) {
+	}
+	else {//없으면.. 221102
+		$("#id_iframeexetemp").html('<iframe id="iframe_exe" width="0" height="0" style="display:none;"></iframe>');
+	}
+});
+</script>
+</html>
+
