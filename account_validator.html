@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>출판계약서 - 인세 계좌 정보</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Pretendard', 'Noto Sans KR', Arial, sans-serif;
+      background: #f5f5f3;
+      color: #1a1a1a;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem 1rem;
+    }
+
+    .card {
+      background: #fff;
+      border-radius: 16px;
+      border: 1px solid #e5e5e3;
+      padding: 2rem 2.25rem;
+      width: 100%;
+      max-width: 520px;
+    }
+
+    .card-header {
+      margin-bottom: 1.75rem;
+      padding-bottom: 1.25rem;
+      border-bottom: 1px solid #ebebeb;
+    }
+
+    .card-header h1 {
+      font-size: 17px;
+      font-weight: 600;
+      color: #1a1a1a;
+      margin-bottom: 4px;
+    }
+
+    .card-header p {
+      font-size: 13px;
+      color: #888;
+      line-height: 1.5;
+    }
+
+    .field-group {
+      margin-bottom: 1.25rem;
+    }
+
+    .field-label {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 7px;
+    }
+
+    .field-label label {
+      font-size: 13px;
+      font-weight: 500;
+      color: #555;
+    }
+
+    .field-label .char-count {
+      font-size: 12px;
+      color: #aaa;
+    }
+
+    select, input[type="text"] {
+      width: 100%;
+      height: 42px;
+      padding: 0 12px;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      font-size: 14px;
+      color: #1a1a1a;
+      background: #fff;
+      transition: border-color 0.15s;
+      outline: none;
+      -webkit-appearance: none;
+    }
+
+    select {
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23aaa' stroke-width='1.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 12px center;
+      padding-right: 36px;
+      cursor: pointer;
+    }
+
+    select:focus, input[type="text"]:focus {
+      border-color: #555;
+    }
+
+    select:disabled, input[type="text"]:disabled {
+      background: #f9f9f9;
+      color: #bbb;
+      cursor: not-allowed;
+    }
+
+    .hint {
+      font-size: 12px;
+      color: #aaa;
+      margin-top: 6px;
+      line-height: 1.5;
+    }
+
+    .status {
+      display: none;
+      font-size: 13px;
+      margin-top: 8px;
+      padding: 8px 12px;
+      border-radius: 7px;
+      line-height: 1.4;
+    }
+
+    .status.ok {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: #f0faf4;
+      color: #1d7d44;
+      border: 1px solid #b8e8cb;
+    }
+
+    .status.warn {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: #fffbec;
+      color: #8a6000;
+      border: 1px solid #f0d888;
+    }
+
+    .status.err {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: #fff3f3;
+      color: #b22222;
+      border: 1px solid #f5c0c0;
+    }
+
+    .status-icon {
+      flex-shrink: 0;
+      width: 16px;
+      height: 16px;
+    }
+
+    .divider {
+      border: none;
+      border-top: 1px solid #ebebeb;
+      margin: 1.5rem 0;
+    }
+
+    .info-box {
+      background: #fafafa;
+      border: 1px solid #ebebeb;
+      border-radius: 8px;
+      padding: 14px 16px;
+      font-size: 12.5px;
+      color: #777;
+      line-height: 1.7;
+    }
+
+    .info-box strong {
+      font-weight: 600;
+      color: #555;
+      display: block;
+      margin-bottom: 4px;
+    }
+
+    .info-box ul {
+      list-style: none;
+      padding: 0;
+    }
+
+    .info-box ul li::before {
+      content: "·";
+      margin-right: 6px;
+      color: #bbb;
+    }
+
+    .submit-btn {
+      margin-top: 1.5rem;
+      width: 100%;
+      height: 44px;
+      background: #1a1a1a;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background 0.15s, opacity 0.15s;
+    }
+
+    .submit-btn:disabled {
+      background: #ccc;
+      cursor: not-allowed;
+    }
+
+    .submit-btn:not(:disabled):hover {
+      background: #333;
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="card-header">
+      <h1>인세 계좌 정보</h1>
+      <p>출판계약서에 등록될 인세 지급 계좌를 입력해 주세요.</p>
+    </div>
+
+    <!-- 예금주 -->
+    <div class="field-group">
+      <div class="field-label">
+        <label for="holder">예금주</label>
+      </div>
+      <input type="text" id="holder" placeholder="홍길동" autocomplete="off" />
+    </div>
+
+    <!-- 은행 선택 -->
+    <div class="field-group">
+      <div class="field-label">
+        <label for="bank">은행</label>
+      </div>
+      <select id="bank" onchange="onBankChange()">
+        <option value="">-- 은행을 선택하세요 --</option>
+        <optgroup label="시중은행">
+          <option value="kb"      data-lengths="14">국민은행</option>
+          <option value="shinhan" data-lengths="11">신한은행</option>
+          <option value="woori"   data-lengths="13">우리은행</option>
+          <option value="hana"    data-lengths="11,12">하나은행</option>
+          <option value="nh"      data-lengths="12,14">농협은행</option>
+          <option value="ibk"     data-lengths="11,12">IBK기업은행</option>
+          <option value="sc"      data-lengths="12">SC제일은행</option>
+          <option value="citi"    data-lengths="10,11">한국씨티은행</option>
+          <option value="busan"   data-lengths="13">부산은행</option>
+          <option value="daegu"   data-lengths="13">대구은행</option>
+        </optgroup>
+        <optgroup label="인터넷은행">
+          <option value="kakao"   data-lengths="13">카카오뱅크</option>
+          <option value="toss"    data-lengths="13">토스뱅크</option>
+          <option value="kbank"   data-lengths="11">케이뱅크</option>
+        </optgroup>
+        <optgroup label="기타">
+          <option value="saemaul" data-lengths="13">새마을금고</option>
+          <option value="post"    data-lengths="13">우체국</option>
+          <option value="suhyup"  data-lengths="13">수협은행</option>
+        </optgroup>
+      </select>
+      <p class="hint" id="bank-hint">은행을 선택하면 계좌번호 자릿수 안내가 표시됩니다.</p>
+    </div>
+
+    <!-- 계좌번호 -->
+    <div class="field-group">
+      <div class="field-label">
+        <label for="account">계좌번호</label>
+        <span class="char-count" id="char-count">0자리</span>
+      </div>
+      <input
+        type="text"
+        id="account"
+        placeholder="숫자만 입력 (하이픈 제외)"
+        inputmode="numeric"
+        oninput="onAccountInput()"
+        disabled
+        autocomplete="off"
+      />
+      <div class="status" id="status-msg">
+        <svg class="status-icon" id="status-icon" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"></svg>
+        <span id="status-text"></span>
+      </div>
+    </div>
+
+    <hr class="divider" />
+
+    <div class="info-box">
+      <strong>입력 안내</strong>
+      <ul>
+        <li>하이픈(-)은 자동으로 제거되며 숫자만 저장됩니다.</li>
+        <li>은행별 자릿수 규칙이 자동으로 적용됩니다.</li>
+        <li>실존 계좌 여부는 별도 인증 절차를 통해 확인됩니다.</li>
+      </ul>
+    </div>
+
+    <button class="submit-btn" id="submit-btn" disabled onclick="onSubmit()">계좌 정보 저장</button>
+  </div>
+
+  <script>
+    // 은행별 허용 자릿수 파싱
+    const BANKS = {};
+    document.querySelectorAll('#bank option[data-lengths]').forEach(opt => {
+      BANKS[opt.value] = opt.dataset.lengths.split(',').map(Number);
+    });
+
+    // 아이콘 SVG 경로
+    const ICONS = {
+      ok:   '<circle cx="8" cy="8" r="7" stroke="currentColor" stroke-width="1.5"/><path d="M5 8l2.5 2.5L11 5.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>',
+      warn: '<circle cx="8" cy="8" r="7" stroke="currentColor" stroke-width="1.5"/><path d="M8 5v3.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><circle cx="8" cy="11" r="0.75" fill="currentColor"/>',
+      err:  '<circle cx="8" cy="8" r="7" stroke="currentColor" stroke-width="1.5"/><path d="M5.5 5.5l5 5M10.5 5.5l-5 5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>',
+    };
+
+    function setStatus(type, message) {
+      const box  = document.getElementById('status-msg');
+      const icon = document.getElementById('status-icon');
+      const text = document.getElementById('status-text');
+
+      box.className = 'status ' + type;
+      icon.innerHTML = ICONS[type] || '';
+      text.textContent = message;
+    }
+
+    function clearStatus() {
+      const box = document.getElementById('status-msg');
+      box.className = 'status';
+    }
+
+    function updateSubmitBtn() {
+      const holder  = document.getElementById('holder').value.trim();
+      const bank    = document.getElementById('bank').value;
+      const account = document.getElementById('account').value;
+      const isValid = holder && bank && account && isAccountValid(bank, account);
+      document.getElementById('submit-btn').disabled = !isValid;
+    }
+
+    function isAccountValid(bankKey, val) {
+      if (!bankKey || !BANKS[bankKey]) return false;
+      return BANKS[bankKey].includes(val.length);
+    }
+
+    function onBankChange() {
+      const sel     = document.getElementById('bank');
+      const hint    = document.getElementById('bank-hint');
+      const accInput = document.getElementById('account');
+      const count   = document.getElementById('char-count');
+
+      accInput.value = '';
+      count.textContent = '0자리';
+      clearStatus();
+
+      const key = sel.value;
+      if (!key) {
+        hint.textContent = '은행을 선택하면 계좌번호 자릿수 안내가 표시됩니다.';
+        accInput.disabled = true;
+        updateSubmitBtn();
+        return;
+      }
+
+      const lengths   = BANKS[key];
+      const bankName  = sel.options[sel.selectedIndex].text;
+      const lengthStr = lengths.length > 1
+        ? lengths.slice(0, -1).join(', ') + ' 또는 ' + lengths[lengths.length - 1]
+        : lengths[0];
+
+      hint.textContent = `${bankName} 계좌번호는 ${lengthStr}자리입니다.`;
+      accInput.disabled = false;
+      accInput.focus();
+      updateSubmitBtn();
+    }
+
+    function onAccountInput() {
+      const accInput = document.getElementById('account');
+      const bankSel  = document.getElementById('bank');
+      const count    = document.getElementById('char-count');
+
+      // 숫자 외 문자 자동 제거
+      let val = accInput.value.replace(/\D/g, '');
+
+      // 최대 자릿수 제한
+      if (bankSel.value && BANKS[bankSel.value]) {
+        const maxLen = Math.max(...BANKS[bankSel.value]);
+        if (val.length > maxLen) val = val.slice(0, maxLen);
+      }
+
+      accInput.value = val;
+      count.textContent = val.length + '자리';
+
+      if (!bankSel.value || val.length === 0) {
+        clearStatus();
+        updateSubmitBtn();
+        return;
+      }
+
+      const lengths = BANKS[bankSel.value];
+      const minLen  = Math.min(...lengths);
+      const maxLen  = Math.max(...lengths);
+
+      if (lengths.includes(val.length)) {
+        setStatus('ok', '올바른 자릿수입니다.');
+      } else if (val.length < minLen) {
+        const need = minLen - val.length;
+        setStatus('warn', `${need}자리 더 입력하세요.`);
+      } else if (val.length > minLen && val.length < maxLen && lengths.length > 1) {
+        setStatus('warn', `${maxLen - val.length}자리 더 입력하거나 ${val.length}자리로 확인하세요.`);
+      } else {
+        setStatus('err', `유효한 자릿수가 아닙니다. (허용: ${lengths.join(' 또는 ')}자리)`);
+      }
+
+      updateSubmitBtn();
+    }
+
+    function onSubmit() {
+      const holder  = document.getElementById('holder').value.trim();
+      const bankSel = document.getElementById('bank');
+      const bankName = bankSel.options[bankSel.selectedIndex].text;
+      const account = document.getElementById('account').value;
+      alert(`저장 완료\n\n예금주: ${holder}\n은행: ${bankName}\n계좌번호: ${account}`);
+    }
+
+    // 예금주 변경 시에도 버튼 상태 업데이트
+    document.getElementById('holder').addEventListener('input', updateSubmitBtn);
+  </script>
+</body>
+</html>
