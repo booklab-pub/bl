@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>북랩 인세 수령액 시뮬레이터</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;600&family=DM+Mono:wght@400;500&family=Pretendard:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #F7F5F0;
+    --surface: #FFFFFF;
+    --surface2: #F0EDE6;
+    --border: #DDD9D0;
+    --text-primary: #1A1814;
+    --text-secondary: #6B6660;
+    --text-muted: #9B9690;
+    --accent: #C8472A;
+    --accent-light: #FAF0ED;
+    --accent2: #2A5C8A;
+    --accent2-light: #EDF3F9;
+    --success: #2A7A4B;
+    --success-light: #EDF6F1;
+    --gold: #A07830;
+    --gold-light: #FAF5EC;
+  }
+
+  body {
+    font-family: 'Pretendard', 'Apple SD Gothic Neo', sans-serif;
+    background: var(--bg);
+    color: var(--text-primary);
+    min-height: 100vh;
+    padding: 2rem 1rem;
+  }
+
+  .page {
+    max-width: 720px;
+    margin: 0 auto;
+  }
+
+  /* Header */
+  .header {
+    margin-bottom: 2.5rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 1.5px solid var(--text-primary);
+  }
+  .header-eyebrow {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    color: var(--accent);
+    text-transform: uppercase;
+    margin-bottom: 0.5rem;
+  }
+  .header-title {
+    font-family: 'Noto Serif KR', serif;
+    font-size: 26px;
+    font-weight: 600;
+    line-height: 1.3;
+    margin-bottom: 0.4rem;
+  }
+  .header-sub {
+    font-size: 13px;
+    color: var(--text-secondary);
+    line-height: 1.6;
+  }
+
+  /* Input section */
+  .input-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.75rem;
+    margin-bottom: 1.5rem;
+  }
+  .input-card-title {
+    font-size: 12px;
+    font-family: 'DM Mono', monospace;
+    letter-spacing: 0.08em;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    margin-bottom: 1.25rem;
+  }
+
+  .slider-row {
+    display: grid;
+    grid-template-columns: 100px 1fr auto;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 1.1rem;
+  }
+  .slider-row:last-child { margin-bottom: 0; }
+  .slider-label { font-size: 13px; color: var(--text-secondary); line-height: 1.4; }
+  .slider-label small { display: block; font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+  .slider-right { display: flex; align-items: center; gap: 8px; }
+  .direct-input {
+    font-family: 'DM Mono', monospace;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-primary);
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 4px 8px;
+    width: 86px;
+    text-align: right;
+    outline: none;
+    transition: border-color 0.15s;
+  }
+  .direct-input:focus { border-color: var(--text-primary); background: var(--surface); }
+  .input-unit { font-size: 12px; color: var(--text-muted); flex-shrink: 0; }
+
+  input[type=range] {
+    -webkit-appearance: none;
+    width: 100%;
+    height: 3px;
+    background: var(--border);
+    border-radius: 2px;
+    outline: none;
+    cursor: pointer;
+  }
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: var(--text-primary);
+    border: 3px solid var(--bg);
+    box-shadow: 0 0 0 1px var(--border);
+    cursor: pointer;
+    transition: transform 0.15s;
+  }
+  input[type=range]::-webkit-slider-thumb:hover { transform: scale(1.15); }
+  input[type=range]::-moz-range-thumb {
+    width: 18px; height: 18px; border-radius: 50%;
+    background: var(--text-primary); border: 3px solid var(--bg);
+    box-shadow: 0 0 0 1px var(--border); cursor: pointer;
+  }
+
+  .divider {
+    height: 1px;
+    background: var(--border);
+    margin: 1.5rem 0;
+  }
+
+  /* Phase toggle */
+  .phase-toggle {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 1.5rem;
+  }
+  .phase-btn {
+    flex: 1;
+    padding: 10px 8px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--surface);
+    font-size: 13px;
+    color: var(--text-secondary);
+    cursor: pointer;
+    text-align: center;
+    transition: all 0.15s;
+    font-family: inherit;
+  }
+  .phase-btn.active {
+    background: var(--text-primary);
+    border-color: var(--text-primary);
+    color: #fff;
+    font-weight: 500;
+  }
+  .phase-btn small { display: block; font-size: 11px; opacity: 0.7; margin-top: 2px; }
+
+  /* Result cards */
+  .result-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 1.5rem;
+  }
+  .result-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 1.25rem;
+  }
+  .result-card.accent {
+    background: var(--accent-light);
+    border-color: #E8C4BB;
+  }
+  .result-card.blue {
+    background: var(--accent2-light);
+    border-color: #BDD0E5;
+  }
+  .result-card.gold {
+    background: var(--gold-light);
+    border-color: #E0CFA8;
+  }
+  .result-card.green {
+    background: var(--success-light);
+    border-color: #AEDAC2;
+  }
+  .rc-label {
+    font-size: 11px;
+    color: var(--text-muted);
+    letter-spacing: 0.04em;
+    margin-bottom: 6px;
+  }
+  .rc-val {
+    font-family: 'DM Mono', monospace;
+    font-size: 22px;
+    font-weight: 500;
+    color: var(--text-primary);
+    line-height: 1.2;
+    margin-bottom: 4px;
+  }
+  .rc-sub { font-size: 11px; color: var(--text-secondary); }
+
+  /* Breakdown table */
+  .breakdown-wrap {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+    margin-bottom: 1.5rem;
+  }
+  .breakdown-header {
+    padding: 1rem 1.25rem;
+    border-bottom: 1px solid var(--border);
+    font-size: 12px;
+    font-family: 'DM Mono', monospace;
+    letter-spacing: 0.08em;
+    color: var(--text-muted);
+    text-transform: uppercase;
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+  }
+  th {
+    padding: 10px 1.25rem;
+    text-align: left;
+    font-weight: 400;
+    font-size: 12px;
+    color: var(--text-muted);
+    background: var(--surface2);
+    border-bottom: 1px solid var(--border);
+  }
+  th:last-child { text-align: right; }
+  td {
+    padding: 10px 1.25rem;
+    border-bottom: 1px solid var(--border);
+    color: var(--text-secondary);
+  }
+  td:last-child { text-align: right; font-family: 'DM Mono', monospace; font-size: 13px; color: var(--text-primary); }
+  tr:last-child td { border-bottom: none; }
+  tr.total-row td {
+    font-weight: 600;
+    color: var(--text-primary);
+    background: var(--surface2);
+    border-top: 1px solid var(--border);
+    font-size: 14px;
+  }
+  tr.total-row td:last-child { color: var(--accent); }
+  .tier-badge {
+    display: inline-block;
+    font-size: 10px;
+    padding: 1px 6px;
+    border-radius: 4px;
+    background: var(--surface2);
+    color: var(--text-muted);
+    margin-left: 4px;
+    font-family: 'DM Mono', monospace;
+  }
+  .tier-badge.active-tier {
+    background: var(--accent-light);
+    color: var(--accent);
+  }
+
+  /* Chart */
+  .chart-section {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.25rem 1.25rem 1rem;
+    margin-bottom: 1.5rem;
+  }
+  .chart-title {
+    font-size: 12px;
+    font-family: 'DM Mono', monospace;
+    letter-spacing: 0.08em;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    margin-bottom: 1rem;
+  }
+  .bar-chart { display: flex; flex-direction: column; gap: 10px; }
+  .bar-row { display: flex; align-items: center; gap: 10px; }
+  .bar-row-label { width: 80px; font-size: 12px; color: var(--text-secondary); text-align: right; flex-shrink: 0; }
+  .bar-track { flex: 1; height: 28px; background: var(--surface2); border-radius: 4px; overflow: hidden; }
+  .bar-fill {
+    height: 100%;
+    border-radius: 4px;
+    transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    display: flex; align-items: center; padding-left: 8px;
+    font-family: 'DM Mono', monospace; font-size: 11px; color: #fff;
+    white-space: nowrap; overflow: hidden;
+  }
+  .bar-fill.bl { background: var(--text-primary); }
+  .bar-fill.ext-current { background: var(--gold); }
+  .bar-fill.ext-new { background: var(--accent2); }
+
+  /* Policy note */
+  .policy-note {
+    background: var(--surface2);
+    border-left: 3px solid var(--text-primary);
+    border-radius: 0 8px 8px 0;
+    padding: 1rem 1.25rem;
+    margin-bottom: 1.5rem;
+  }
+  .policy-note-title {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 6px;
+  }
+  .policy-note ul {
+    list-style: none;
+    font-size: 12px;
+    color: var(--text-secondary);
+    line-height: 1.8;
+  }
+  .policy-note ul li::before { content: '·  '; color: var(--text-muted); }
+
+  .footer-note {
+    font-size: 11px;
+    color: var(--text-muted);
+    line-height: 1.7;
+    text-align: center;
+    padding-top: 1rem;
+    border-top: 1px solid var(--border);
+  }
+
+  @media (max-width: 540px) {
+    .slider-row { grid-template-columns: 110px 1fr 80px; gap: 10px; }
+    .result-grid { grid-template-columns: 1fr; }
+    .rc-val { font-size: 18px; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <div class="header">
+    <div class="header-eyebrow">Booklab · 인세 계산</div>
+    <div class="header-title">인세 수령액 시뮬레이터</div>
+    <div class="header-sub">출판계약서 제5조 기준 · 구간별 인세율 자동 적용</div>
+  </div>
+
+  <!-- Inputs -->
+  <div class="input-card">
+    <div class="input-card-title">계약 조건 입력</div>
+
+    <div class="slider-row">
+      <div class="slider-label">정가</div>
+      <input type="range" id="price" min="8000" max="40000" step="100" value="16000">
+      <div class="slider-right">
+        <input type="number" class="direct-input" id="price-input" min="8000" max="40000" step="100" value="16000">
+        <span class="input-unit">원</span>
+      </div>
+    </div>
+    <div class="slider-row">
+      <div class="slider-label">판매 부수<small>계약기간(2년) 누적</small></div>
+      <input type="range" id="sales" min="0" max="6000" step="10" value="300">
+      <div class="slider-right">
+        <input type="number" class="direct-input" id="sales-input" min="0" max="6000" step="10" value="300">
+        <span class="input-unit">부</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Result cards -->
+  <div class="result-grid" id="result-grid"></div>
+
+  <!-- Breakdown -->
+  <div class="breakdown-wrap">
+    <div class="breakdown-header">구간별 인세 내역</div>
+    <table id="breakdown-table"></table>
+  </div>
+
+  <div class="footer-note">
+    본 시뮬레이터는 출판계약서 제2조·제5조를 기준으로 작성되었습니다.<br>
+    실제 인세는 정산 시점의 판매 데이터에 따라 달라질 수 있습니다.
+  </div>
+
+</div>
+
+<script>
+  function fmt(n) {
+    return Math.round(n).toLocaleString('ko-KR') + '원';
+  }
+
+  function calcRoyalty(price, qty) {
+    let r = 0;
+    const tiers = [];
+    if (qty <= 0) return { total: 0, tiers: [] };
+
+    const t1 = Math.min(qty, 200);
+    r += price * t1 * 0.10;
+    tiers.push({ label: '1~200부', rate: '10%', qty: t1, amount: price * t1 * 0.10, active: qty <= 200 });
+
+    if (qty > 200) {
+      const t2 = Math.min(qty - 200, 1800);
+      r += price * t2 * 0.20;
+      tiers.push({ label: '201~2,000부', rate: '20%', qty: t2, amount: price * t2 * 0.20, active: qty <= 2000 });
+    }
+    if (qty > 2000) {
+      const t3 = Math.min(qty - 2000, 3000);
+      r += price * t3 * 0.22;
+      tiers.push({ label: '2,001~5,000부', rate: '22%', qty: t3, amount: price * t3 * 0.22, active: qty <= 5000 });
+    }
+    if (qty > 5000) {
+      const t4 = qty - 5000;
+      r += price * t4 * 0.25;
+      tiers.push({ label: '5,001부 초과', rate: '25%', qty: t4, amount: price * t4 * 0.25, active: true });
+    }
+    return { total: r, tiers };
+  }
+
+  function getCurrentRate(qty) {
+    if (qty <= 200) return '10%';
+    if (qty <= 2000) return '20%';
+    if (qty <= 5000) return '22%';
+    return '25%';
+  }
+  function getCurrentTierName(qty) {
+    if (qty <= 200) return '1~200부 구간';
+    if (qty <= 2000) return '201~2,000부 구간';
+    if (qty <= 5000) return '2,001~5,000부 구간';
+    return '5,001부 초과 구간';
+  }
+
+  function clamp(val, min, max) {
+    return Math.min(max, Math.max(min, val));
+  }
+
+  function render() {
+    const price = +document.getElementById('price').value;
+    const sales = +document.getElementById('sales').value;
+
+    const { total, tiers } = calcRoyalty(price, sales);
+    const perBook = sales > 0 ? total / sales : 0;
+
+    document.getElementById('result-grid').innerHTML = `
+      <div class="result-card accent">
+        <div class="rc-label">2년간 인세 합계</div>
+        <div class="rc-val">${fmt(total)}</div>
+        <div class="rc-sub">누적 ${sales.toLocaleString()}부 판매 기준</div>
+      </div>
+      <div class="result-card">
+        <div class="rc-label">권당 평균 인세</div>
+        <div class="rc-val">${fmt(perBook)}</div>
+        <div class="rc-sub">정가 ${price.toLocaleString()}원 기준</div>
+      </div>
+      <div class="result-card blue">
+        <div class="rc-label">분기 평균 수령액</div>
+        <div class="rc-val">${fmt(total / 8)}</div>
+        <div class="rc-sub">8분기(2년) 균등 분할</div>
+      </div>
+      <div class="result-card">
+        <div class="rc-label">현재 인세율 구간</div>
+        <div class="rc-val" style="font-size:18px">${getCurrentRate(sales)}</div>
+        <div class="rc-sub">${getCurrentTierName(sales)}</div>
+      </div>
+    `;
+
+    let rows = `<tr><th>구간</th><th>인세율</th><th>해당 부수</th><th>인세액</th></tr>`;
+    tiers.forEach(t => {
+      rows += `<tr>
+        <td>${t.label}<span class="tier-badge ${t.active ? 'active-tier' : ''}">${t.active ? '현재' : ''}</span></td>
+        <td>${t.rate}</td>
+        <td>${t.qty.toLocaleString()}부</td>
+        <td>${fmt(t.amount)}</td>
+      </tr>`;
+    });
+    rows += `<tr class="total-row"><td colspan="3">합계</td><td>${fmt(total)}</td></tr>`;
+    document.getElementById('breakdown-table').innerHTML = rows;
+  }
+
+  // Sync slider → input
+  document.getElementById('price').addEventListener('input', function() {
+    document.getElementById('price-input').value = this.value;
+    render();
+  });
+  document.getElementById('sales').addEventListener('input', function() {
+    document.getElementById('sales-input').value = this.value;
+    render();
+  });
+
+  // Sync input → slider
+  document.getElementById('price-input').addEventListener('input', function() {
+    let v = clamp(Math.round(+this.value / 100) * 100, 8000, 40000);
+    document.getElementById('price').value = v;
+    render();
+  });
+  document.getElementById('sales-input').addEventListener('input', function() {
+    let v = clamp(Math.round(+this.value / 10) * 10, 0, 6000);
+    document.getElementById('sales').value = v;
+    render();
+  });
+
+  render();
+</script>
+</body>
+</html>
