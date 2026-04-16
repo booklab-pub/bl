@@ -1,0 +1,166 @@
+<!--
+=======================================================================
+  promt_dplaystd.php — 캡처 영역(매대 도서 홍보 섹션) 재현 + 수정본
+  -----------------------------------------------------------------------
+  [적용 방법] promt_dplaystd.php 에서 3곳만 수정:
+
+  1) pm_price dd 한 줄 → [교체 시작]~[교체 끝] 블록으로 통째 교체
+     찾을 원본:
+       <dd class="pm_price"><strong ...>건당 33만 원부터</strong> ...</dd>
+
+  2) 상단 JS 변수:
+       var iPrice = 330000;  →  var iPrice = 0;
+
+  3) 신청 처리 함수 맨 앞에 추가:
+       if (!iPrice) {
+           alert('카테고리를 먼저 선택해 주세요.');
+           document.getElementById('id_category_select').focus();
+           return;
+       }
+=======================================================================
+-->
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>캡처 영역 미리보기 — 교보문고 강남점 매대 광고</title>
+<style>
+body { font-family: '나눔고딕', 'Nanum Gothic', sans-serif; background: #f5f5f5; padding: 30px; }
+
+.section-title {
+  display: flex; align-items: center; gap: 10px;
+  font-size: 20px; font-weight: bold; margin-bottom: 16px; color: #222;
+}
+.section-title .dot {
+  width: 14px; height: 14px; border-radius: 50%; background: #D42931;
+  box-shadow: 0 0 0 2px #fff, 0 0 0 4px #D42931; flex-shrink: 0;
+}
+.card {
+  background: #fff; border: 1px solid #ddd;
+  padding: 20px 24px; max-width: 700px;
+}
+.row { display: flex; gap: 20px; }
+.thumb img {
+  width: 110px; background: #e0e0e0;
+  display: block;
+}
+.info { flex: 1; }
+.pm_name { font-size: 18px; font-weight: bold; color: #222; margin-bottom: 8px; }
+.divider { border: none; border-top: 1px solid #ddd; margin: 12px 0; }
+.bullets { font-size: 13px; color: #444; line-height: 1.9; }
+.bullets p::before { content: '• '; }
+.bullets p { margin: 0; }
+
+/* 카테고리 선택 UI */
+#id_category_price_wrap label {
+  font-size: 15px; font-weight: bold; color: #333;
+  display: block; margin-bottom: 8px;
+}
+#id_category_select {
+  width: 100%; max-width: 420px; height: 46px;
+  font-size: 16px; padding: 0 12px;
+  border: 2px solid #D42931; border-radius: 6px;
+  color: #222; background: #fff; cursor: pointer;
+  font-family: '나눔고딕', 'Nanum Gothic', sans-serif;
+  letter-spacing: -0.5px;
+}
+#id_price_display { margin-top: 10px; display: none; }
+#id_price_display .lbl  { font-size: 13px; color: #888; }
+#id_price_display .amt  { font-size: 22px; font-weight: bold; color: #D42931; }
+#id_price_display .unit { font-size: 18px; font-weight: bold; color: #D42931; }
+#id_price_display .note { margin-left: 8px; font-size: 12px; color: #999; }
+</style>
+</head>
+<body>
+
+<div class="section-title"><span class="dot"></span> 매대 도서 홍보</div>
+
+<div class="card">
+  <div class="row">
+    <div class="thumb">
+      <svg width="110" height="140" viewBox="0 0 110 140" xmlns="http://www.w3.org/2000/svg">
+        <!-- 책 배경 -->
+        <rect width="110" height="140" rx="4" fill="#f0f0f0"/>
+        <!-- 책 표지 -->
+        <rect x="18" y="16" width="74" height="100" rx="3" fill="#D42931"/>
+        <!-- 책등 -->
+        <rect x="18" y="16" width="10" height="100" rx="2" fill="#a81e25"/>
+        <!-- 제목 줄 -->
+        <rect x="32" y="34" width="46" height="5" rx="2" fill="#fff" opacity="0.9"/>
+        <rect x="32" y="44" width="36" height="4" rx="2" fill="#fff" opacity="0.6"/>
+        <!-- 구분선 -->
+        <rect x="32" y="58" width="46" height="1" fill="#fff" opacity="0.3"/>
+        <!-- 텍스트 줄들 -->
+        <rect x="32" y="66" width="40" height="3" rx="1" fill="#fff" opacity="0.5"/>
+        <rect x="32" y="74" width="44" height="3" rx="1" fill="#fff" opacity="0.5"/>
+        <rect x="32" y="82" width="38" height="3" rx="1" fill="#fff" opacity="0.5"/>
+        <!-- 저자 -->
+        <rect x="32" y="100" width="30" height="3" rx="1" fill="#fff" opacity="0.4"/>
+        <!-- 하단 텍스트 -->
+        <text x="55" y="130" text-anchor="middle" font-size="10" fill="#999" font-family="sans-serif">썸네일 이미지</text>
+      </svg>
+    </div>
+    <div class="info">
+      <div class="pm_name">교보문고 강남점 매대 광고</div>
+
+      <!-- ================================================= -->
+      <!-- [교체 시작]                                        -->
+      <!-- ================================================= -->
+      <div id="id_category_price_wrap">
+        <label for="id_category_select">📚 도서 카테고리를 선택해 주세요</label>
+        <select id="id_category_select" onchange="updatePriceByCategory(this.value)">
+          <option value="">-- 카테고리 선택 --</option>
+          <option value="330000">문학 (소설 / 시 / 에세이) — 33만 원</option>
+          <option value="440000">외국어 / 외국서적 — 44만 원</option>
+          <option value="550000">자연과학 / 기술 / 컴퓨터 / 건강 — 55만 원</option>
+          <option value="550000_2">예술 / 취미 / 스포츠 / 요리 / 여행 — 55만 원</option>
+          <option value="550000_3">초중고 학습 — 55만 원</option>
+          <option value="660000">인문 / 문화 / 역사 / 종교 — 66만 원</option>
+          <option value="660000_2">경제경영 / 자기계발 / 취업 / 정치사회 — 66만 원</option>
+        </select>
+        <div id="id_price_display">
+          <span class="lbl">선택하신 카테고리 광고비:</span><br>
+          <span id="id_price" class="amt"></span>
+          <span class="unit">원</span>
+          <span class="note">(부가세 포함)</span>
+        </div>
+      </div>
+      <!-- [교체 끝]                                          -->
+      <!-- ================================================= -->
+
+      <hr class="divider">
+      <div class="bullets">
+        <p>신청한 날짜가 속한 달의 다음 달 1일부터 말일까지 한달간 집행됩니다.</p>
+        <p>수요자가 많을 경우 선착순 또는 추첨을 통해 광고할 수 있는 상품입니다.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+var iPrice = 0;
+
+var iCategoryPrices = {
+  "330000":   { price: 330000 },
+  "440000":   { price: 440000 },
+  "550000":   { price: 550000 },
+  "550000_2": { price: 550000 },
+  "550000_3": { price: 550000 },
+  "660000":   { price: 660000 },
+  "660000_2": { price: 660000 }
+};
+
+function updatePriceByCategory(val) {
+  var display   = document.getElementById('id_price_display');
+  var priceSpan = document.getElementById('id_price');
+  if (!val) { display.style.display = 'none'; iPrice = 0; return; }
+  var info = iCategoryPrices[val];
+  if (info) {
+    iPrice = info.price;
+    priceSpan.textContent = info.price.toLocaleString();
+    display.style.display = 'block';
+  }
+}
+</script>
+</body>
+</html>
