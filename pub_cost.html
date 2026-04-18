@@ -1,0 +1,778 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>출판 비용 계산기</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;600&family=DM+Mono:wght@400;500&family=Pretendard:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #F7F5F0;
+    --surface: #FFFFFF;
+    --surface2: #F0EDE6;
+    --border: #DDD9D0;
+    --text-primary: #1A1814;
+    --text-secondary: #6B6660;
+    --text-muted: #9B9690;
+    --accent: #C8472A;
+    --accent-light: #FAF0ED;
+    --accent2: #2A5C8A;
+    --accent2-light: #EDF3F9;
+    --success: #2A7A4B;
+    --success-light: #EDF6F1;
+    --gold: #A07830;
+    --gold-light: #FAF5EC;
+  }
+
+  body {
+    font-family: 'Pretendard', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
+    background: var(--bg);
+    color: var(--text-primary);
+    min-height: 100vh;
+    padding: 2rem 1rem;
+  }
+
+  .page {
+    max-width: 720px;
+    margin: 0 auto;
+  }
+
+  /* Header */
+  .header {
+    margin-bottom: 2.5rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 1.5px solid var(--text-primary);
+  }
+  .header-eyebrow {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    color: var(--accent);
+    text-transform: uppercase;
+    margin-bottom: 0.5rem;
+  }
+  .header-title {
+    font-family: 'Noto Serif KR', serif;
+    font-size: 26px;
+    font-weight: 600;
+    line-height: 1.3;
+    margin-bottom: 0.4rem;
+  }
+  .header-sub {
+    font-size: 13px;
+    color: var(--text-secondary);
+    line-height: 1.6;
+  }
+
+  /* Input card */
+  .input-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.75rem;
+    margin-bottom: 1.5rem;
+  }
+  .input-card-title {
+    font-size: 12px;
+    font-family: 'DM Mono', monospace;
+    letter-spacing: 0.08em;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    margin-bottom: 1.25rem;
+  }
+
+  /* Radio group */
+  .radio-group {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin-bottom: 1.5rem;
+  }
+  .radio-btn {
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 14px;
+    cursor: pointer;
+    transition: all 0.15s;
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    background: var(--surface);
+  }
+  .radio-btn:hover { border-color: var(--text-secondary); }
+  .radio-btn.active {
+    background: var(--text-primary);
+    border-color: var(--text-primary);
+  }
+  .radio-btn input[type="radio"] { display: none; }
+  .radio-dot {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    border: 1.5px solid var(--border);
+    flex-shrink: 0;
+    margin-top: 1px;
+    transition: all 0.15s;
+    background: var(--surface);
+  }
+  .radio-btn.active .radio-dot {
+    border-color: #fff;
+    background: #fff;
+    box-shadow: inset 0 0 0 3px var(--text-primary);
+  }
+  .radio-text { font-size: 13px; color: var(--text-secondary); line-height: 1.4; }
+  .radio-btn.active .radio-text { color: #fff; }
+
+  .divider { height: 1px; background: var(--border); margin: 1.5rem 0; }
+
+  /* Form fields */
+  .field-row {
+    display: grid;
+    grid-template-columns: 140px 1fr;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 1rem;
+  }
+  .field-row:last-child { margin-bottom: 0; }
+  .field-label {
+    font-size: 13px;
+    color: var(--text-secondary);
+    line-height: 1.4;
+  }
+  .field-label small {
+    display: block;
+    font-size: 11px;
+    color: var(--text-muted);
+    margin-top: 2px;
+  }
+  .field-input-wrap {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .num-input {
+    font-family: 'DM Mono', monospace;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-primary);
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 7px 10px;
+    width: 120px;
+    text-align: right;
+    outline: none;
+    transition: border-color 0.15s;
+    -moz-appearance: textfield;
+  }
+  .num-input::-webkit-inner-spin-button,
+  .num-input::-webkit-outer-spin-button { -webkit-appearance: none; }
+  .num-input:focus { border-color: var(--text-primary); background: var(--surface); }
+  .field-unit { font-size: 12px; color: var(--text-muted); flex-shrink: 0; }
+
+  /* Select */
+  .styled-select {
+    font-family: 'Pretendard', 'Apple SD Gothic Neo', sans-serif;
+    font-size: 13px;
+    color: var(--text-primary);
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 7px 10px;
+    outline: none;
+    cursor: pointer;
+    transition: border-color 0.15s;
+    appearance: none;
+    -webkit-appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%239B9690'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+    padding-right: 28px;
+  }
+  .styled-select:focus { border-color: var(--text-primary); background-color: var(--surface); }
+
+  /* Checkbox */
+  .checkbox-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    padding: 10px 12px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--surface);
+    transition: all 0.15s;
+    margin-bottom: 1rem;
+  }
+  .checkbox-row:hover { border-color: var(--text-secondary); }
+  .checkbox-row.checked {
+    background: var(--surface2);
+    border-color: var(--text-primary);
+  }
+  .checkbox-row input[type="checkbox"] { display: none; }
+  .custom-checkbox {
+    width: 16px;
+    height: 16px;
+    border: 1.5px solid var(--border);
+    border-radius: 4px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s;
+    background: var(--surface);
+  }
+  .checkbox-row.checked .custom-checkbox {
+    background: var(--text-primary);
+    border-color: var(--text-primary);
+  }
+  .custom-checkbox svg { display: none; }
+  .checkbox-row.checked .custom-checkbox svg { display: block; }
+  .checkbox-text { font-size: 13px; color: var(--text-secondary); }
+  .checkbox-row.checked .checkbox-text { color: var(--text-primary); font-weight: 500; }
+
+  /* Info chip */
+  .info-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 11px;
+    font-family: 'DM Mono', monospace;
+    color: var(--text-muted);
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 3px 10px;
+    margin-bottom: 1rem;
+  }
+
+  /* Result cards */
+  .result-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 1.5rem;
+  }
+  .result-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 1.25rem;
+  }
+  .result-card.accent {
+    background: var(--accent-light);
+    border-color: #E8C4BB;
+  }
+  .result-card.blue {
+    background: var(--accent2-light);
+    border-color: #BDD0E5;
+  }
+  .result-card.gold {
+    background: var(--gold-light);
+    border-color: #E0CFA8;
+  }
+  .rc-label {
+    font-size: 11px;
+    color: var(--text-muted);
+    letter-spacing: 0.04em;
+    margin-bottom: 6px;
+  }
+  .rc-val {
+    font-family: 'DM Mono', monospace;
+    font-size: 22px;
+    font-weight: 500;
+    color: var(--text-primary);
+    line-height: 1.2;
+    margin-bottom: 4px;
+  }
+  .rc-sub { font-size: 11px; color: var(--text-secondary); }
+
+  /* Breakdown */
+  .breakdown-wrap {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+    margin-bottom: 1.5rem;
+  }
+  .breakdown-header {
+    padding: 1rem 1.25rem;
+    border-bottom: 1px solid var(--border);
+    font-size: 12px;
+    font-family: 'DM Mono', monospace;
+    letter-spacing: 0.08em;
+    color: var(--text-muted);
+    text-transform: uppercase;
+  }
+  .tier-row {
+    display: flex;
+    align-items: center;
+    padding: 12px 1.25rem;
+    border-bottom: 1px solid var(--border);
+    gap: 0;
+  }
+  .tier-row:last-child { border-bottom: none; }
+  .tier-row.total {
+    background: var(--surface2);
+    font-weight: 600;
+  }
+  .tier-left {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex: 1;
+    min-width: 0;
+  }
+  .tier-name {
+    font-size: 13px;
+    color: var(--text-secondary);
+    white-space: nowrap;
+  }
+  .tier-row.total .tier-name {
+    font-size: 14px;
+    color: var(--text-primary);
+    font-weight: 600;
+  }
+  .tier-detail {
+    font-size: 12px;
+    color: var(--text-muted);
+    white-space: nowrap;
+    margin-left: 12px;
+    flex-shrink: 0;
+  }
+  .tier-amount {
+    font-family: 'DM Mono', monospace;
+    font-size: 13px;
+    color: var(--text-primary);
+    white-space: nowrap;
+    flex-shrink: 0;
+    width: 130px;
+    text-align: right;
+    margin-left: 16px;
+  }
+  .tier-row.total .tier-amount {
+    font-size: 14px;
+    color: var(--accent);
+    font-weight: 600;
+  }
+
+  /* Copy button */
+  .copy-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 16px;
+    font-size: 13px;
+    font-family: inherit;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all 0.15s;
+    width: 100%;
+    justify-content: center;
+    margin-bottom: 1.5rem;
+  }
+  .copy-btn:hover {
+    border-color: var(--text-primary);
+    color: var(--text-primary);
+  }
+  .copy-btn svg { flex-shrink: 0; }
+
+  .footer-note {
+    font-size: 11px;
+    color: var(--text-muted);
+    line-height: 1.7;
+    text-align: center;
+    padding-top: 1rem;
+    border-top: 1px solid var(--border);
+  }
+
+  /* Empty state */
+  .empty-state {
+    text-align: center;
+    padding: 3rem 1.25rem;
+    color: var(--text-muted);
+    font-size: 13px;
+    line-height: 1.7;
+  }
+
+  @media (max-width: 540px) {
+    body { padding: 1.5rem 0.75rem; }
+    .radio-group { grid-template-columns: 1fr; }
+    .result-grid { grid-template-columns: 1fr; }
+    .rc-val { font-size: 18px; }
+    .field-row { grid-template-columns: 120px 1fr; }
+    .tier-detail { display: none; }
+    .tier-amount { width: 100px; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <div class="header">
+    <div class="header-eyebrow">Booklab · 비용 계산</div>
+    <div class="header-title">출판 비용 셀프 계산기</div>
+    <div class="header-sub">패키지·페이지 수·옵션 선택으로 예상 출판 비용을 즉시 확인하세요</div>
+  </div>
+
+  <!-- Step 1: 원고 유형 -->
+  <div class="input-card">
+    <div class="input-card-title">Step 01 &nbsp;·&nbsp; 원고 유형</div>
+    <div class="radio-group" id="manuscript-group">
+      <label class="radio-btn" onclick="selectManuscript(this,'text_only','bw_premium')">
+        <input type="radio" name="manuscriptType" value="text_only">
+        <div class="radio-dot"></div>
+        <div class="radio-text">텍스트만 있는 원고</div>
+      </label>
+      <label class="radio-btn" onclick="selectManuscript(this,'with_images','bw_wow')">
+        <input type="radio" name="manuscriptType" value="with_images">
+        <div class="radio-dot"></div>
+        <div class="radio-text">사진·도표가 있는 원고</div>
+      </label>
+      <label class="radio-btn" onclick="selectManuscript(this,'poetry','bw_basic')">
+        <input type="radio" name="manuscriptType" value="poetry">
+        <div class="radio-dot"></div>
+        <div class="radio-text">시집</div>
+      </label>
+      <label class="radio-btn" onclick="selectManuscript(this,'edu','edu_bw')">
+        <input type="radio" name="manuscriptType" value="edu">
+        <div class="radio-dot"></div>
+        <div class="radio-text">교재 출판<br><small style="font-size:11px;opacity:0.75">46배판 이상</small></div>
+      </label>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- Step 2: 패키지 -->
+    <div class="input-card-title">Step 02 &nbsp;·&nbsp; 기준 패키지</div>
+    <div class="field-row" style="margin-bottom:1.25rem">
+      <div class="field-label">패키지</div>
+      <div class="field-input-wrap">
+        <select class="styled-select" id="package" onchange="calculate()">
+          <option value="">-- 선택하세요 --</option>
+          <option value="bw_premium">베스트셀러 프리미엄</option>
+          <option value="bw_wow">베스트셀러 WOW</option>
+          <option value="bw_basic">베스트셀러 베이직</option>
+          <option value="edu_bw">교재 출판 (46배판 이상)</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- Step 3: 페이지 및 옵션 -->
+    <div class="input-card-title">Step 03 &nbsp;·&nbsp; 페이지 및 옵션</div>
+
+    <div class="field-row">
+      <div class="field-label">총 페이지 수</div>
+      <div class="field-input-wrap">
+        <input class="num-input" type="number" id="totalPages" value="0" min="0" oninput="calculate()">
+        <span class="field-unit">쪽</span>
+        <span class="info-chip" id="bwBase-chip" style="margin:0">기준 <span id="bwBase">-</span></span>
+      </div>
+    </div>
+
+    <div class="field-row">
+      <div class="field-label">컬러 페이지 수</div>
+      <div class="field-input-wrap">
+        <input class="num-input" type="number" id="colorPages" value="0" min="0" oninput="calculate()">
+        <span class="field-unit">쪽</span>
+      </div>
+    </div>
+
+    <div class="field-row">
+      <div class="field-label">표지 에폭시</div>
+      <div class="field-input-wrap">
+        <select class="styled-select" id="epoxyOption" onchange="calculate()">
+          <option value="no">아니오</option>
+          <option value="yes">예 (+500,000원)</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="field-row" style="margin-bottom:1.25rem">
+      <div class="field-label">증정본<small>기본 40부 포함</small></div>
+      <div class="field-input-wrap">
+        <input class="num-input" type="number" id="giftCopies" value="40" min="40" oninput="calculate()">
+        <span class="field-unit">부</span>
+      </div>
+    </div>
+
+    <label class="checkbox-row" id="workFee-row" onclick="toggleWorkFee()">
+      <input type="checkbox" id="workFee">
+      <div class="custom-checkbox">
+        <svg width="10" height="8" viewBox="0 0 10 8" fill="none">
+          <path d="M1 4L3.5 6.5L9 1" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+      <span class="checkbox-text">작업비 200,000원 추가</span>
+    </label>
+
+  </div>
+
+  <!-- Results -->
+  <div id="result-section">
+    <div class="breakdown-wrap">
+      <div class="empty-state">
+        원고 유형과 패키지를 선택하면<br>예상 비용이 표시됩니다
+      </div>
+    </div>
+  </div>
+
+  <button class="copy-btn" onclick="copyCurrentUrl()">
+    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5">
+      <rect x="1" y="4" width="8" height="9" rx="1.5"/>
+      <path d="M4 4V2.5A1.5 1.5 0 015.5 1h7A1.5 1.5 0 0114 2.5v7A1.5 1.5 0 0112.5 11H11" stroke-linecap="round"/>
+    </svg>
+    이 계산기 URL 복사
+  </button>
+
+  <div class="footer-note">
+    본 계산기는 북랩 출판 패키지 기준으로 작성되었습니다.<br>
+    실제 비용은 계약 조건에 따라 달라질 수 있습니다.
+  </div>
+
+</div>
+
+<script>
+const allPackages = {
+  "bw_basic":   { name: "베스트셀러 베이직",       basePrice: 1500000, basePages: 150, bwRate: 5000, colorRate: 10000 },
+  "bw_premium": { name: "베스트셀러 프리미엄",     basePrice: 1800000, basePages: 200, bwRate: 5000, colorRate: 10000 },
+  "bw_wow":     { name: "베스트셀러 WOW",          basePrice: 2000000, basePages: 200, bwRate: 5000, colorRate: 10000 },
+  "edu_bw":     { name: "교재 출판 (46배판 이상)", basePrice: 2680000, basePages: 200, bwRate: 7000, colorRate: 10000 }
+};
+
+const GIFT_COPIES_BASE = 40;
+const WORK_FEE_AMOUNT = 200000;
+
+function fmt(n) {
+  return Math.round(n).toLocaleString('ko-KR') + '원';
+}
+
+function selectManuscript(el, type, pkg) {
+  document.querySelectorAll('#manuscript-group .radio-btn').forEach(b => b.classList.remove('active'));
+  el.classList.add('active');
+  el.querySelector('input[type=radio]').checked = true;
+  document.getElementById('package').value = pkg;
+  calculate();
+}
+
+function toggleWorkFee() {
+  const cb = document.getElementById('workFee');
+  cb.checked = !cb.checked;
+  const row = document.getElementById('workFee-row');
+  row.classList.toggle('checked', cb.checked);
+  calculate();
+}
+
+function getManuscriptType() {
+  const radioButtons = document.getElementsByName('manuscriptType');
+  for (const r of radioButtons) { if (r.checked) return r.value; }
+  const sel = document.getElementById('package').value;
+  if (sel === 'bw_basic') return 'poetry';
+  if (sel === 'bw_premium') return 'text_only';
+  if (sel === 'bw_wow') return 'with_images';
+  if (sel === 'edu_bw') return 'edu';
+  return '';
+}
+
+function getGiftRateByColorPages(cp) {
+  cp = Math.max(0, parseInt(cp, 10) || 0);
+  if (cp <= 0) return 5000;
+  return 5000 + (Math.ceil(cp / 20) * 500);
+}
+
+function calculate() {
+  const selected = document.getElementById('package').value;
+  const totalPages = parseInt(document.getElementById('totalPages').value) || 0;
+  const colorPages = parseInt(document.getElementById('colorPages').value) || 0;
+  const epoxy = document.getElementById('epoxyOption').value;
+  const workFeeChecked = document.getElementById('workFee').checked;
+  const giftCopies = parseInt(document.getElementById('giftCopies').value) || GIFT_COPIES_BASE;
+  const manuscriptType = getManuscriptType();
+
+  if (!selected) {
+    document.getElementById('result-section').innerHTML = `
+      <div class="breakdown-wrap">
+        <div class="empty-state">원고 유형과 패키지를 선택하면<br>예상 비용이 표시됩니다</div>
+      </div>`;
+    return;
+  }
+
+  const pkg = allPackages[selected];
+  const extraPages = Math.max(0, totalPages - pkg.basePages);
+  const bwExtraCost = extraPages * pkg.bwRate;
+  const colorExtraCost = colorPages * pkg.colorRate;
+  const epoxyCost = epoxy === 'yes' ? 500000 : 0;
+  const workFeeCost = workFeeChecked ? WORK_FEE_AMOUNT : 0;
+
+  const extraCopies = Math.max(0, giftCopies - GIFT_COPIES_BASE);
+  let giftRate = 0;
+  if (extraCopies > 0) {
+    if (manuscriptType === 'poetry') giftRate = 4000;
+    else if (manuscriptType === 'edu') giftRate = Math.max(6000, getGiftRateByColorPages(colorPages));
+    else giftRate = getGiftRateByColorPages(colorPages);
+  }
+  const giftCopiesCost = extraCopies * giftRate;
+
+  const total = pkg.basePrice + bwExtraCost + colorExtraCost + epoxyCost + workFeeCost + giftCopiesCost;
+
+  // Update base pages chip
+  document.getElementById('bwBase').textContent = `${pkg.basePages}쪽 포함`;
+
+  // Build breakdown rows
+  const rows = [];
+  rows.push({ name: '기본 출판비', detail: `${pkg.name}`, amount: pkg.basePrice });
+  if (extraPages > 0)
+    rows.push({ name: '추가 페이지', detail: `흑백 ${extraPages}쪽 × ${pkg.bwRate.toLocaleString()}원`, amount: bwExtraCost });
+  if (colorPages > 0)
+    rows.push({ name: '컬러 페이지', detail: `${colorPages}쪽 × ${pkg.colorRate.toLocaleString()}원`, amount: colorExtraCost });
+  if (epoxyCost > 0)
+    rows.push({ name: '표지 에폭시', detail: '표지 코팅 옵션', amount: epoxyCost });
+  if (workFeeCost > 0)
+    rows.push({ name: '작업비', detail: '선택 추가 항목', amount: workFeeCost });
+  if (giftCopiesCost > 0)
+    rows.push({ name: '증정본 추가', detail: `초과 ${extraCopies}부 × ${giftRate.toLocaleString()}원`, amount: giftCopiesCost });
+
+  let rowsHTML = rows.map(r => `
+    <div class="tier-row">
+      <div class="tier-left">
+        <span class="tier-name">${r.name}</span>
+      </div>
+      <span class="tier-detail">${r.detail}</span>
+      <div class="tier-amount">${fmt(r.amount)}</div>
+    </div>`).join('');
+
+  rowsHTML += `<div class="tier-row total">
+    <div class="tier-left"><span class="tier-name">합계</span></div>
+    <span class="tier-detail"></span>
+    <div class="tier-amount">${fmt(total)}</div>
+  </div>`;
+
+  // Result cards
+  const addOns = total - pkg.basePrice;
+  const vatEstimate = total * 0.1;
+
+  document.getElementById('result-section').innerHTML = `
+    <div class="result-grid">
+      <div class="result-card accent">
+        <div class="rc-label">총 예상 출판 비용</div>
+        <div class="rc-val">${fmt(total)}</div>
+        <div class="rc-sub">${pkg.name} 기준</div>
+      </div>
+      <div class="result-card">
+        <div class="rc-label">기본 출판비</div>
+        <div class="rc-val">${fmt(pkg.basePrice)}</div>
+        <div class="rc-sub">기준 ${pkg.basePages}쪽 포함</div>
+      </div>
+      <div class="result-card blue">
+        <div class="rc-label">추가 옵션 합계</div>
+        <div class="rc-val">${fmt(addOns)}</div>
+        <div class="rc-sub">페이지·에폭시·증정본 등</div>
+      </div>
+      <div class="result-card gold">
+        <div class="rc-label">부가세 예상 (10%)</div>
+        <div class="rc-val">${fmt(vatEstimate)}</div>
+        <div class="rc-sub">총액 기준 참고값</div>
+      </div>
+    </div>
+    <div class="breakdown-wrap">
+      <div class="breakdown-header">비용 상세 내역</div>
+      ${rowsHTML}
+    </div>`;
+}
+
+// ── URL 파라미터 ──────────────────────────────────────
+function getCurrentUrlParams() {
+  const manuscriptType = getManuscriptType();
+  const params = new URLSearchParams();
+  if (manuscriptType) params.set('type', manuscriptType);
+  const pkg = document.getElementById('package').value;
+  if (pkg) params.set('package', pkg);
+  const tp = document.getElementById('totalPages').value;
+  if (tp && tp !== '0') params.set('total_pages', tp);
+  const cp = document.getElementById('colorPages').value;
+  if (cp && cp !== '0') params.set('color_pages', cp);
+  if (document.getElementById('epoxyOption').value === 'yes') params.set('epoxy', 'yes');
+  if (document.getElementById('workFee').checked) params.set('work_fee', '1');
+  const gc = document.getElementById('giftCopies').value;
+  if (gc && gc !== String(GIFT_COPIES_BASE)) params.set('free_copies', gc);
+  const base = window.location.origin + window.location.pathname;
+  const qs = params.toString();
+  return base + (qs ? '?' + qs : '');
+}
+
+function copyCurrentUrl() {
+  const url = getCurrentUrlParams();
+  if (navigator.clipboard && window.isSecureContext) {
+    navigator.clipboard.writeText(url).then(() => alert('✅ URL이 클립보드에 복사되었습니다:\n' + url))
+      .catch(() => copyFallback(url));
+  } else {
+    copyFallback(url);
+  }
+}
+
+function copyFallback(text) {
+  const ta = document.createElement('textarea');
+  ta.value = text;
+  ta.style.cssText = 'position:fixed;top:-9999px;left:-9999px';
+  document.body.appendChild(ta);
+  ta.focus(); ta.select();
+  try {
+    if (document.execCommand('copy')) alert('✅ URL이 클립보드에 복사되었습니다:\n' + text);
+    else throw new Error();
+  } catch {
+    alert('❌ 복사에 실패했습니다. 아래 주소를 직접 복사하세요:\n' + text);
+  }
+  document.body.removeChild(ta);
+}
+
+function initFromUrlParams() {
+  const params = new URLSearchParams(window.location.search);
+  let shouldCalc = false;
+
+  const type = params.get('type');
+  if (type) {
+    const radio = document.querySelector(`input[name="manuscriptType"][value="${type}"]`);
+    if (radio) {
+      const label = radio.closest('.radio-btn');
+      document.querySelectorAll('#manuscript-group .radio-btn').forEach(b => b.classList.remove('active'));
+      label.classList.add('active');
+      radio.checked = true;
+      shouldCalc = true;
+    }
+  }
+
+  const pkg = params.get('package');
+  if (pkg) { document.getElementById('package').value = pkg; shouldCalc = true; }
+
+  const tp = params.get('total_pages');
+  if (tp) { document.getElementById('totalPages').value = tp; shouldCalc = true; }
+
+  const cp = params.get('color_pages');
+  if (cp) { document.getElementById('colorPages').value = cp; shouldCalc = true; }
+
+  if (params.get('epoxy') === 'yes') { document.getElementById('epoxyOption').value = 'yes'; shouldCalc = true; }
+
+  if (params.get('work_fee') === '1') {
+    const cb = document.getElementById('workFee');
+    cb.checked = true;
+    document.getElementById('workFee-row').classList.add('checked');
+    shouldCalc = true;
+  }
+
+  const fc = params.get('free_copies');
+  if (fc) { document.getElementById('giftCopies').value = fc; shouldCalc = true; }
+
+  if (shouldCalc) calculate();
+}
+
+window.onload = initFromUrlParams;
+</script>
+</body>
+</html>
