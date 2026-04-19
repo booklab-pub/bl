@@ -1,0 +1,582 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>판권 면 추출기</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.2.67/pdf.min.mjs" type="module"></script>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Pretendard', 'Apple SD Gothic Neo', sans-serif; background: #f5f4f0; color: #1a1a1a; min-height: 100vh; }
+
+  .header {
+    background: #1a1a1a; color: #fff; padding: 20px 32px;
+    display: flex; align-items: center; gap: 16px;
+  }
+  .header h1 { font-size: 18px; font-weight: 500; letter-spacing: -0.3px; }
+  .header .sub { font-size: 13px; color: #888; margin-top: 2px; }
+
+  .main { max-width: 1100px; margin: 0 auto; padding: 32px 24px; display: grid; grid-template-columns: 340px 1fr; gap: 24px; }
+
+  .panel { background: #fff; border-radius: 12px; border: 0.5px solid #e0ddd6; overflow: hidden; }
+  .panel-header { padding: 16px 20px; border-bottom: 0.5px solid #e8e6e0; font-size: 13px; font-weight: 500; color: #555; letter-spacing: 0.2px; text-transform: uppercase; }
+
+  /* 업로드 영역 */
+  .drop-zone {
+    margin: 20px; border: 1.5px dashed #d0cdc5; border-radius: 10px;
+    padding: 40px 20px; text-align: center; cursor: pointer; transition: all .15s;
+  }
+  .drop-zone:hover, .drop-zone.drag-over { border-color: #888; background: #f9f8f5; }
+  .drop-zone .icon { font-size: 32px; margin-bottom: 12px; }
+  .drop-zone p { font-size: 14px; color: #666; line-height: 1.6; }
+  .drop-zone p strong { color: #1a1a1a; }
+  #file-input { display: none; }
+
+  /* 설정 */
+  .settings { padding: 0 20px 20px; }
+  .setting-row { display: flex; align-items: center; justify-content: space-between; padding: 12px 0; border-bottom: 0.5px solid #f0ede8; }
+  .setting-row:last-child { border-bottom: none; }
+  .setting-label { font-size: 13px; color: #444; }
+  .setting-label small { display: block; font-size: 11px; color: #999; margin-top: 2px; }
+  .setting-row select, .setting-row input[type=number] {
+    font-size: 13px; border: 0.5px solid #d0cdc5; border-radius: 6px;
+    padding: 5px 8px; background: #faf9f7; color: #1a1a1a; width: 100px;
+  }
+  .setting-row input[type=range] { width: 100px; accent-color: #1a1a1a; }
+
+  /* 후보 목록 */
+  .candidates { padding: 12px 20px 20px; }
+  .cand-item {
+    display: flex; align-items: center; gap: 10px; padding: 8px 10px;
+    border-radius: 8px; cursor: pointer; transition: background .1s; margin-bottom: 4px;
+  }
+  .cand-item:hover { background: #f5f4f0; }
+  .cand-item.active { background: #1a1a1a; color: #fff; }
+  .cand-num { font-size: 12px; font-weight: 500; min-width: 24px; }
+  .cand-info { flex: 1; font-size: 13px; }
+  .cand-score { font-size: 11px; opacity: .6; }
+
+  /* 미리보기 */
+  .preview-area { padding: 20px; min-height: 500px; display: flex; flex-direction: column; }
+  .preview-wrap {
+    flex: 1; display: flex; align-items: center; justify-content: center;
+    background: #e8e6e0; border-radius: 8px; overflow: hidden; position: relative; min-height: 400px;
+  }
+  #preview-canvas { max-width: 100%; max-height: 600px; display: block; border-radius: 4px; }
+  .preview-placeholder { text-align: center; color: #999; font-size: 14px; }
+  .preview-placeholder .big { font-size: 48px; margin-bottom: 12px; }
+
+  /* 상태 표시 */
+  .status-bar {
+    display: flex; align-items: center; gap: 8px; padding: 10px 20px;
+    background: #f5f4f0; border-top: 0.5px solid #e0ddd6; font-size: 13px; color: #666;
+    min-height: 42px;
+  }
+  .status-bar .dot { width: 8px; height: 8px; border-radius: 50%; background: #ccc; flex-shrink: 0; }
+  .status-bar.processing .dot { background: #f0a020; animation: pulse .8s infinite; }
+  .status-bar.done .dot { background: #3a9a5c; }
+  .status-bar.error .dot { background: #c0392b; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.3} }
+
+  /* 다운로드 버튼들 */
+  .download-bar { padding: 16px 20px; border-top: 0.5px solid #e0ddd6; display: flex; gap: 10px; flex-wrap: wrap; }
+  .btn {
+    padding: 9px 18px; border-radius: 8px; font-size: 13px; font-weight: 500; cursor: pointer;
+    border: 0.5px solid #d0cdc5; background: #fff; color: #1a1a1a; transition: all .12s;
+  }
+  .btn:hover { background: #f5f4f0; }
+  .btn.primary { background: #1a1a1a; color: #fff; border-color: #1a1a1a; }
+  .btn.primary:hover { background: #333; }
+  .btn:disabled { opacity: .4; cursor: not-allowed; }
+  .btn-size { font-size: 11px; display: block; opacity: .6; font-weight: 400; margin-top: 2px; }
+
+  /* 진행 표시 */
+  .progress-wrap { padding: 0 20px 16px; display: none; }
+  .progress-bar { height: 3px; background: #e8e6e0; border-radius: 99px; overflow: hidden; }
+  .progress-fill { height: 100%; background: #1a1a1a; border-radius: 99px; transition: width .3s; width: 0%; }
+
+  /* 반응형 */
+  @media (max-width: 768px) {
+    .main { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div>
+    <h1>판권 면 추출기</h1>
+    <div class="sub">PDF에서 판권 면을 자동으로 찾아 이미지로 추출합니다</div>
+  </div>
+</div>
+
+<div class="main">
+  <!-- 왼쪽: 설정 패널 -->
+  <div>
+    <div class="panel" style="margin-bottom:20px;">
+      <div class="panel-header">PDF 업로드</div>
+      <div class="drop-zone" id="drop-zone" onclick="document.getElementById('file-input').click()">
+        <div class="icon">📄</div>
+        <p><strong>PDF 파일을 드래그하거나 클릭</strong><br>하여 업로드하세요</p>
+      </div>
+      <input type="file" id="file-input" accept=".pdf">
+    </div>
+
+    <div class="panel" style="margin-bottom:20px;">
+      <div class="panel-header">추출 설정</div>
+      <div class="settings">
+        <div class="setting-row">
+          <div class="setting-label">출력 해상도
+            <small>높을수록 고화질, 파일 큼</small>
+          </div>
+          <select id="dpi-select">
+            <option value="150">150 dpi</option>
+            <option value="200">200 dpi</option>
+            <option value="300" selected>300 dpi</option>
+            <option value="400">400 dpi</option>
+          </select>
+        </div>
+        <div class="setting-row">
+          <div class="setting-label">출력 형식</div>
+          <select id="format-select">
+            <option value="image/jpeg">JPG</option>
+            <option value="image/png">PNG</option>
+          </select>
+        </div>
+        <div class="setting-row">
+          <div class="setting-label">JPG 품질
+            <small>JPG 선택 시 적용</small>
+          </div>
+          <div style="display:flex;align-items:center;gap:6px;">
+            <input type="range" id="quality-slider" min="60" max="100" value="92" step="1">
+            <span id="quality-val" style="font-size:13px;min-width:32px;">92%</span>
+          </div>
+        </div>
+        <div class="setting-row">
+          <div class="setting-label">검색 범위
+            <small>뒤에서 몇 페이지 검색</small>
+          </div>
+          <select id="search-range">
+            <option value="10">10페이지</option>
+            <option value="20" selected>20페이지</option>
+            <option value="30">30페이지</option>
+            <option value="50">50페이지</option>
+          </select>
+        </div>
+        <div class="setting-row">
+          <div class="setting-label">파일명</div>
+          <input type="text" id="filename-input" placeholder="판권면" style="width:120px;font-size:13px;border:0.5px solid #d0cdc5;border-radius:6px;padding:5px 8px;background:#faf9f7;">
+        </div>
+      </div>
+    </div>
+
+    <div class="panel" id="candidates-panel" style="display:none;">
+      <div class="panel-header">후보 페이지</div>
+      <div class="candidates" id="candidates-list"></div>
+    </div>
+  </div>
+
+  <!-- 오른쪽: 미리보기 -->
+  <div class="panel">
+    <div class="panel-header" id="preview-title">미리보기</div>
+
+    <div class="progress-wrap" id="progress-wrap">
+      <div class="progress-bar"><div class="progress-fill" id="progress-fill"></div></div>
+    </div>
+
+    <div class="preview-area">
+      <div class="preview-wrap" id="preview-wrap">
+        <div class="preview-placeholder">
+          <div class="big">📋</div>
+          <p>PDF를 업로드하면<br>판권 면을 자동으로 찾습니다</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="status-bar" id="status-bar">
+      <div class="dot"></div>
+      <span id="status-text">PDF 파일을 업로드해 주세요</span>
+    </div>
+
+    <div class="download-bar" id="download-bar" style="display:none;">
+      <button class="btn primary" id="btn-download" disabled>다운로드</button>
+      <button class="btn" id="btn-prev-page">◀ 이전 페이지</button>
+      <button class="btn" id="btn-next-page">다음 페이지 ▶</button>
+      <span id="page-info" style="font-size:13px;color:#888;align-self:center;"></span>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+// PDF.js 설정
+const pdfjsLib = await import('https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.2.67/pdf.min.mjs');
+pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.2.67/pdf.worker.min.mjs';
+
+// ── 북랩 판권 면 감지 규칙 ──
+// 구조적 필수 항목 (모두 존재해야 판권 면으로 인정)
+const REQUIRED_FIELDS = ['발행일', '지은이', '펴낸이', '펴낸곳', '출판등록', 'ISBN'];
+// 보조 키워드 (있으면 가점)
+const BONUS_KEYWORDS = [
+  { kw: '(주)북랩',        score: 10 },
+  { kw: '북랩',            score:  5 },
+  { kw: 'book.co.kr',     score: 10 },
+  { kw: 'ask.book.co.kr', score: 10 },
+  { kw: '(종이책)',        score:  8 },
+  { kw: '(전자책)',        score:  8 },
+  { kw: '홈페이지',        score:  4 },
+  { kw: '전화번호',        score:  3 },
+  { kw: '저작권',          score:  4 },
+  { kw: '무단 전재',       score:  5 },
+  { kw: '무단전재',        score:  5 },
+  { kw: '작가 멘탈케어',   score:  8 },
+  { kw: '성공출판',        score:  8 },
+  { kw: '979-11-7598',    score:  8 },
+  { kw: '팩스',            score:  3 },
+];
+const ISBN_RE = /979-\d{2}-\d{4}-\d{3}-\d|978-\d{2}-\d{4}-\d{3}-\d/;
+
+let pdfDoc = null;
+let currentPage = 1;
+let candidates = [];
+let pdfFileName = '';
+
+// UI 요소
+const dropZone = document.getElementById('drop-zone');
+const fileInput = document.getElementById('file-input');
+const previewWrap = document.getElementById('preview-wrap');
+const statusBar = document.getElementById('status-bar');
+const statusText = document.getElementById('status-text');
+const downloadBar = document.getElementById('download-bar');
+const btnDownload = document.getElementById('btn-download');
+const candidatesPanel = document.getElementById('candidates-panel');
+const candidatesList = document.getElementById('candidates-list');
+const progressWrap = document.getElementById('progress-wrap');
+const progressFill = document.getElementById('progress-fill');
+const previewTitle = document.getElementById('preview-title');
+const pageInfo = document.getElementById('page-info');
+const qualitySlider = document.getElementById('quality-slider');
+const qualityVal = document.getElementById('quality-val');
+
+qualitySlider.addEventListener('input', () => {
+  qualityVal.textContent = qualitySlider.value + '%';
+});
+
+// 드래그 앤 드롭
+dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('drag-over'); });
+dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
+dropZone.addEventListener('drop', e => {
+  e.preventDefault();
+  dropZone.classList.remove('drag-over');
+  const file = e.dataTransfer.files[0];
+  if (file && file.type === 'application/pdf') loadPDF(file);
+});
+fileInput.addEventListener('change', e => {
+  if (e.target.files[0]) loadPDF(e.target.files[0]);
+});
+
+document.getElementById('btn-prev-page').addEventListener('click', () => {
+  if (currentPage > 1) { currentPage--; renderPage(currentPage); }
+});
+document.getElementById('btn-next-page').addEventListener('click', () => {
+  if (pdfDoc && currentPage < pdfDoc.numPages) { currentPage++; renderPage(currentPage); }
+});
+
+function setStatus(msg, state='') {
+  statusText.textContent = msg;
+  statusBar.className = 'status-bar' + (state ? ' ' + state : '');
+}
+
+function setProgress(pct) {
+  progressWrap.style.display = 'block';
+  progressFill.style.width = pct + '%';
+  if (pct >= 100) setTimeout(() => { progressWrap.style.display = 'none'; }, 400);
+}
+
+async function scorePage(pageObj) {
+  const content = await pageObj.getTextContent();
+  const items = content.items;
+
+  // ── 텍스트 추출: str이 비어있는 PDF를 위해 hasEOL 기반으로 재조합 ──
+  let text = '';
+  for (const item of items) {
+    if (item.str) text += item.str;
+    if (item.hasEOL) text += '\n';
+    else text += ' ';
+  }
+  text = text.trim();
+
+  // str이 전부 빈 경우 대비: transform 기반 텍스트 재추출 시도
+  const nonEmpty = items.filter(i => i.str && i.str.trim());
+  if (nonEmpty.length === 0) return { score: 0, lines: 0, preview: '' };
+
+  let score = 0;
+
+  // ── 1. 필수 항목 체크 (하나라도 없으면 0점 반환) ──
+  for (const field of REQUIRED_FIELDS) {
+    if (!text.includes(field)) return { score: 0, lines: 0, preview: text.slice(0, 80) };
+  }
+  // 필수 항목 모두 존재 → 기본 점수 부여
+  score += REQUIRED_FIELDS.length * 5;
+
+  // ── 2. ISBN 패턴 검증 ──
+  if (ISBN_RE.test(text)) score += 10;
+
+  // ── 3. 보조 키워드 가점 ──
+  for (const { kw, score: s } of BONUS_KEYWORDS) {
+    if (text.includes(kw)) score += s;
+  }
+
+  // ── 4. 텍스트 위치 분포 분석 ──
+  // 판권 면 = 상단에 빈 공간(표지 이미지), 텍스트가 하단 절반에 집중
+  const pageHeight = pageObj.view[3];
+  let topCount = 0, bottomCount = 0;
+  for (const item of nonEmpty) {
+    const y = item.transform[5];  // PDF 좌표계: 아래=0, 위=max
+    if (y > pageHeight * 0.5) topCount++;
+    else bottomCount++;
+  }
+  const total = topCount + bottomCount;
+  if (total > 0) {
+    const bottomRatio = bottomCount / total;
+    if (bottomRatio >= 0.6) score += Math.round(bottomRatio * 15);
+  }
+
+  // ── 5. 텍스트 총량 체크 (판권 면은 본문보다 텍스트가 적음) ──
+  if (nonEmpty.length <= 80) score += 5;
+  else if (nonEmpty.length > 200) score -= 10;
+
+  const lines = text.split(/\n/).filter(l => l.trim()).length;
+  return { score, lines, preview: text.slice(0, 120) };
+}
+
+async function loadPDF(file) {
+  pdfFileName = file.name.replace(/\.pdf$/i, '');
+  document.getElementById('filename-input').placeholder = pdfFileName;
+
+  setStatus('PDF 불러오는 중...', 'processing');
+  setProgress(5);
+
+  try {
+    const buf = await file.arrayBuffer();
+    pdfDoc = await pdfjsLib.getDocument({ data: buf }).promise;
+    const total = pdfDoc.numPages;
+
+    setStatus(`총 ${total}페이지 — 판권 면 분석 중...`, 'processing');
+
+    const searchRange = parseInt(document.getElementById('search-range').value);
+    const backStart = Math.max(1, total - searchRange + 1);
+    // 앞 5페이지 + 뒤 searchRange페이지를 합쳐 검색 (판권은 앞/뒤 모두 가능)
+    const searchPages = new Set();
+    for (let i = 1; i <= Math.min(5, total); i++) searchPages.add(i);
+    for (let i = backStart; i <= total; i++) searchPages.add(i);
+    const pageList = Array.from(searchPages).sort((a,b) => a - b);
+    candidates = [];
+
+    for (let idx = 0; idx < pageList.length; idx++) {
+      const i = pageList[idx];
+      const pg = await pdfDoc.getPage(i);
+      const { score, lines, preview } = await scorePage(pg);
+      if (score > 0) candidates.push({ pageNum: i, score, lines, preview });
+      setProgress(5 + (idx / pageList.length) * 80);
+    }
+
+    candidates.sort((a, b) => b.score - a.score);
+
+    if (candidates.length === 0) {
+      setStatus('판권 면을 찾을 수 없습니다. 검색 범위를 늘려보세요.', 'error');
+      setProgress(100);
+      return;
+    }
+
+    // 후보 목록 표시
+    renderCandidates();
+    candidatesPanel.style.display = 'block';
+
+    // 최상위 후보 표시
+    currentPage = candidates[0].pageNum;
+    await renderPage(currentPage);
+    setProgress(100);
+    downloadBar.style.display = 'flex';
+    btnDownload.disabled = false;
+    setStatus(`판권 면 감지 완료 — ${candidates.length}개 후보 중 최적 페이지: ${currentPage}p`, 'done');
+
+  } catch (e) {
+    setStatus('오류: ' + e.message, 'error');
+    setProgress(100);
+    console.error(e);
+  }
+}
+
+function renderCandidates() {
+  candidatesList.innerHTML = '';
+  candidates.slice(0, 5).forEach((c, idx) => {
+    const el = document.createElement('div');
+    el.className = 'cand-item' + (idx === 0 ? ' active' : '');
+    el.innerHTML = `
+      <div class="cand-num">${idx + 1}위</div>
+      <div class="cand-info">
+        <span style="font-weight:500;">${c.pageNum}페이지</span>
+        <span class="cand-score"> · 점수 ${c.score} · ${c.lines}줄</span>
+      </div>`;
+    el.addEventListener('click', () => {
+      document.querySelectorAll('.cand-item').forEach(e => e.classList.remove('active'));
+      el.classList.add('active');
+      currentPage = c.pageNum;
+      renderPage(currentPage);
+    });
+    candidatesList.appendChild(el);
+  });
+}
+
+async function extractBookTitle(pageNum) {
+  // 판권 면에서 도서 제목을 추출
+  // 전략: 판권 면(좌측) 텍스트 아이템 중 가장 큰 폰트 크기 기준으로 제목 라인 수집
+  const page = await pdfDoc.getPage(pageNum);
+  const vp = page.getViewport({ scale: 1 });
+  const pw = vp.width, ph = vp.height;
+  const isSpread = pw > ph * 1.3;
+  const rightBound = isSpread ? pw / 2 : pw;
+
+  const content = await page.getTextContent();
+  const items = content.items.filter(i => i.str && i.str.trim());
+
+  // 판권 면(왼쪽) 아이템만
+  const leftItems = items.filter(i => i.transform[4] < rightBound);
+  if (leftItems.length === 0) return pdfFileName;
+
+  // 가장 큰 폰트 크기 찾기
+  const maxSize = Math.max(...leftItems.map(i => i.height || i.transform[0]));
+  // 최대 폰트의 70% 이상 크기인 아이템 = 제목 라인
+  const titleItems = leftItems.filter(i => (i.height || i.transform[0]) >= maxSize * 0.7);
+
+  if (titleItems.length === 0) return pdfFileName;
+
+  // y 좌표 기준 그룹핑 (같은 줄 = y 차이 5pt 이내)
+  titleItems.sort((a, b) => a.transform[5] - b.transform[5]);  // PDF y 오름차순 = 화면 역순
+  const lines = [];
+  let curLine = [titleItems[0]];
+  for (let i = 1; i < titleItems.length; i++) {
+    const dy = Math.abs(titleItems[i].transform[5] - titleItems[i-1].transform[5]);
+    if (dy < 5) {
+      curLine.push(titleItems[i]);
+    } else {
+      lines.push(curLine);
+      curLine = [titleItems[i]];
+    }
+  }
+  lines.push(curLine);
+
+  // 각 줄을 x 순서로 정렬해 텍스트 합치기 (PDF y 내림차순 = 화면 위→아래)
+  lines.sort((a, b) => b[0].transform[5] - a[0].transform[5]);
+  const titleText = lines.map(line => {
+    line.sort((a, b) => a.transform[4] - b.transform[4]);
+    return line.map(i => i.str).join('');
+  }).join(' ');
+
+  // 파일명으로 사용 불가한 문자 제거
+  return titleText.replace(/[\\/:*?"<>|]/g, ' ').replace(/\s+/g, ' ').trim() || pdfFileName;
+}
+
+async function getCropRect(page) {
+  // 스프레드(2페이지 합본)이면 판권 면(왼쪽 절반)만 추출, 단면이면 전체
+  // 상단 여백 제거 없이 판권 면 전체를 그대로 사용
+  const vp = page.getViewport({ scale: 1 });
+  const pw = vp.width, ph = vp.height;
+
+  const isSpread = pw > ph * 1.3;
+  const rightBound = isSpread ? pw / 2 : pw;
+
+  return { cropTop: 0, rightBound, ph, isSpread };
+}
+
+async function renderPage(pageNum) {
+  if (!pdfDoc) return;
+  const dpi = parseInt(document.getElementById('dpi-select').value);
+  const scale = dpi / 72;
+
+  const page = await pdfDoc.getPage(pageNum);
+  const { cropTop, rightBound, ph, isSpread } = await getCropRect(page);
+
+  // 크롭 viewport 적용
+  const cropVp = page.getViewport({
+    scale,
+    offsetX: 0,
+    offsetY: -cropTop * scale,  // 상단 여백 제거
+  });
+
+  const drawW = Math.round(rightBound * scale);
+  const drawH = Math.round((ph - cropTop) * scale);
+
+  const canvas = document.createElement('canvas');
+  canvas.id = 'preview-canvas';
+  const ctx = canvas.getContext('2d');
+  canvas.width = drawW;
+  canvas.height = drawH;
+
+  // 크롭 클립 적용
+  ctx.save();
+  ctx.beginPath();
+  ctx.rect(0, 0, drawW, drawH);
+  ctx.clip();
+  await page.render({ canvasContext: ctx, viewport: cropVp }).promise;
+  ctx.restore();
+
+  previewWrap.innerHTML = '';
+  previewWrap.appendChild(canvas);
+
+  const isBest = candidates.length > 0 && candidates[0].pageNum === pageNum;
+  const spreadNote = isSpread ? ' (스프레드→판권만 표시)' : '';
+  previewTitle.textContent = `미리보기 — ${pageNum}페이지 / 전체 ${pdfDoc.numPages}페이지${isBest ? ' ★ 판권 면 추천' : ''}${spreadNote}`;
+  pageInfo.textContent = `${pageNum} / ${pdfDoc.numPages}`;
+}
+
+// 다운로드
+btnDownload.addEventListener('click', async () => {
+  if (!pdfDoc) return;
+  const dpi = parseInt(document.getElementById('dpi-select').value);
+  const scale = dpi / 72;
+  const format = document.getElementById('format-select').value;
+  const quality = parseInt(qualitySlider.value) / 100;
+  const ext = format === 'image/jpeg' ? 'jpg' : 'png';
+  const customName = document.getElementById('filename-input').value.trim();
+  const nameBase = (customName || await extractBookTitle(currentPage)) + '(3)';
+
+  btnDownload.disabled = true;
+  setStatus('이미지 생성 중...', 'processing');
+
+  const page = await pdfDoc.getPage(currentPage);
+  const { cropTop, rightBound, ph, isSpread } = await getCropRect(page);
+
+  const cropVp = page.getViewport({
+    scale,
+    offsetX: 0,
+    offsetY: -cropTop * scale,
+  });
+
+  const drawW = Math.round(rightBound * scale);
+  const drawH = Math.round((ph - cropTop) * scale);
+
+  const canvas = document.createElement('canvas');
+  canvas.width = drawW;
+  canvas.height = drawH;
+  const ctx = canvas.getContext('2d');
+  ctx.save();
+  ctx.beginPath();
+  ctx.rect(0, 0, drawW, drawH);
+  ctx.clip();
+  await page.render({ canvasContext: ctx, viewport: cropVp }).promise;
+  ctx.restore();
+
+  const dataUrl = canvas.toDataURL(format, quality);
+  const a = document.createElement('a');
+  a.href = dataUrl;
+  a.download = `${nameBase}.${ext}`;
+  a.click();
+
+  const kb = Math.round(dataUrl.length * 0.75 / 1024);
+  setStatus(`다운로드 완료 — ${drawW}×${drawH}px · 약 ${kb.toLocaleString()}KB`, 'done');
+  btnDownload.disabled = false;
+});
+</script>
+</body>
+</html>
