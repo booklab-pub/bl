@@ -1,0 +1,652 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>소요 시간 계산기</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&family=DM+Mono:wght@300;400;500&display=swap');
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #111113;
+    --surface: #1c1c1e;
+    --surface2: #2c2c2e;
+    --picker-bg: #252528;
+    --picker-highlight: #3a3a3c;
+    --text-primary: #ffffff;
+    --text-secondary: rgba(255,255,255,0.45);
+    --text-dim: rgba(255,255,255,0.18);
+    --accent: #f5a623;
+    --accent2: #ff6b35;
+    --radius: 20px;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text-primary);
+    font-family: 'Noto Sans KR', sans-serif;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px 16px;
+  }
+
+  /* subtle noise texture */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .container {
+    width: 100%;
+    max-width: 480px;
+    position: relative;
+    z-index: 1;
+  }
+
+  .app-title {
+    text-align: center;
+    font-size: 26px;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    color: var(--accent);
+    margin-bottom: 32px;
+  }
+
+  .pickers-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 24px;
+  }
+
+  .picker-card {
+    background: var(--surface);
+    border-radius: var(--radius);
+    padding: 16px 8px;
+    border: 1px solid rgba(255,255,255,0.06);
+    min-width: 0;
+  }
+
+  .picker-label {
+    font-size: 18px;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    color: var(--text-secondary);
+    margin-bottom: 14px;
+    text-align: center;
+  }
+
+  /* ── Drum Picker ── */
+  .drum-wrapper {
+    display: flex;
+    gap: 4px;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .drum-col {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    min-width: 0;
+  }
+
+  .drum-col-label {
+    font-size: 10px;
+    color: var(--text-dim);
+    margin-bottom: 2px;
+    letter-spacing: 0.08em;
+  }
+
+  .drum {
+    position: relative;
+    width: 52px;
+    height: 160px;
+    overflow: hidden;
+    border-radius: 14px;
+    background: var(--picker-bg);
+    cursor: ns-resize;
+    user-select: none;
+    -webkit-user-select: none;
+    touch-action: none;
+  }
+
+  .drum.ampm {
+    width: 38px;
+  }
+
+  /* fade top & bottom */
+  .drum::before,
+  .drum::after {
+    content: '';
+    position: absolute;
+    left: 0; right: 0;
+    height: 52px;
+    z-index: 3;
+    pointer-events: none;
+  }
+  .drum::before {
+    top: 0;
+    background: linear-gradient(to bottom, var(--picker-bg) 0%, transparent 100%);
+  }
+  .drum::after {
+    bottom: 0;
+    background: linear-gradient(to top, var(--picker-bg) 0%, transparent 100%);
+  }
+
+  /* selection highlight */
+  .drum-highlight {
+    position: absolute;
+    left: 4px; right: 4px;
+    top: 50%;
+    height: 40px;
+    transform: translateY(-50%);
+    background: var(--picker-highlight);
+    border-radius: 10px;
+    z-index: 0;
+    pointer-events: none;
+  }
+
+  .drum-track {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    transition: transform 0.08s ease;
+    will-change: transform;
+    z-index: 2;
+  }
+
+  .drum-item {
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'DM Mono', monospace;
+    font-size: 20px;
+    font-weight: 400;
+    color: var(--text-primary);
+    width: 100%;
+    flex-shrink: 0;
+    transition: opacity 0.1s, font-size 0.1s, color 0.1s;
+  }
+
+  .drum-item.selected {
+    color: var(--accent);
+    font-weight: 500;
+  }
+
+  .drum.ampm .drum-item {
+    font-family: 'Noto Sans KR', sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+  }
+
+  .drum.ampm .drum-item.selected {
+    font-weight: 700;
+  }
+
+  /* ── Result Card ── */
+  .result-card {
+    background: var(--surface);
+    border-radius: var(--radius);
+    padding: 28px 24px;
+    border: 1px solid rgba(255,255,255,0.06);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .result-label {
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--text-secondary);
+  }
+
+  .result-value {
+    font-family: 'DM Mono', monospace;
+    font-size: 44px;
+    font-weight: 300;
+    color: var(--text-primary);
+    letter-spacing: -0.02em;
+    line-height: 1;
+  }
+
+  .result-value span.accent {
+    color: var(--accent);
+  }
+
+  .result-sub {
+    font-size: 13px;
+    color: var(--text-secondary);
+    margin-top: 4px;
+  }
+
+  .result-sub strong {
+    color: var(--text-primary);
+    font-weight: 500;
+  }
+
+  /* negative duration warning */
+  .result-warn {
+    font-size: 12px;
+    color: #ff6b6b;
+    margin-top: 2px;
+    display: none;
+  }
+
+  /* 아이폰 12 미니 (375px) 이하: 세로 레이아웃으로 전환 */
+  @media (max-width: 400px) {
+    .pickers-row {
+      grid-template-columns: 1fr;
+      gap: 12px;
+    }
+    .picker-card {
+      padding: 16px 12px;
+    }
+    .drum { width: 56px; height: 150px; }
+    .drum.ampm { width: 42px; }
+    .drum-item { font-size: 20px; height: 40px; }
+    .drum-highlight { height: 40px; }
+    .drum-wrapper { gap: 8px; }
+    .result-value { font-size: 40px; }
+  }
+
+  @media (max-width: 320px) {
+    .drum { width: 48px; height: 130px; }
+    .drum.ampm { width: 36px; }
+    .drum-item { font-size: 17px; height: 35px; }
+    .drum-highlight { height: 35px; }
+    .result-value { font-size: 32px; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <p class="app-title">소요 시간 계산기</p>
+
+  <div class="pickers-row">
+    <!-- 시작 시각 -->
+    <div class="picker-card">
+      <p class="picker-label">시작 시각</p>
+      <div class="drum-wrapper">
+        <div class="drum-col">
+          <div class="drum ampm" id="start-ampm">
+            <div class="drum-highlight"></div>
+            <div class="drum-track"></div>
+          </div>
+        </div>
+        <div class="drum-col">
+          <div class="drum" id="start-hour">
+            <div class="drum-highlight"></div>
+            <div class="drum-track"></div>
+          </div>
+        </div>
+        <div class="drum-col">
+          <div class="drum" id="start-min">
+            <div class="drum-highlight"></div>
+            <div class="drum-track"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 종료 시각 -->
+    <div class="picker-card">
+      <p class="picker-label">종료 시각</p>
+      <div class="drum-wrapper">
+        <div class="drum-col">
+          <div class="drum ampm" id="end-ampm">
+            <div class="drum-highlight"></div>
+            <div class="drum-track"></div>
+          </div>
+        </div>
+        <div class="drum-col">
+          <div class="drum" id="end-hour">
+            <div class="drum-highlight"></div>
+            <div class="drum-track"></div>
+          </div>
+        </div>
+        <div class="drum-col">
+          <div class="drum" id="end-min">
+            <div class="drum-highlight"></div>
+            <div class="drum-track"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 결과 -->
+  <div class="result-card">
+    <p class="result-label">소요 시간</p>
+    <p class="result-value" id="result-value">0<span class="accent">h</span> 00<span class="accent">m</span></p>
+    <p class="result-sub" id="result-sub"></p>
+    <p class="result-warn" id="result-warn">⚠ 종료 시각이 시작 시각보다 이릅니다</p>
+  </div>
+</div>
+
+<script>
+// ── Data ──
+const AMPM  = ['오전','오후'];
+const HOURS = Array.from({length:12}, (_,i) => String(i+1).padStart(2,'0')); // 01~12
+const MINS  = Array.from({length:60}, (_,i) => String(i).padStart(2,'0'));   // 00~59
+
+// ── State: 현재 시각으로 초기화 ──
+const _now = new Date();
+const _nowH24 = _now.getHours();
+const _nowM   = _now.getMinutes();
+const _nowAmpm = _nowH24 >= 12 ? 1 : 0;
+// HOURS = ['01','02',...,'12'], index 0~11
+// 12시(정오/자정)는 HOURS[11]='12', 1시는 HOURS[0]='01'
+const _h12 = _nowH24 % 12; // 0이면 12시
+const _nowH12 = _h12 === 0 ? 11 : _h12 - 1; // index into HOURS
+
+const state = {
+  start: { ampm: _nowAmpm, hour: _nowH12, min: _nowM },
+  end:   { ampm: _nowAmpm, hour: _nowH12, min: _nowM },
+};
+
+// ── Build drum ──
+const DRUM_H = 160;
+const PAD = 2; // 앞뒤로 복제할 아이템 수
+
+function buildDrum(el, items, initIdx, noClone) {
+  const track = el.querySelector('.drum-track');
+  const total = items.length;
+
+  if (noClone) {
+    // ampm 등 짧은 목록: 빈 ghost 패딩
+    for (let i = 0; i < PAD; i++) {
+      const d = document.createElement('div');
+      d.className = 'drum-item';
+      track.appendChild(d);
+    }
+    items.forEach(v => {
+      const d = document.createElement('div');
+      d.className = 'drum-item';
+      d.textContent = v;
+      track.appendChild(d);
+    });
+    for (let i = 0; i < PAD; i++) {
+      const d = document.createElement('div');
+      d.className = 'drum-item';
+      track.appendChild(d);
+    }
+  } else {
+    // 시/분 등 긴 목록: 실제 숫자로 순환 복제
+    for (let i = total - PAD; i < total; i++) {
+      const d = document.createElement('div');
+      d.className = 'drum-item clone';
+      d.textContent = items[i];
+      track.appendChild(d);
+    }
+    items.forEach(v => {
+      const d = document.createElement('div');
+      d.className = 'drum-item';
+      d.textContent = v;
+      track.appendChild(d);
+    });
+    for (let i = 0; i < PAD; i++) {
+      const d = document.createElement('div');
+      d.className = 'drum-item clone';
+      d.textContent = items[i];
+      track.appendChild(d);
+    }
+  }
+
+  el._items   = items;
+  el._total   = total;
+  el._pad     = PAD;
+  el._idx     = initIdx;
+  el._itemH   = 40;
+  el._noClone = noClone || false;
+
+  setDrumIndex(el, initIdx, false);
+  bindDrum(el);
+}
+
+function setDrumIndex(el, idx, animate) {
+  const clamped = ((idx % el._total) + el._total) % el._total;
+  el._idx = clamped;
+  const offset = -(clamped + el._pad) * el._itemH + (DRUM_H / 2 - el._itemH / 2);
+  const track = el.querySelector('.drum-track');
+  track.style.transition = animate ? 'transform 0.32s cubic-bezier(0.25,0.46,0.45,0.94)' : 'none';
+  track.style.transform = `translateY(${offset}px)`;
+  updateOpacity(el, clamped);
+}
+
+function updateOpacity(el, activeIdx) {
+  const items = el.querySelectorAll('.drum-item');
+  // 실제 아이템은 PAD번째부터 시작 (DOM index = PAD + realIdx)
+  items.forEach((item, i) => {
+    // i=0..PAD-1: 앞 클론, i=PAD..PAD+total-1: 실제, i=PAD+total..: 뒤 클론
+    // 중앙 선택 기준: PAD + activeIdx
+    const dist = Math.abs(i - (el._pad + activeIdx));
+    item.classList.remove('selected');
+    if (dist === 0) {
+      item.style.opacity = '1';
+      item.classList.add('selected');
+    } else if (dist === 1) { item.style.opacity = '0.4'; }
+    else if (dist === 2) { item.style.opacity = '0.18'; }
+    else { item.style.opacity = '0.06'; }
+  });
+}
+
+function bindDrum(el) {
+  const ITEM_H = el._itemH || 40;
+  const TOTAL  = el._total;
+  const PAD    = el._pad;
+  // 인덱스 → 트랙 translateY
+  function idxToOffset(idx) {
+    return -(idx + PAD) * ITEM_H + (DRUM_H / 2 - ITEM_H / 2);
+  }
+  // 트랙 translateY → 가장 가까운 인덱스
+  function offsetToIdx(offset) {
+    const raw = -(offset - (DRUM_H / 2 - ITEM_H / 2)) / ITEM_H - PAD;
+    return Math.round(raw);
+  }
+
+  let startY = 0, startOffset = 0, dragging = false;
+  let lastY = 0, lastTime = 0, velocity = 0;
+  const track = el.querySelector('.drum-track');
+
+  function getOffset() {
+    const m = new DOMMatrix(getComputedStyle(track).transform);
+    return m.m42; // translateY
+  }
+
+  function setOffset(offset, animate) {
+    track.style.transition = animate
+      ? 'transform 0.32s cubic-bezier(0.25,0.46,0.45,0.94)'
+      : 'none';
+    track.style.transform = `translateY(${offset}px)`;
+  }
+
+  function snapToIdx(rawOffset) {
+    let rawIdx = offsetToIdx(rawOffset);
+    let idx = ((rawIdx % TOTAL) + TOTAL) % TOTAL;
+    el._idx = idx;
+    setOffset(idxToOffset(idx), true);
+    updateOpacity(el, idx);
+    // rawIdx: 랩핑 전 값 (몇 바퀴 돌았는지 계산에 사용)
+    el.dispatchEvent(new CustomEvent('change', { detail: idx, bubbles: false }));
+    el._rawIdx = rawIdx; // 마지막 raw 인덱스 저장
+    calculate();
+  }
+
+  function onStart(y) {
+    dragging = true;
+    startY = y;
+    lastY = y;
+    lastTime = Date.now();
+    velocity = 0;
+    startOffset = getOffset();
+    // 드래그 시작 시점의 raw 인덱스 기록
+    el._rawIdxAtStart = el._rawIdx !== undefined ? el._rawIdx : el._idx;
+    track.style.transition = 'none';
+    track.style.transform = `translateY(${startOffset}px)`;
+  }
+
+  function onMove(y) {
+    if (!dragging) return;
+    const now = Date.now();
+    velocity = (y - lastY) / Math.max(now - lastTime, 1);
+    lastY = y;
+    lastTime = now;
+    // 손가락이 아래로 내려가면(y 증가) 트랙도 아래로 → 이전 숫자
+    const offset = startOffset + (y - startY);
+    setOffset(offset, false);
+    // 실시간 하이라이트 업데이트
+    const nearIdx = ((offsetToIdx(offset) % TOTAL) + TOTAL) % TOTAL;
+    updateOpacity(el, nearIdx);
+  }
+
+  function onEnd() {
+    if (!dragging) return;
+    dragging = false;
+    const currentOffset = getOffset();
+    // 관성 적용
+    const momentum = velocity * 80;
+    snapToIdx(currentOffset + momentum);
+  }
+
+  // Mouse
+  el.addEventListener('mousedown', e => { e.preventDefault(); onStart(e.clientY); });
+  window.addEventListener('mousemove', e => { if (dragging) onMove(e.clientY); });
+  window.addEventListener('mouseup',   () => { if (dragging) onEnd(); });
+
+  // Touch
+  el.addEventListener('touchstart', e => { onStart(e.touches[0].clientY); }, { passive: true });
+  el.addEventListener('touchmove',  e => { e.preventDefault(); onMove(e.touches[0].clientY); }, { passive: false });
+  el.addEventListener('touchend',   () => onEnd());
+
+  // Wheel
+  let wheelTimer;
+  el.addEventListener('wheel', e => {
+    e.preventDefault();
+    const step = Math.sign(e.deltaY);
+    const prevRaw = el._rawIdx !== undefined ? el._rawIdx : el._idx;
+    const newRaw  = prevRaw + step;
+    el._rawIdxAtStart = prevRaw; // 직전 값 기준
+    el._rawIdx = newRaw;
+    el._idx = ((newRaw % TOTAL) + TOTAL) % TOTAL;
+    setOffset(idxToOffset(el._idx), true);
+    updateOpacity(el, el._idx);
+    clearTimeout(wheelTimer);
+    wheelTimer = setTimeout(() => {
+      el.dispatchEvent(new CustomEvent('change', { detail: el._idx }));
+      calculate();
+    }, 100);
+  }, { passive: false });
+}
+
+// ── Init all six drums ──
+const drums = {
+  'start-ampm': { data: AMPM,  stateKey: 'start', field: 'ampm' },
+  'start-hour': { data: HOURS, stateKey: 'start', field: 'hour' },
+  'start-min':  { data: MINS,  stateKey: 'start', field: 'min'  },
+  'end-ampm':   { data: AMPM,  stateKey: 'end',   field: 'ampm' },
+  'end-hour':   { data: HOURS, stateKey: 'end',   field: 'hour' },
+  'end-min':    { data: MINS,  stateKey: 'end',   field: 'min'  },
+};
+
+// ampm 드럼을 애니메이션과 함께 전환하는 헬퍼
+function flipAmpm(stateKey) {
+  const ampmEl = document.getElementById(`${stateKey}-ampm`);
+  const newAmpm = state[stateKey].ampm === 0 ? 1 : 0;
+  state[stateKey].ampm = newAmpm;
+  setDrumIndex(ampmEl, newAmpm, true);
+}
+
+Object.entries(drums).forEach(([id, cfg]) => {
+  const el = document.getElementById(id);
+  const noClone = cfg.field === 'ampm';
+  buildDrum(el, cfg.data, state[cfg.stateKey][cfg.field], noClone);
+
+  el.addEventListener('change', e => {
+    const newIdx = e.detail;
+    state[cfg.stateKey][cfg.field] = newIdx;
+
+    if (cfg.field === 'hour') {
+      const hourEl = el;
+      // rawIdx: 랩핑 전 누적 인덱스 (음수 가능)
+      const rawNow   = hourEl._rawIdx !== undefined ? hourEl._rawIdx : newIdx;
+      const rawStart = hourEl._rawIdxAtStart !== undefined ? hourEl._rawIdxAtStart : newIdx;
+      // 12칸 기준으로 몇 번 경계를 넘었는지 (부호 포함)
+      const laps = Math.trunc(rawNow / 12) - Math.trunc(rawStart / 12);
+      if (laps !== 0) {
+        const flips = Math.abs(laps) % 2; // 홀수 번 넘었을 때만 실제 전환
+        if (flips === 1) flipAmpm(cfg.stateKey);
+      }
+      // 다음 드래그를 위해 기준점 갱신
+      hourEl._rawIdxAtStart = rawNow;
+    }
+  });
+});
+
+// ── Calculate ──
+function toMinutes(s) {
+  // ampm: 0=오전, 1=오후
+  let h = parseInt(HOURS[s.hour]);
+  if (s.ampm === 0 && h === 12) h = 0;
+  if (s.ampm === 1 && h !== 12) h += 12;
+  return h * 60 + s.min;
+}
+
+function pad(n) { return String(n).padStart(2,'0'); }
+
+function calculate() {
+  const startMin = toMinutes(state.start);
+  const endMin   = toMinutes(state.end);
+  let diff = endMin - startMin;
+
+  const warn = document.getElementById('result-warn');
+  const sub  = document.getElementById('result-sub');
+  const val  = document.getElementById('result-value');
+
+  if (diff < 0) {
+    // treat as next-day
+    diff += 24 * 60;
+    warn.style.display = 'block';
+  } else {
+    warn.style.display = 'none';
+  }
+
+  const h = Math.floor(diff / 60);
+  const m = diff % 60;
+
+  // start/end display strings
+  const startH = toMinutes(state.start);
+  const endH   = toMinutes(state.end);
+  const fmtTime = (min) => {
+    const hh = Math.floor(min/60);
+    const mm = min%60;
+    const ap = hh < 12 ? '오전' : '오후';
+    const disp = hh % 12 === 0 ? 12 : hh % 12;
+    return `${ap} ${disp}:${pad(mm)}`;
+  };
+
+  val.innerHTML = `${h}<span class="accent">h</span> ${pad(m)}<span class="accent">m</span>`;
+  sub.innerHTML = `<strong>${fmtTime(startMin)}</strong> → <strong>${fmtTime(endMin)}</strong>`;
+}
+
+calculate();
+</script>
+</body>
+</html>
