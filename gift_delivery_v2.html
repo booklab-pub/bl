@@ -369,11 +369,6 @@
     if (d) d.name = v;
   }
 
-  function onQty(id, v) {
-    var d = dests.find(function(x) { return x.id === id; });
-    if (d) { d.qty = v; recalc(); }
-  }
-
   function getPerBox() {
     var spine = parseFloat(document.getElementById('spine').value);
     if (!spine || spine <= 0) return 0;
@@ -400,7 +395,7 @@
         + '</div>'
         + '<input class="dest-name-input" type="text" placeholder="'
         + (isFree ? '저자명 또는 메모' : '수령인 또는 주소 메모')
-        + '" value="' + (d.name || '') + '" oninput="onName(' + d.id + ',this.value)" />'
+        + '" value="' + (d.name || '') + '" data-name-id="' + d.id + '" />'
         + '</div>'
         + '<button class="del-btn" onclick="removeDest(' + d.id + ')" title="삭제">×</button>'
         + '</div>';
@@ -417,10 +412,10 @@
         body = '<div class="dest-body">'
           + '<div class="dest-row">'
           + '<div class="iunit">'
-          + '<input type="number" min="1" placeholder="부수" value="' + (d.qty || '') + '" oninput="onQty(' + d.id + ',this.value)">'
+          + '<input type="number" min="1" placeholder="부수" value="' + (d.qty || '') + '" data-qty-id="' + d.id + '">'
           + '<div class="u">부</div>'
           + '</div>'
-          + '<div class="qty-result">' + costTxt + '</div>'
+          + '<div class="qty-result" data-result-id="' + d.id + '">' + costTxt + '</div>'
           + '</div>'
           + '</div>';
       }
@@ -433,6 +428,64 @@
     var paidCnt = dests.filter(function(d) { return d.type === 'paid'; }).length;
     document.getElementById('free-cnt-badge').textContent = '무료 ' + freeCnt;
     document.getElementById('paid-cnt-badge').textContent = '유료 ' + paidCnt;
+  }
+
+  document.getElementById('dest-list').addEventListener('input', function(e) {
+    var qtyInput = e.target.closest('[data-qty-id]');
+    var nameInput = e.target.closest('[data-name-id]');
+    if (qtyInput) {
+      var id = parseInt(qtyInput.getAttribute('data-qty-id'));
+      var d = dests.find(function(x) { return x.id === id; });
+      if (d) {
+        d.qty = qtyInput.value;
+        updateResults();
+      }
+    } else if (nameInput) {
+      var id = parseInt(nameInput.getAttribute('data-name-id'));
+      var d = dests.find(function(x) { return x.id === id; });
+      if (d) d.name = nameInput.value;
+    }
+  });
+
+  function updateResults() {
+    var perBox = getPerBox();
+    var totalBoxes = 0;
+
+    dests.forEach(function(d) {
+      if (d.type === 'paid') {
+        var qty = parseInt(d.qty) || 0;
+        var boxes = (perBox > 0 && qty > 0) ? Math.ceil(qty / perBox) : 0;
+        var resultEl = document.querySelector('[data-result-id="' + d.id + '"]');
+        if (resultEl) {
+          resultEl.innerHTML = boxes > 0
+            ? boxes + '박스 · <strong>' + (boxes * 5500).toLocaleString('ko-KR') + '원</strong>'
+            : '수량 입력 후 계산';
+        }
+        totalBoxes += boxes;
+      }
+    });
+
+    var spine = parseFloat(document.getElementById('spine').value);
+    if (!spine || spine <= 0) return;
+    var h = boxType === 'std' ? 320 : 250;
+    var formula = (boxType === 'std'
+      ? '일반: ' + h + 'mm ÷ ' + spine + 'mm × 2'
+      : '46배판: ' + h + 'mm ÷ ' + spine + 'mm')
+      + ' = ' + perBox + '부/박스';
+
+    if (totalBoxes > 0) {
+      document.getElementById('s-boxes').textContent = totalBoxes;
+      document.getElementById('s-boxes-u').textContent = '박스';
+      document.getElementById('s-cost').textContent = (totalBoxes * 5500).toLocaleString('ko-KR');
+      document.getElementById('s-cost-u').textContent = '원';
+      formula += '   ·   유료 ' + totalBoxes + '박스 × 5,500 = ' + (totalBoxes * 5500).toLocaleString('ko-KR') + '원';
+    } else {
+      document.getElementById('s-boxes').textContent = '—';
+      document.getElementById('s-boxes-u').textContent = '';
+      document.getElementById('s-cost').textContent = '—';
+      document.getElementById('s-cost-u').textContent = '';
+    }
+    document.getElementById('s-formula').textContent = formula;
   }
 
   function recalc() {
@@ -451,38 +504,10 @@
       return;
     }
 
-    var h = boxType === 'std' ? 320 : 250;
-    var formula = (boxType === 'std'
-      ? '일반: ' + h + 'mm ÷ ' + spine + 'mm × 2'
-      : '46배판: ' + h + 'mm ÷ ' + spine + 'mm')
-      + ' = ' + perBox + '부/박스';
-
-    var totalBoxes = 0;
-    dests.forEach(function(d) {
-      if (d.type === 'paid') {
-        var qty = parseInt(d.qty) || 0;
-        if (qty > 0 && perBox > 0) totalBoxes += Math.ceil(qty / perBox);
-      }
-    });
-
     document.getElementById('s-per').textContent = perBox;
     document.getElementById('s-per-u').textContent = '부';
-
-    if (totalBoxes > 0) {
-      document.getElementById('s-boxes').textContent = totalBoxes;
-      document.getElementById('s-boxes-u').textContent = '박스';
-      document.getElementById('s-cost').textContent = (totalBoxes * 5500).toLocaleString('ko-KR');
-      document.getElementById('s-cost-u').textContent = '원';
-      formula += '   ·   유료 ' + totalBoxes + '박스 × 5,500 = ' + (totalBoxes * 5500).toLocaleString('ko-KR') + '원';
-    } else {
-      document.getElementById('s-boxes').textContent = '—';
-      document.getElementById('s-boxes-u').textContent = '';
-      document.getElementById('s-cost').textContent = '—';
-      document.getElementById('s-cost-u').textContent = '';
-    }
-
-    document.getElementById('s-formula').textContent = formula;
     renderList();
+    updateResults();
   }
 
   addDest();
