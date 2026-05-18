@@ -219,8 +219,8 @@
         <div class="field">
           <div class="field-label">판형</div>
           <div class="btn-group">
-            <button class="btn-type on" id="bt-std" onclick="setBox('std')">일반 박스<br><span style="font-size:10px;opacity:.6;">높이 320mm</span></button>
-            <button class="btn-type" id="bt-46" onclick="setBox('46')">46배판 전용<br><span style="font-size:10px;opacity:.6;">높이 250mm</span></button>
+            <button class="btn-type on" id="bt-std" onclick="setBox('std')">일반 박스<br><span style="font-size:10px;opacity:.6;">높이 300mm</span></button>
+            <button class="btn-type" id="bt-46" onclick="setBox('46')">46배판 전용<br><span style="font-size:10px;opacity:.6;">높이 230mm</span></button>
           </div>
         </div>
         <div class="field">
@@ -346,9 +346,10 @@
     recalc();
   }
 
-  function addDest() {
+  function addDest(defaultType) {
     var id = ++destId;
-    dests.push({ id: id, type: 'free', name: '', qty: '' });
+    var t = defaultType || 'free';
+    dests.push({ id: id, type: t, name: '', qty: '' });
     renderList();
     recalc();
   }
@@ -372,7 +373,7 @@
   function getPerBox() {
     var spine = parseFloat(document.getElementById('spine').value);
     if (!spine || spine <= 0) return 0;
-    var h = boxType === 'std' ? 320 : 250;
+    var h = boxType === 'std' ? 300 : 230;
     return boxType === 'std' ? Math.floor(h / spine * 2) : Math.floor(h / spine);
   }
 
@@ -467,7 +468,7 @@
 
     var spine = parseFloat(document.getElementById('spine').value);
     if (!spine || spine <= 0) return;
-    var h = boxType === 'std' ? 320 : 250;
+    var h = boxType === 'std' ? 300 : 230;
     var formula = (boxType === 'std'
       ? '일반: ' + h + 'mm ÷ ' + spine + 'mm × 2'
       : '46배판: ' + h + 'mm ÷ ' + spine + 'mm')
@@ -510,7 +511,9 @@
     updateResults();
   }
 
-  addDest();
+  addDest('free');
+  addDest('paid');
+  addDest('paid');
 </script>
 
 </body>
