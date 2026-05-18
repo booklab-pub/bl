@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>저자 증정본 택배비 부과 원칙</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Pretendard', 'Apple SD Gothic Neo', sans-serif; background: #f5f4f0; color: #1a1a1a; min-height: 100vh; }
+
+  .header {
+    background: #1a1a1a; color: #fff; padding: 20px 32px;
+    display: flex; align-items: center; gap: 16px;
+  }
+  .header h1 { font-size: 18px; font-weight: 500; letter-spacing: -0.3px; }
+  .header .sub { font-size: 13px; color: #888; margin-top: 2px; }
+
+  .main { max-width: 760px; margin: 0 auto; padding: 32px 24px; display: flex; flex-direction: column; gap: 20px; }
+
+  .panel { background: #fff; border-radius: 12px; border: 0.5px solid #e0ddd6; overflow: hidden; }
+  .panel-header {
+    padding: 16px 20px; border-bottom: 0.5px solid #e8e6e0;
+    font-size: 13px; font-weight: 500; color: #555;
+    letter-spacing: 0.2px; text-transform: uppercase;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .panel-header .badge {
+    font-size: 11px; background: #1a1a1a; color: #fff;
+    padding: 2px 8px; border-radius: 99px; letter-spacing: 0; text-transform: none; font-weight: 400;
+  }
+
+  .rule-list { padding: 8px 20px 20px; }
+  .rule-item {
+    display: flex; gap: 14px; padding: 14px 0;
+    border-bottom: 0.5px solid #f0ede8;
+  }
+  .rule-item:last-child { border-bottom: none; }
+  .rule-num {
+    width: 22px; height: 22px; border-radius: 50%;
+    background: #1a1a1a; color: #fff;
+    font-size: 12px; font-weight: 600;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0; margin-top: 1px;
+  }
+  .rule-body { flex: 1; }
+  .rule-title { font-size: 14px; font-weight: 500; color: #1a1a1a; margin-bottom: 5px; line-height: 1.5; }
+  .rule-desc { font-size: 13px; color: #555; line-height: 1.7; }
+
+  .highlight-box {
+    margin: 10px 0 0; padding: 11px 14px;
+    background: #f5f4f0; border-radius: 0 8px 8px 0;
+    border-left: 3px solid #1a1a1a;
+    font-size: 13px; color: #333; line-height: 1.6;
+  }
+  .highlight-box strong { color: #1a1a1a; }
+
+  .notice-box {
+    margin: 10px 0 0; padding: 11px 14px;
+    background: #fffbf0; border-radius: 0 8px 8px 0;
+    border-left: 3px solid #f0a020;
+    font-size: 13px; color: #555; line-height: 1.7;
+  }
+  .notice-box strong { color: #b07800; }
+
+  .proc-steps { margin: 10px 0 0; display: flex; flex-direction: column; gap: 7px; }
+  .proc-step {
+    display: flex; align-items: flex-start; gap: 10px;
+    font-size: 13px; color: #444; line-height: 1.6;
+  }
+  .proc-step .label {
+    font-size: 11px; font-weight: 500; background: #e8e6e0;
+    color: #555; padding: 1px 7px; border-radius: 4px;
+    white-space: nowrap; margin-top: 2px; flex-shrink: 0;
+  }
+
+  .meta-bar {
+    padding: 12px 20px; background: #f5f4f0;
+    border-top: 0.5px solid #e0ddd6;
+    font-size: 12px; color: #888;
+    display: flex; justify-content: space-between;
+  }
+
+  /* 계산기 패널 */
+  .calc-panel {
+    background: #fff; border-radius: 12px;
+    border: 2px solid #1a6fb0; overflow: hidden;
+  }
+  .calc-panel .panel-header {
+    background: #e8f2fb; border-bottom: 0.5px solid #b5d4f4;
+    color: #1a5a90;
+  }
+  .calc-panel .panel-header .badge {
+    background: #1a6fb0; color: #fff;
+  }
+  .calc-body { padding: 20px; display: flex; flex-direction: column; gap: 16px; }
+  .form-label { font-size: 12px; font-weight: 500; color: #555; text-transform: uppercase; letter-spacing: 0.3px; margin-bottom: 6px; }
+  .btn-group { display: flex; gap: 8px; }
+  .btn-type {
+    flex: 1; padding: 10px 12px; border: 0.5px solid #d0cec8;
+    border-radius: 8px; background: #f5f4f0; color: #555;
+    font-size: 13px; cursor: pointer; transition: all 0.15s; text-align: center;
+    font-family: inherit; line-height: 1.5;
+  }
+  .btn-type:hover { background: #ece9e3; }
+  .btn-type.active { background: #1a1a1a; color: #fff; border-color: #1a1a1a; font-weight: 500; }
+  .btn-type .sub-label { font-size: 11px; opacity: 0.65; display: block; }
+  .input-row { display: flex; gap: 8px; align-items: center; }
+  .input-with-unit { display: flex; align-items: stretch; }
+  .input-with-unit input {
+    border: 0.5px solid #d0cec8; border-right: none;
+    border-radius: 8px 0 0 8px; padding: 0 12px;
+    height: 36px; font-size: 13px; font-family: inherit;
+    background: #fff; color: #1a1a1a; width: 120px;
+    outline: none;
+  }
+  .input-with-unit input:focus { border-color: #1a6fb0; }
+  .input-with-unit .unit {
+    padding: 0 12px; height: 36px; display: flex; align-items: center;
+    border: 0.5px solid #d0cec8; border-radius: 0 8px 8px 0;
+    background: #f5f4f0; font-size: 13px; color: #888; white-space: nowrap;
+  }
+  .qty-hint { font-size: 12px; color: #aaa; }
+  .divider { border: none; border-top: 0.5px solid #e8e6e0; }
+  .result-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+  .result-card { background: #f5f4f0; border-radius: 8px; padding: 12px 14px; }
+  .result-card .rc-label { font-size: 11px; color: #888; margin-bottom: 4px; }
+  .result-card .rc-value { font-size: 22px; font-weight: 500; color: #1a1a1a; display: inline; }
+  .result-card .rc-unit { font-size: 12px; color: #555; margin-left: 2px; }
+  .result-card.highlight { background: #e8f2fb; }
+  .result-card.highlight .rc-label { color: #1a5a90; }
+  .result-card.highlight .rc-value { color: #1a5a90; }
+  .formula-box {
+    padding: 10px 14px; background: #f5f4f0; border-radius: 8px;
+    font-size: 12px; color: #666; line-height: 1.8;
+    font-family: 'D2Coding', 'Courier New', monospace;
+  }
+  .formula-box code { color: #1a5a90; font-weight: 500; }
+  .empty-hint { font-size: 13px; color: #aaa; padding: 4px 0; }
+
+  @media (max-width: 600px) {
+    .main { padding: 20px 14px; }
+    .result-grid { grid-template-columns: 1fr 1fr; }
+    .result-grid .highlight { grid-column: 1 / -1; }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div>
+    <h1>저자 증정본 택배비 부과 원칙</h1>
+    <div class="sub">편집부 내부 업무 지침 · 계약 안내 기준</div>
+  </div>
+</div>
+
+<div class="main">
+
+  <!-- 계산기 패널 -->
+  <div class="calc-panel">
+    <div class="panel-header">
+      택배비 계산기
+      <span class="badge">분산 배송 비용 산정</span>
+    </div>
+    <div class="calc-body">
+
+      <div>
+        <div class="form-label">판형 선택</div>
+        <div class="btn-group">
+          <button class="btn-type active" id="btn-standard" onclick="selectType('standard')">
+            일반 박스
+            <span class="sub-label">높이 320mm</span>
+          </button>
+          <button class="btn-type" id="btn-46" onclick="selectType('46')">
+            46배판 전용 박스
+            <span class="sub-label">높이 250mm</span>
+          </button>
+        </div>
+      </div>
+
+      <div>
+        <div class="form-label">책등 사이즈</div>
+        <div class="input-with-unit" style="width: fit-content;">
+          <input type="number" id="spine" min="1" max="200" placeholder="예: 20" oninput="calculate()" />
+          <div class="unit">mm</div>
+        </div>
+      </div>
+
+      <div>
+        <div class="form-label">배송 수량 (총 증정본 부수)</div>
+        <div class="input-row">
+          <div class="input-with-unit">
+            <input type="number" id="qty" min="1" placeholder="예: 50" oninput="calculate()" />
+            <div class="unit">부</div>
+          </div>
+          <span class="qty-hint">↳ 택배비 총액 계산에 사용됩니다</span>
+        </div>
+      </div>
+
+      <hr class="divider">
+
+      <div id="result-area" style="display:none; flex-direction:column; gap:10px;">
+        <div class="result-grid">
+          <div class="result-card">
+            <div class="rc-label">박스당 수량</div>
+            <span class="rc-value" id="res-per-box">—</span><span class="rc-unit">부</span>
+          </div>
+          <div class="result-card">
+            <div class="rc-label">필요 박스 수</div>
+            <span class="rc-value" id="res-boxes">—</span><span class="rc-unit">박스</span>
+          </div>
+          <div class="result-card highlight">
+            <div class="rc-label">택배비 합계</div>
+            <span class="rc-value" id="res-cost">—</span><span class="rc-unit">원</span>
+          </div>
+        </div>
+        <div class="formula-box" id="formula-desc"></div>
+      </div>
+
+      <div class="empty-hint" id="empty-hint">판형과 책등 사이즈를 입력하면 결과가 표시됩니다.</div>
+
+    </div>
+  </div>
+
+  <!-- 국내 배송 -->
+  <div class="panel">
+    <div class="panel-header">
+      국내 배송
+      <span class="badge">기본 원칙</span>
+    </div>
+    <div class="rule-list">
+
+      <div class="rule-item">
+        <div class="rule-num">1</div>
+        <div class="rule-body">
+          <div class="rule-title">저자 주소지 배송은 무료</div>
+          <div class="rule-desc">
+            계약서에 기재된 저자 본인의 주소지로 발송하는 증정본은 전량 무료로 배송한다.
+          </div>
+        </div>
+      </div>
+
+      <div class="rule-item">
+        <div class="rule-num">2</div>
+        <div class="rule-body">
+          <div class="rule-title">지정 분산 배송은 택배비 청구</div>
+          <div class="rule-desc">
+            저자가 제3자 또는 다른 주소지로의 배송을 요청하는 경우, 해당 건에 대한 택배비를 저자에게 청구한다.
+          </div>
+          <div class="highlight-box">
+            <strong>청구 단가:</strong> 박스당 <strong>5,500원</strong> (부가세 포함)
+          </div>
+          <div class="notice-box">
+            <strong>박스 수량 확인 방법:</strong> 디자인본을 토대로 최종 페이지가 산정된 후,
+            제작부 <strong>구성우 팀장</strong>에게 예상 박스 수량을 문의하고,
+            해당 수량을 기준으로 비용을 저자에게 안내한다.
+          </div>
+        </div>
+      </div>
+
+    </div>
+    <div class="meta-bar">
+      <span>단가 기준: 박스당 5,500원 (부가세 포함)</span>
+      <span>수량 문의: 제작부 구성우 팀장</span>
+    </div>
+  </div>
+
+  <!-- 해외 배송 -->
+  <div class="panel">
+    <div class="panel-header">
+      해외 배송
+      <span class="badge">착불 원칙</span>
+    </div>
+    <div class="rule-list">
+
+      <div class="rule-item">
+        <div class="rule-num">1</div>
+        <div class="rule-body">
+          <div class="rule-title">착불 원칙 · 저자 지정 운송수단 이용</div>
+          <div class="rule-desc">
+            해외 배송은 원칙적으로 <strong>착불</strong>로 처리하며,
+            저자가 지정한 운송수단(항공, EMS, 특송 등)을 이용한다.
+          </div>
+        </div>
+      </div>
+
+      <div class="rule-item">
+        <div class="rule-num">2</div>
+        <div class="rule-body">
+          <div class="rule-title">국내 발송지까지의 비용은 저자 부담</div>
+          <div class="rule-desc">
+            해외 발송을 위한 국내 구간 운송비(국내 발송지까지의 택배비)는 저자에게 청구한다.
+          </div>
+          <div class="proc-steps">
+            <div class="proc-step">
+              <span class="label">STEP 1</span>
+              저자로부터 해외 수취지 주소 및 운송수단 확인
+            </div>
+            <div class="proc-step">
+              <span class="label">STEP 2</span>
+              국내 발송지(포워더·우체국 등)까지의 택배비 산정
+            </div>
+            <div class="proc-step">
+              <span class="label">STEP 3</span>
+              해당 금액 저자에게 사전 안내 후 청구
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+    <div class="meta-bar">
+      <span>해외 배송 본비용: 착불 처리</span>
+      <span>국내 구간: 저자 부담</span>
+    </div>
+  </div>
+
+</div><!-- /main -->
+
+<script>
+  var boxType = 'standard';
+
+  function selectType(t) {
+    boxType = t;
+    document.getElementById('btn-standard').classList.toggle('active', t === 'standard');
+    document.getElementById('btn-46').classList.toggle('active', t === '46');
+    calculate();
+  }
+
+  function calculate() {
+    var spineVal = parseFloat(document.getElementById('spine').value);
+    var qtyVal = parseInt(document.getElementById('qty').value);
+    var resultArea = document.getElementById('result-area');
+    var emptyHint = document.getElementById('empty-hint');
+
+    if (!spineVal || spineVal <= 0) {
+      resultArea.style.display = 'none';
+      emptyHint.style.display = 'block';
+      return;
+    }
+
+    var boxHeight = boxType === 'standard' ? 320 : 250;
+    var perBox, formulaText;
+
+    if (boxType === 'standard') {
+      perBox = Math.floor(boxHeight / spineVal * 2);
+      formulaText = '일반 박스: ' + boxHeight + 'mm ÷ ' + spineVal + 'mm × 2 = <code>' + perBox + '부/박스</code>';
+    } else {
+      perBox = Math.floor(boxHeight / spineVal);
+      formulaText = '46배판 전용 박스: ' + boxHeight + 'mm ÷ ' + spineVal + 'mm = <code>' + perBox + '부/박스</code>';
+    }
+
+    document.getElementById('res-per-box').textContent = perBox;
+
+    if (qtyVal && qtyVal > 0 && perBox > 0) {
+      var boxCount = Math.ceil(qtyVal / perBox);
+      var cost = (boxCount * 5500).toLocaleString('ko-KR');
+      formulaText += '&nbsp;&nbsp;·&nbsp;&nbsp;박스 수: ⌈' + qtyVal + ' ÷ ' + perBox + '⌉ = ' + boxCount + '박스'
+                   + '&nbsp;&nbsp;·&nbsp;&nbsp;택배비: ' + boxCount + ' × 5,500 = <code>' + cost + '원</code>';
+      document.getElementById('res-boxes').textContent = boxCount;
+      document.getElementById('res-cost').textContent = cost;
+    } else {
+      document.getElementById('res-boxes').textContent = '—';
+      document.getElementById('res-cost').textContent = '—';
+    }
+
+    document.getElementById('formula-desc').innerHTML = formulaText;
+    resultArea.style.display = 'flex';
+    emptyHint.style.display = 'none';
+  }
+</script>
+
+</body>
+</html>
