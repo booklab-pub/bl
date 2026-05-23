@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>양장본 출판비 계산기</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'Pretendard', 'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif;
+  background: #f4f2ee;
+  color: #1a1a1a;
+  min-height: 100vh;
+  padding: 2rem 1rem 3rem;
+}
+
+.container {
+  max-width: 520px;
+  margin: 0 auto;
+}
+
+h1 {
+  font-size: 17px;
+  font-weight: 600;
+  color: #111;
+  margin-bottom: 1.5rem;
+  letter-spacing: -0.02em;
+}
+
+.card {
+  background: #fff;
+  border-radius: 14px;
+  padding: 1.25rem 1.25rem;
+  margin-bottom: 12px;
+  border: 1px solid #e8e5e0;
+}
+
+.card-title {
+  font-size: 11px;
+  font-weight: 600;
+  color: #999;
+  text-transform: uppercase;
+  letter-spacing: .07em;
+  margin-bottom: 1rem;
+}
+
+.field {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 0;
+  border-bottom: 1px solid #f0ede8;
+}
+.field:last-child { border-bottom: none; }
+
+.field label {
+  font-size: 14px;
+  color: #555;
+  flex-shrink: 0;
+  width: 120px;
+}
+
+.input-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 1;
+  min-width: 0;
+}
+
+.input-row input {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  outline: none;
+  font-size: 15px;
+  font-weight: 500;
+  color: #111;
+  background: transparent;
+  text-align: right;
+  padding: 2px 0;
+  -moz-appearance: textfield;
+}
+.input-row input::-webkit-outer-spin-button,
+.input-row input::-webkit-inner-spin-button { -webkit-appearance: none; }
+.input-row input::placeholder { color: #bbb; font-weight: 400; }
+
+.unit {
+  font-size: 13px;
+  color: #999;
+  white-space: nowrap;
+}
+
+.type-btns {
+  display: flex;
+  gap: 6px;
+  flex: 1;
+  justify-content: flex-end;
+}
+
+.type-btn {
+  padding: 5px 14px;
+  font-size: 13px;
+  font-weight: 500;
+  border: 1px solid #ddd;
+  border-radius: 20px;
+  background: #fff;
+  color: #888;
+  cursor: pointer;
+  transition: all .15s;
+  white-space: nowrap;
+}
+.type-btn.active {
+  background: #1a1a1a;
+  border-color: #1a1a1a;
+  color: #fff;
+}
+.type-btn:not(.active):hover { border-color: #999; color: #444; }
+
+.type-desc {
+  font-size: 11px;
+  color: #aaa;
+  text-align: right;
+  margin-top: 6px;
+  min-height: 14px;
+}
+
+.result-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.metric {
+  background: #f7f5f1;
+  border-radius: 10px;
+  padding: 12px 10px;
+  text-align: center;
+}
+.metric-label {
+  font-size: 11px;
+  color: #999;
+  margin-bottom: 6px;
+  line-height: 1.4;
+}
+.metric-value {
+  font-size: 15px;
+  font-weight: 600;
+  color: #111;
+  letter-spacing: -0.02em;
+}
+.metric-value.blue { color: #1a6ef5; }
+
+.divider { border: none; border-top: 1px solid #f0ede8; margin: 12px 0; }
+
+.row-info {
+  display: flex;
+  justify-content: space-between;
+  font-size: 13px;
+  padding: 4px 0;
+}
+.row-info span:first-child { color: #888; }
+.row-info span:last-child { font-weight: 500; color: #333; }
+
+.note-box {
+  background: #fff;
+  border-radius: 14px;
+  padding: 1rem 1.25rem;
+  border: 1px solid #e8e5e0;
+}
+.note-title {
+  font-size: 11px;
+  font-weight: 600;
+  color: #999;
+  text-transform: uppercase;
+  letter-spacing: .07em;
+  margin-bottom: 8px;
+}
+.note-box p {
+  font-size: 12px;
+  color: #aaa;
+  line-height: 1.8;
+}
+
+@media (max-width: 400px) {
+  body { padding: 1.25rem .75rem 2.5rem; }
+  h1 { font-size: 16px; }
+  .field label { width: 100px; font-size: 13px; }
+  .input-row input { font-size: 14px; }
+  .result-grid { gap: 6px; }
+  .metric { padding: 10px 8px; }
+  .metric-label { font-size: 10px; }
+  .metric-value { font-size: 13px; }
+  .type-btn { padding: 5px 10px; font-size: 12px; }
+}
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>양장본 출판비 계산기</h1>
+
+  <div class="card">
+    <div class="card-title">입력</div>
+
+    <div class="field">
+      <label>초판 발행 부수</label>
+      <div class="input-row">
+        <input type="text" id="printqty" value="" inputmode="numeric" placeholder="0">
+        <span class="unit">부</span>
+      </div>
+    </div>
+
+    <div class="field">
+      <label>외주제작비</label>
+      <div class="input-row">
+        <input type="text" id="outsourcing" value="" inputmode="numeric" placeholder="0">
+        <span class="unit">원 (VAT 포함)</span>
+      </div>
+    </div>
+
+    <div class="field" style="align-items:flex-start; padding-top:10px; padding-bottom:10px;">
+      <label style="padding-top:5px;">원고 유형</label>
+      <div style="flex:1;">
+        <div class="type-btns">
+          <button class="type-btn active" id="btnA">A 텍스트</button>
+          <button class="type-btn" id="btnB">B 디자인</button>
+        </div>
+        <div class="type-desc" id="type-desc">텍스트 위주 원고 — 공급가액 ÷ 0.5</div>
+      </div>
+    </div>
+
+    <div class="field">
+      <label>적용 출판비</label>
+      <div class="input-row">
+        <input type="text" id="custprice" inputmode="numeric" placeholder="자동 계산">
+        <span class="unit">원</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">계산 결과</div>
+    <div class="result-grid">
+      <div class="metric">
+        <div class="metric-label">공급가액<br>(VAT 제외)</div>
+        <div class="metric-value" id="r-supply">—</div>
+      </div>
+      <div class="metric">
+        <div class="metric-label">출판비<br>(권장)</div>
+        <div class="metric-value blue" id="r-pubcost">—</div>
+      </div>
+      <div class="metric">
+        <div class="metric-label">적용<br>출판비</div>
+        <div class="metric-value blue" id="r-price">—</div>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <div class="row-info">
+      <span>재판 비용 부담</span>
+      <span>저자 전액 부담</span>
+    </div>
+    <div class="row-info">
+      <span>인세 (200부 이하)</span>
+      <span>정가 × 10%</span>
+    </div>
+    <div class="row-info">
+      <span>인세 (201부 초과)</span>
+      <span>정가 × 30%</span>
+    </div>
+  </div>
+
+  <div class="note-box">
+    <div class="note-title">계산 기준</div>
+    <p>공급가액 = 외주제작비 ÷ 1.1 (VAT 제거)<br>
+    출판비 = 공급가액 ÷ 0.5 (A유형) 또는 ÷ 0.4 (B유형)<br>
+    적용 출판비 직접 입력 시 해당 값 우선 적용</p>
+  </div>
+</div>
+
+<script>
+const outsourcingEl = document.getElementById('outsourcing');
+const custpriceEl   = document.getElementById('custprice');
+const printqtyEl    = document.getElementById('printqty');
+const btnA = document.getElementById('btnA');
+const btnB = document.getElementById('btnB');
+const typeDesc = document.getElementById('type-desc');
+
+let selectedRate = 0.5;
+let userEditedPrice = false;
+
+function toNum(s){ return parseFloat((s||'').replace(/,/g,''))||0; }
+function fmtC(n){ return isNaN(n)||n===0 ? '—' : Math.round(n).toLocaleString('ko-KR'); }
+function fmtW(n){ return isNaN(n)||n===0 ? '—' : Math.round(n).toLocaleString('ko-KR')+'만원'.slice(0,0) + Math.round(n).toLocaleString('ko-KR'); }
+
+function applyComma(el){
+  const cur = el.selectionStart;
+  const prev = el.value;
+  const raw = prev.replace(/,/g,'');
+  if(!/^\d*$/.test(raw)){ el.value=prev; return; }
+  const fmt = raw ? parseInt(raw,10).toLocaleString('ko-KR') : '';
+  el.value = fmt;
+  const diff = fmt.length - prev.length;
+  try{ el.setSelectionRange(cur+diff, cur+diff); }catch(e){}
+}
+
+function fmt(n){ return n ? Math.round(n).toLocaleString('ko-KR') : '—'; }
+
+function calc(){
+  const vat    = toNum(outsourcingEl.value);
+  const supply = vat / 1.1;
+  const pub    = supply / selectedRate;
+
+  document.getElementById('r-supply').textContent  = vat  ? fmt(supply) : '—';
+  document.getElementById('r-pubcost').textContent = vat  ? fmt(pub)    : '—';
+
+  let price;
+  if(userEditedPrice && custpriceEl.value.trim()){
+    price = toNum(custpriceEl.value);
+  } else {
+    price = vat ? Math.ceil(pub/100)*100 : 0;
+    custpriceEl.placeholder = price ? fmt(price) : '자동 계산';
+    if(!userEditedPrice) custpriceEl.value = '';
+  }
+
+  document.getElementById('r-price').textContent = price ? fmt(price) : '—';
+}
+
+outsourcingEl.addEventListener('input', ()=>{ applyComma(outsourcingEl); userEditedPrice=false; calc(); });
+custpriceEl.addEventListener('input', ()=>{
+  applyComma(custpriceEl);
+  userEditedPrice = custpriceEl.value.trim() !== '';
+  calc();
+});
+printqtyEl.addEventListener('input', ()=>{ applyComma(printqtyEl); });
+
+btnA.addEventListener('click',()=>{
+  selectedRate=0.5;
+  btnA.classList.add('active'); btnB.classList.remove('active');
+  typeDesc.textContent='텍스트 위주 원고 — 공급가액 ÷ 0.5';
+  userEditedPrice=false; calc();
+});
+btnB.addEventListener('click',()=>{
+  selectedRate=0.4;
+  btnB.classList.add('active'); btnA.classList.remove('active');
+  typeDesc.textContent='디자인 요소가 많은 원고 — 공급가액 ÷ 0.4';
+  userEditedPrice=false; calc();
+});
+
+calc();
+</script>
+</body>
+</html>
