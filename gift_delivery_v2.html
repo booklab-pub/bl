@@ -403,7 +403,20 @@
 
       var body;
       if (isFree) {
-        body = '<div class="dest-body"><div class="free-notice">✓ 저자 본인 주소지 — 택배비 무료</div></div>';
+        var qty = parseInt(d.qty) || 0;
+        var boxes = (perBox > 0 && qty > 0) ? Math.ceil(qty / perBox) : 0;
+        var freeTxt = boxes > 0
+          ? boxes + '박스 · <strong style="color:#3B6D11;">무료</strong>'
+          : '수량 입력 후 계산';
+        body = '<div class="dest-body">'
+          + '<div class="dest-row">'
+          + '<div class="iunit">'
+          + '<input type="number" min="1" placeholder="부수" value="' + (d.qty || '') + '" data-qty-id="' + d.id + '">'
+          + '<div class="u">부</div>'
+          + '</div>'
+          + '<div class="qty-result" data-result-id="' + d.id + '">' + freeTxt + '</div>'
+          + '</div>'
+          + '</div>';
       } else {
         var qty = parseInt(d.qty) || 0;
         var boxes = (perBox > 0 && qty > 0) ? Math.ceil(qty / perBox) : 0;
@@ -453,10 +466,16 @@
     var totalBoxes = 0;
 
     dests.forEach(function(d) {
-      if (d.type === 'paid') {
-        var qty = parseInt(d.qty) || 0;
-        var boxes = (perBox > 0 && qty > 0) ? Math.ceil(qty / perBox) : 0;
-        var resultEl = document.querySelector('[data-result-id="' + d.id + '"]');
+      var qty = parseInt(d.qty) || 0;
+      var boxes = (perBox > 0 && qty > 0) ? Math.ceil(qty / perBox) : 0;
+      var resultEl = document.querySelector('[data-result-id="' + d.id + '"]');
+      if (d.type === 'free') {
+        if (resultEl) {
+          resultEl.innerHTML = boxes > 0
+            ? boxes + '박스 · <strong style="color:#3B6D11;">무료</strong>'
+            : '수량 입력 후 계산';
+        }
+      } else if (d.type === 'paid') {
         if (resultEl) {
           resultEl.innerHTML = boxes > 0
             ? boxes + '박스 · <strong>' + (boxes * 5500).toLocaleString('ko-KR') + '원</strong>'
