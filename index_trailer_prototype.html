@@ -1,0 +1,164 @@
+﻿<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>북트레일러 메인 삽입 프로토타입</title>
+<style>
+@import url(https://fonts.googleapis.com/css?family=Noto+Sans+KR:400,500,700,900&display=swap);
+* { box-sizing: border-box; }
+body { margin: 0; background: #fff; color: #111; font-family: "Noto Sans KR", "Nanum Gothic", Arial, sans-serif; }
+a { color: inherit; text-decoration: none; }
+.prototype-page { width: 978px; margin: 0 auto; padding: 24px 0 56px; }
+.prototype-main { width: 900px; float: left; }
+.prototype-side { float: right; width: 71px; min-height: 520px; border-left: 1px solid #eee; }
+.main-banner { width: 900px; height: 300px; position: relative; overflow: hidden; border-bottom: 1px solid #eeeeee; background: #f5f5f5; }
+.main-banner img { display: block; width: 900px; height: 300px; }
+.booktrailer-section { margin-top: 20px; margin-bottom: 20px; }
+.booktrailer-titlebar { width: 900px; height: 32px; border-bottom: 1px solid #d9d9d9; display: table; }
+.booktrailer-titlebar h2 { display: table-cell; margin: 0; padding: 0 0 6px 4px; vertical-align: bottom; font-size: 22px; line-height: 1; font-weight: 800; letter-spacing: 0; color: #555; }
+.booktrailer-titlebar em { margin-left: 5px; font-style: normal; color: #d42931; font-size: 18px; font-weight: 900; }
+.booktrailer-titlebar a { display: table-cell; width: 90px; padding: 0 3px 7px 0; vertical-align: bottom; text-align: right; font-size: 13px; color: #888; font-weight: 900; letter-spacing: 0; text-transform: uppercase; }
+.booktrailer-list { width: 900px; margin-top: 10px; border-top: 1px solid #d7d7d7; border-bottom: 1px solid #d7d7d7; display: grid; grid-template-columns: 1fr 1fr; }
+.booktrailer-card { min-height: 152px; padding: 10px 12px 10px 0; display: grid; grid-template-columns: 214px 1fr; column-gap: 14px; cursor: pointer; background: #fff; }
+.booktrailer-card + .booktrailer-card { border-left: 1px solid #eee; padding-left: 12px; }
+.booktrailer-card:hover { background: #fafafa; }
+.video-thumb { width: 214px; height: 120px; position: relative; overflow: hidden; background: #121820; box-shadow: inset 0 0 0 1px rgba(0,0,0,.08); }
+.video-thumb:after { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(0,0,0,.05), rgba(0,0,0,.36)); }
+.scene-sky { position: absolute; inset: 0; background: linear-gradient(180deg, #102332 0%, #244b60 54%, #4d6b61 55%, #213d2e 100%); }
+.scene-sky.alt { background: linear-gradient(180deg, #202a3b 0%, #53616f 52%, #7b6d56 53%, #2b3029 100%); }
+.scene-book { position: absolute; left: 32px; top: 24px; width: 70px; height: 86px; transform: skewY(-5deg); background: #df6c13; box-shadow: 6px 5px 12px rgba(0,0,0,.35); }
+.scene-book:before { content: ""; position: absolute; right: -9px; top: 4px; width: 9px; height: 78px; background: #f2f2ed; transform: skewY(20deg); }
+.scene-book.alt { background: #2f5f97; }
+.scene-title { position: absolute; right: 22px; top: 34px; width: 78px; color: #fff; font-size: 18px; line-height: 1.15; font-weight: 900; text-align: center; text-shadow: 0 2px 6px rgba(0,0,0,.5); }
+.play-button { position: absolute; z-index: 2; left: 50%; top: 50%; width: 54px; height: 38px; margin: -19px 0 0 -27px; border-radius: 10px; background: #ff0000; box-shadow: 0 2px 8px rgba(0,0,0,.35); }
+.play-button:before { content: ""; position: absolute; left: 21px; top: 10px; border-left: 16px solid #fff; border-top: 9px solid transparent; border-bottom: 9px solid transparent; }
+.video-meta { min-width: 0; padding-top: 1px; }
+.video-title { height: 42px; overflow: hidden; color: #111; font-size: 15px; line-height: 21px; font-weight: 800; letter-spacing: 0; }
+.video-author { height: 23px; overflow: hidden; color: #124272; font-size: 12px; line-height: 23px; }
+.video-summary { height: 48px; overflow: hidden; color: #777; font-size: 12px; line-height: 16px; }
+.service-title { width: 900px; height: 38px; margin-top: 7px; }
+.service-title img { display: block; width: 900px; height: 38px; }
+.service-grid { display: grid; grid-template-columns: repeat(3, 1fr); column-gap: 13px; margin-top: 2px; }
+.service-grid img { display: block; width: 287px; height: 269px; }
+.section-placeholder { margin-top: 20px; border-top: 2px solid #535353; padding-top: 8px; }
+.hall-title { width: 900px; height: 23px; display: grid; grid-template-columns: 306px 594px; cursor: pointer; }
+.hall-title img { display: block; height: 23px; }
+.hall-body { width: 900px; height: 269px; margin-top: 5px; display: grid; grid-template-columns: 306px 596px; column-gap: 0; overflow: hidden; }
+.hall-feature { position: relative; width: 287px; height: 269px; background: #f4f4f4; }
+.hall-feature img.bg { position: absolute; left: 0; top: 0; width: 287px; height: 269px; }
+.hall-feature img.cover { position: absolute; left: 140px; top: 34px; width: 124px; height: 181px; box-shadow: 5px 5px 12px rgba(0,0,0,.45); }
+.hall-list { display: grid; grid-template-columns: repeat(4, 149px); padding-top: 5px; }
+.hall-book { text-align: center; }
+.hall-book img { width: 130px; height: 193px; }
+.hall-book div { width: 130px; margin: 5px auto 0; color: #333; font-size: 13px; line-height: 17px; text-align: left; }
+.news-row { width: 900px; height: 170px; margin-top: 20px; display: grid; grid-template-columns: 295px 295px 290px; column-gap: 10px; }
+.news-panel { border: 1px solid #eeeeee; padding: 8px 10px; background: #fff; }
+.news-title { height: 26px; line-height: 26px; border-bottom: 1px solid #ececec; color: #333; font-size: 15px; font-weight: 800; }
+.news-list { margin: 8px 0 0; padding: 0; list-style: none; }
+.news-list li { height: 25px; line-height: 25px; overflow: hidden; color: #777; font-size: 13px; border-bottom: 1px dashed #d7d7d7; }
+.news-banner { display: grid; grid-template-rows: 80px 10px 80px; }
+.news-banner img { display: block; }
+.clear { clear: both; }
+</style>
+</head>
+<body>
+<div class="prototype-page">
+  <main class="prototype-main">
+    <section class="main-banner" aria-label="메인 배너">
+      <img src="http://www.book.co.kr/essay_ver2/images/index/mainbanner_advice.jpg?v4.1" alt="출간문의 메인 배너" />
+    </section>
+
+    <div class="service-title"><img src="http://www.book.co.kr/essay_ver2/images/index/conts2nd_tit.jpg?v5.1" alt="북랩은 서점유통에서 비매품 제작까지 모든 출판 서비스를 제공합니다." /></div>
+    <div class="service-grid">
+      <img src="http://www.book.co.kr/essay_ver2/images/index/conts2nd_banner_1.jpg?v2.5" alt="출판유통" />
+      <img src="http://www.book.co.kr/essay_ver2/images/index/conts2nd_banner_2.jpg?v3.1" alt="출판도구 모음" />
+      <img src="http://www.book.co.kr/essay_ver2/images/index/conts2nd_banner_3.jpg?v4.2" alt="인쇄 및 제본" />
+    </div>
+
+    <section class="section-placeholder" aria-label="명예의 전당">
+      <div class="hall-title">
+        <img src="http://www.book.co.kr/essay_ver2/images/index/tit_halloffame1.jpg?v1.2" alt="명예의 전당" />
+        <img src="http://www.book.co.kr/essay_ver2/images/index/tit_halloffame2.jpg?v2.2" alt="명예의 전당" />
+      </div>
+      <div class="hall-body">
+        <div class="hall-feature">
+          <img class="bg" src="http://www.book.co.kr/essay_ver2/images/index/halloffame_recomm.jpg?v2.2" alt="" />
+          <img class="cover" src="http://www.book.co.kr/_FILE/book/cover/2023/2310130002/2310130002_S1.jpg?v1.2" alt="추천 도서 표지" />
+        </div>
+        <div class="hall-list">
+          <div class="hall-book"><img src="http://www.book.co.kr/_FILE/book/cover/2024/2401190001/2401190001_B.png?v1.2" alt="책 이미지" /><div>명예의 전당 도서</div></div>
+          <div class="hall-book"><img src="http://www.book.co.kr/_FILE/book/cover/2023/2308220002/2308220002_B.png?v1.2" alt="책 이미지" /><div>추천 도서</div></div>
+          <div class="hall-book"><img src="http://www.book.co.kr/_FILE/book/cover/2022/2212260004/2212260004_B.png?v1.2" alt="책 이미지" /><div>선정 도서</div></div>
+          <div class="hall-book"><img src="http://www.book.co.kr/_FILE/book/cover/2018/1803080002/1803080002_B.png?v1.2" alt="책 이미지" /><div>북랩 도서</div></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="news-row" aria-label="북랩 News">
+      <div class="news-panel">
+        <div class="news-title">북랩 News</div>
+        <ul class="news-list">
+          <li>북랩 출간 소식과 공지사항이 표시되는 영역</li>
+          <li>신간, 이벤트, 서비스 안내 목록</li>
+          <li>기존 index.php의 뉴스 행 위치 기준</li>
+        </ul>
+      </div>
+      <div class="news-panel">
+        <div class="news-title">북랩 Story</div>
+        <ul class="news-list">
+          <li>작가 인터뷰와 출판 스토리</li>
+          <li>독자에게 전하는 책 이야기</li>
+          <li>콘텐츠 목록형 게시판 영역</li>
+        </ul>
+      </div>
+      <div class="news-banner">
+        <img src="http://www.book.co.kr/essay_ver2/images/index/banner_tel.jpg?v1.2" width="290" height="80" alt="상담 전화" />
+        <span></span>
+        <div>
+          <img src="http://www.book.co.kr/essay_ver2/images/index/main_banner_02.jpg" width="80" height="80" alt="신용카드결제" />
+          <img src="http://www.book.co.kr/essay_ver2/images/index/main_banner_03.jpg" width="200" height="80" alt="무통장입금" style="margin-left:10px;" />
+        </div>
+      </div>
+    </section>
+
+    <section class="booktrailer-section" aria-label="북트레일러">
+      <div class="booktrailer-titlebar">
+        <h2>북트레일러<em>Book Trailer</em></h2>
+        <a href="trailer_list.php">MORE</a>
+      </div>
+      <div class="booktrailer-list">
+        <article class="booktrailer-card" onclick="location.href='trailer_view.php?no=sample1'">
+          <div class="video-thumb" aria-hidden="true">
+            <div class="scene-sky"></div>
+            <div class="scene-book"></div>
+            <div class="scene-title">반클리프<br>그리고<br>어퍼컷</div>
+            <div class="play-button"></div>
+          </div>
+          <div class="video-meta">
+            <div class="video-title">반클리프 그리고 어퍼컷</div>
+            <div class="video-author">북랩</div>
+            <div class="video-summary">유튜브 목록 화면처럼 썸네일과 재생 버튼을 강조한 북트레일러 카드입니다.</div>
+          </div>
+        </article>
+        <article class="booktrailer-card" onclick="location.href='trailer_view.php?no=sample2'">
+          <div class="video-thumb" aria-hidden="true">
+            <div class="scene-sky alt"></div>
+            <div class="scene-book alt"></div>
+            <div class="scene-title">새로운<br>책의<br>예고편</div>
+            <div class="play-button"></div>
+          </div>
+          <div class="video-meta">
+            <div class="video-title">작가와 독자를 잇는 두 번째 북트레일러</div>
+            <div class="video-author">북랩</div>
+            <div class="video-summary">메인에는 최대 2개만 노출되도록 카드 폭과 간격을 고정했습니다.</div>
+          </div>
+        </article>
+      </div>
+    </section>
+  </main>
+  <aside class="prototype-side"></aside>
+  <div class="clear"></div>
+</div>
+</body>
+</html>
