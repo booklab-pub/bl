@@ -1,0 +1,910 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>저자측 상세보기 - 최종 교정본 체크리스트 프로토타입</title>
+  <style>
+    :root {
+      --red: #d8232a;
+      --red-dark: #b8171e;
+      --nav-blue: #123d72;
+      --line: #d7dce3;
+      --soft-line: #e8ebef;
+      --text: #222;
+      --muted: #6b7280;
+      --panel: #f7f9fb;
+      --green: #137a4b;
+      --yellow: #fff7df;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      color: var(--text);
+      background: #fff;
+      font-family: "Noto Sans KR", "Malgun Gothic", Arial, sans-serif;
+      font-size: 14px;
+      line-height: 1.55;
+    }
+
+    a { color: inherit; text-decoration: none; }
+
+    .page {
+      width: 1130px;
+      margin: 0 auto;
+    }
+
+    .topbar {
+      height: 91px;
+      display: flex;
+      align-items: center;
+      gap: 28px;
+      border-bottom: 1px solid #eef0f2;
+    }
+
+    .logo {
+      width: 210px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      color: #c9151e;
+      font-weight: 800;
+      letter-spacing: -1px;
+    }
+
+    .logo-mark {
+      width: 56px;
+      height: 42px;
+      border: 4px solid #e01924;
+      border-left-width: 8px;
+      border-radius: 50% 48% 45% 52%;
+      position: relative;
+    }
+
+    .logo-mark:before,
+    .logo-mark:after {
+      content: "";
+      position: absolute;
+      background: #e01924;
+      border-radius: 999px;
+      transform: rotate(18deg);
+    }
+
+    .logo-mark:before {
+      width: 36px;
+      height: 4px;
+      left: 7px;
+      top: 14px;
+    }
+
+    .logo-mark:after {
+      width: 28px;
+      height: 4px;
+      left: 11px;
+      top: 23px;
+    }
+
+    .logo-ko {
+      display: block;
+      font-size: 38px;
+      line-height: 1;
+    }
+
+    .logo-en {
+      display: block;
+      margin-top: 1px;
+      color: #9d1820;
+      font-size: 16px;
+      line-height: 1;
+      letter-spacing: 0;
+    }
+
+    .search {
+      flex: 1;
+      max-width: 532px;
+      height: 52px;
+      display: grid;
+      grid-template-columns: 106px 1fr 62px;
+      border-radius: 6px;
+      overflow: hidden;
+      border: 1px solid #cfcfcf;
+    }
+
+    .search select,
+    .search input,
+    .search button {
+      border: 0;
+      font: inherit;
+      outline: 0;
+    }
+
+    .search select {
+      padding: 0 18px;
+      background: #e6e6e6;
+      font-size: 17px;
+    }
+
+    .search input {
+      padding: 0 16px;
+      color: #6b7280;
+      font-size: 16px;
+    }
+
+    .search button {
+      background: var(--red);
+      cursor: pointer;
+      position: relative;
+    }
+
+    .search button:before {
+      content: "";
+      position: absolute;
+      width: 25px;
+      height: 25px;
+      left: 17px;
+      top: 12px;
+      border: 4px solid #fff;
+      border-radius: 50%;
+    }
+
+    .search button:after {
+      content: "";
+      position: absolute;
+      width: 17px;
+      height: 5px;
+      left: 39px;
+      top: 35px;
+      background: #fff;
+      border-radius: 999px;
+      transform: rotate(45deg);
+    }
+
+    .quick {
+      margin-left: auto;
+      min-width: 270px;
+      text-align: right;
+      color: #555;
+      font-weight: 700;
+    }
+
+    .quick strong {
+      color: #2d2d2d;
+      font-size: 25px;
+      letter-spacing: 1px;
+    }
+
+    .quick-links {
+      margin-top: 8px;
+      color: #777;
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    .nav {
+      height: 42px;
+      display: grid;
+      grid-template-columns: repeat(6, 1fr) 164px;
+      margin-top: 0;
+      color: #fff;
+      font-size: 17px;
+      font-weight: 800;
+      text-align: center;
+    }
+
+    .nav a {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--red);
+      border-right: 1px solid rgba(255,255,255,.15);
+    }
+
+    .nav a:last-child { background: var(--nav-blue); }
+
+    .layout {
+      display: grid;
+      grid-template-columns: 232px 1fr;
+      gap: 24px;
+      margin-top: 8px;
+    }
+
+    .sidebar {
+      border: 1px solid #cbd1d8;
+      border-left: 0;
+      min-height: 790px;
+      padding-bottom: 20px;
+    }
+
+    .member {
+      padding: 14px 12px 12px;
+      border-bottom: 2px solid #243447;
+      text-align: center;
+      color: #777;
+      font-size: 13px;
+    }
+
+    .member strong { color: #444; }
+
+    .member-actions {
+      display: flex;
+      justify-content: center;
+      gap: 16px;
+      margin-top: 9px;
+      color: #616b75;
+      font-weight: 800;
+    }
+
+    .menu {
+      padding: 18px 14px;
+      color: #7c858f;
+      font-size: 17px;
+      line-height: 1.85;
+    }
+
+    .menu h3 {
+      margin: 4px 0 2px;
+      color: #273447;
+      font-size: 20px;
+      font-weight: 500;
+      line-height: 1.4;
+    }
+
+    .menu .active {
+      color: #111;
+      font-weight: 800;
+      text-decoration: underline;
+      text-decoration-color: var(--red);
+      text-underline-offset: 4px;
+    }
+
+    .content { min-width: 0; }
+
+    .banner {
+      height: 102px;
+      border: 4px solid #e5e7eb;
+      background:
+        linear-gradient(90deg, rgba(255,255,255,.95), rgba(255,255,255,.35)),
+        linear-gradient(135deg, #eef2f7 0%, #f8eaf7 58%, #e2edff 100%);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .banner:after {
+      content: "";
+      position: absolute;
+      right: 50px;
+      top: -18px;
+      width: 260px;
+      height: 126px;
+      background: rgba(30, 64, 116, .16);
+      transform: skewX(-18deg);
+    }
+
+    .section-title {
+      margin-top: 25px;
+      height: 48px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .section-title h1 {
+      margin: 0;
+      color: #5f6670;
+      font-size: 26px;
+      font-weight: 800;
+      letter-spacing: -1px;
+    }
+
+    .section-title small {
+      margin-left: 8px;
+      color: #9aa1aa;
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .breadcrumb {
+      color: #89909a;
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .article-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      margin: 22px 0 8px;
+    }
+
+    .article-head h2 {
+      margin: 0;
+      font-size: 19px;
+      letter-spacing: -1px;
+    }
+
+    .article-actions {
+      display: flex;
+      gap: 18px;
+      color: #2366bd;
+      font-size: 17px;
+      font-weight: 700;
+    }
+
+    .final-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      min-height: 30px;
+      padding: 4px 10px;
+      border: 1px solid #f1c7c9;
+      background: #fff4f4;
+      color: var(--red-dark);
+      font-size: 13px;
+      font-weight: 800;
+    }
+
+    .final-badge:before {
+      content: "";
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--red);
+    }
+
+    .meta-table {
+      width: 100%;
+      border-collapse: collapse;
+      border-top: 1px solid #c9ced5;
+      border-left: 1px solid #c9ced5;
+      font-size: 14px;
+    }
+
+    .meta-table th,
+    .meta-table td {
+      height: 51px;
+      padding: 12px;
+      border-right: 1px solid #c9ced5;
+      border-bottom: 1px solid #c9ced5;
+      text-align: left;
+    }
+
+    .meta-table th {
+      width: 114px;
+      background: #e0e3e8;
+      color: #111;
+      font-weight: 800;
+    }
+
+    .meta-table .wide { width: 368px; }
+
+    .post-body {
+      min-height: 250px;
+      padding: 25px 26px 34px;
+      border: 1px solid #c9ced5;
+      border-top: 0;
+      color: #333;
+      white-space: pre-line;
+    }
+
+    .checklist-area {
+      margin-top: 24px;
+      border: 1px solid #d9b8b8;
+      background: #fff;
+    }
+
+    .consent-alert {
+      display: grid;
+      grid-template-columns: 42px 1fr auto;
+      gap: 14px;
+      padding: 18px 20px;
+      border-bottom: 1px solid #efd1d1;
+      background: linear-gradient(180deg, #fff8f8 0%, #fff 100%);
+      align-items: center;
+    }
+
+    .alert-icon {
+      width: 42px;
+      height: 42px;
+      display: grid;
+      place-items: center;
+      border-radius: 50%;
+      background: var(--red);
+      color: #fff;
+      font-size: 26px;
+      font-weight: 900;
+    }
+
+    .consent-alert h3 {
+      margin: 0 0 4px;
+      color: var(--red-dark);
+      font-size: 18px;
+      letter-spacing: -1px;
+    }
+
+    .consent-alert p {
+      margin: 0;
+      color: #4b5563;
+      font-size: 14px;
+    }
+
+    .admin-only {
+      padding: 4px 8px;
+      border: 1px solid #cdd6e2;
+      background: #f6f8fb;
+      color: #5f6875;
+      font-size: 12px;
+      font-weight: 800;
+      white-space: nowrap;
+    }
+
+    .checklist-toggle {
+      border-bottom: 1px solid var(--soft-line);
+    }
+
+    .checklist-toggle summary {
+      list-style: none;
+      min-height: 56px;
+      padding: 15px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      cursor: pointer;
+      font-size: 16px;
+      font-weight: 800;
+    }
+
+    .checklist-toggle summary::-webkit-details-marker { display: none; }
+
+    .toggle-label {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .toggle-label:before {
+      content: "+";
+      width: 22px;
+      height: 22px;
+      display: grid;
+      place-items: center;
+      border: 1px solid #c4ccd6;
+      color: var(--red);
+      font-weight: 900;
+      line-height: 1;
+    }
+
+    details[open] .toggle-label:before { content: "-"; }
+
+    .progress {
+      color: #6b7280;
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .checklist-panel {
+      padding: 0 20px 18px;
+    }
+
+    .checklist-copy {
+      margin: 0 0 14px;
+      padding: 14px 16px;
+      background: var(--yellow);
+      border: 1px solid #f3dfad;
+      color: #4a3d1f;
+    }
+
+    .checks {
+      margin: 0;
+      padding: 0;
+      list-style: none;
+      border: 1px solid var(--soft-line);
+      border-bottom: 0;
+    }
+
+    .checks li {
+      display: grid;
+      grid-template-columns: 34px 1fr;
+      gap: 10px;
+      align-items: start;
+      padding: 12px 14px;
+      border-bottom: 1px solid var(--soft-line);
+      background: #fff;
+    }
+
+    .checks li:nth-child(even) { background: #fbfcfd; }
+
+    .checks input {
+      width: 20px;
+      height: 20px;
+      margin-top: 1px;
+      accent-color: var(--red);
+      cursor: pointer;
+    }
+
+    .checks label {
+      cursor: pointer;
+      color: #313842;
+    }
+
+    .agreement {
+      padding: 18px 20px 20px;
+      background: #fafbfc;
+    }
+
+    .agreement label {
+      display: grid;
+      grid-template-columns: 26px 1fr;
+      gap: 12px;
+      align-items: start;
+      font-weight: 800;
+      color: #1f2937;
+    }
+
+    .agreement input {
+      width: 20px;
+      height: 20px;
+      margin-top: 2px;
+      accent-color: var(--green);
+      cursor: pointer;
+    }
+
+    .agreement-note {
+      margin: 10px 0 0 38px;
+      color: #647181;
+      font-size: 13px;
+    }
+
+    .button-row {
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+      margin-top: 16px;
+    }
+
+    .btn {
+      min-width: 126px;
+      height: 40px;
+      border: 1px solid #b9c1cc;
+      background: #fff;
+      color: #374151;
+      font-weight: 800;
+      cursor: pointer;
+    }
+
+    .btn-primary {
+      border-color: var(--red);
+      background: var(--red);
+      color: #fff;
+    }
+
+    .btn-primary:disabled {
+      border-color: #c7cdd5;
+      background: #c7cdd5;
+      cursor: not-allowed;
+    }
+
+    .hidden-state {
+      margin-top: 24px;
+      padding: 16px 18px;
+      border: 1px dashed #cbd5e1;
+      background: #f8fafc;
+      color: #64748b;
+    }
+
+    @media (max-width: 900px) {
+      .page {
+        width: 100%;
+        padding: 0 14px;
+      }
+
+      .topbar {
+        height: auto;
+        padding: 14px 0;
+        flex-wrap: wrap;
+      }
+
+      .logo { width: auto; }
+      .search {
+        order: 3;
+        flex: 0 0 100%;
+        width: 100%;
+        min-width: 0;
+        max-width: none;
+        grid-template-columns: 92px minmax(0, 1fr) 58px;
+      }
+      .quick { min-width: 0; font-size: 13px; }
+
+      .nav {
+        grid-template-columns: repeat(2, 1fr);
+        height: auto;
+      }
+
+      .nav a { min-height: 40px; }
+
+      .layout {
+        grid-template-columns: 1fr;
+      }
+
+      .sidebar { display: none; }
+
+      .section-title {
+        height: auto;
+        padding: 14px 0;
+        align-items: flex-start;
+        flex-direction: column;
+      }
+
+      .article-head {
+        align-items: flex-start;
+        flex-direction: column;
+      }
+
+      .meta-table th,
+      .meta-table td {
+        display: block;
+        width: 100%;
+        height: auto;
+        min-width: 0;
+      }
+
+      .meta-table,
+      .meta-table tbody {
+        display: block;
+        width: 100%;
+      }
+
+      .meta-table tr {
+        width: 100%;
+        display: grid;
+        grid-template-columns: 102px minmax(0, 1fr);
+      }
+
+      .meta-table tr.title-row {
+        grid-template-columns: 102px minmax(0, 1fr);
+      }
+
+      .meta-table th { width: auto; }
+
+      .meta-table .wide {
+        width: 100%;
+      }
+
+      .meta-table td[colspan] {
+        grid-column: 2;
+      }
+
+      .consent-alert {
+        grid-template-columns: 34px 1fr;
+      }
+
+      .alert-icon {
+        width: 34px;
+        height: 34px;
+        font-size: 21px;
+      }
+
+      .admin-only {
+        grid-column: 2;
+        justify-self: start;
+      }
+
+      .checklist-toggle summary {
+        align-items: flex-start;
+        flex-direction: column;
+      }
+
+      .button-row {
+        flex-direction: column;
+      }
+
+      .btn {
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <header class="topbar">
+      <a class="logo" href="#">
+        <span class="logo-mark" aria-hidden="true"></span>
+        <span>
+          <span class="logo-ko">북랩</span>
+          <span class="logo-en">Book Lab</span>
+        </span>
+      </a>
+
+      <form class="search">
+        <select aria-label="검색 분류">
+          <option>도서</option>
+        </select>
+        <input type="search" placeholder="도서 제목 또는 저자 이름을 입력하세요.">
+        <button type="submit" aria-label="검색"></button>
+      </form>
+
+      <div class="quick">
+        출판계약상담 <strong>02-2026-5566</strong>
+        <div class="quick-links">로그아웃&nbsp;&nbsp; | &nbsp;&nbsp;MY북랩&nbsp;&nbsp; | &nbsp;&nbsp;북트레일러&nbsp;&nbsp; | &nbsp;&nbsp;보도자료</div>
+      </div>
+    </header>
+
+    <nav class="nav" aria-label="주 메뉴">
+      <a href="#">회사소개</a>
+      <a href="#">출판가이드</a>
+      <a href="#">가격표</a>
+      <a href="#">출판유통</a>
+      <a href="#">인쇄/제본</a>
+      <a href="#">홍보/마케팅</a>
+      <a href="#">북스토어</a>
+    </nav>
+
+    <main class="layout">
+      <aside class="sidebar">
+        <div class="member">
+          <strong>태원용</strong>님 반갑습니다!
+          <div class="member-actions">
+            <span>My북랩</span>
+            <span>회원정보 수정</span>
+            <span>로그아웃</span>
+          </div>
+        </div>
+        <div class="menu">
+          <h3>출판</h3>
+          <div>프로젝트 최신글 (1)</div>
+          <div class="active">나의 출판 프로젝트</div>
+          <div>나의 출판계약서</div>
+          <div>&nbsp;&nbsp;ㄴ 계약서 (4)</div>
+          <div>&nbsp;&nbsp;ㄴ 현금영수증 신청.조회</div>
+          <h3>판매 및 인세 내역</h3>
+          <div>도서판매 및 인세 내역</div>
+          <div>도서출고 및 인세 내역</div>
+          <div>자주 하시는 질문</div>
+          <div>저자교정 동영상 가이드</div>
+          <div>저자 프로필 자동 생성기</div>
+          <div>AI 작가지원 챗봇</div>
+          <h3>북스토어</h3>
+          <div>저자구매</div>
+          <div>주문내역조회</div>
+          <div>장바구니</div>
+          <div>관심상품</div>
+        </div>
+      </aside>
+
+      <section class="content">
+        <div class="banner" aria-hidden="true"></div>
+
+        <div class="section-title">
+          <h1>나의 출판 프로젝트 <small>나의 출판 프로젝트를 관리하실 수 있습니다.</small></h1>
+          <div class="breadcrumb">마이페이지 &gt; 나의 출판 프로젝트</div>
+        </div>
+
+        <div class="article-head">
+          <div>
+            <h2>ㆍ동유럽ㆍ터키를 가슴에 담다</h2>
+            <div class="final-badge">인쇄 직전 최종본 확인 요청 게시물</div>
+          </div>
+          <div class="article-actions">
+            <a href="#">글쓰기</a>
+            <a href="#">목록으로</a>
+          </div>
+        </div>
+
+        <table class="meta-table">
+          <tr>
+            <th>작성자</th>
+            <td class="wide">태원용</td>
+            <th>작성일</th>
+            <td>2026-06-09 10:25</td>
+          </tr>
+          <tr>
+            <th>이메일</th>
+            <td>taehihe@hanmail.net</td>
+            <th>연락처</th>
+            <td>010-3634-9445</td>
+          </tr>
+          <tr class="title-row">
+            <th>분류</th>
+            <td colspan="3">인쇄</td>
+          </tr>
+          <tr class="title-row">
+            <th>제목</th>
+            <td colspan="3">최종 교정본 확인 및 인쇄 승인 요청드립니다.</td>
+          </tr>
+        </table>
+
+        <div class="post-body">안녕하세요.
+최종 교정본 파일을 첨부드립니다.
+
+본문, 표지, 목차, 이미지 반영 상태를 확인하신 뒤 아래 체크리스트를 열어 항목별로 확인해 주세요.
+확인이 완료되면 최종 승인 동의를 남겨 주시면 인쇄 및 제작 절차를 진행하겠습니다.</div>
+
+        <section class="checklist-area" data-final-print="true" aria-label="최종 교정본 확인 체크리스트">
+          <div class="consent-alert">
+            <div class="alert-icon" aria-hidden="true">!</div>
+            <div>
+              <h3>최종 교정본 승인 전 확인이 필요합니다.</h3>
+              <p>승인 후에는 인쇄 및 제작 절차가 진행되므로 수정이 어렵거나 추가 비용이 발생할 수 있습니다. 번거로우시더라도 아래 사항을 한 번 더 확인해 주세요.</p>
+            </div>
+            <span class="admin-only">관리자 최종본 체크 시 노출</span>
+          </div>
+
+          <details class="checklist-toggle" open>
+            <summary>
+              <span class="toggle-label">최종 교정본 확인 체크리스트</span>
+              <span class="progress" id="progressText">0 / 9 확인</span>
+            </summary>
+            <div class="checklist-panel">
+              <p class="checklist-copy">아래 항목은 인쇄 직전 최종본에만 표시됩니다. 모든 항목을 체크하면 최종 승인 동의가 가능합니다.</p>
+              <ul class="checks">
+                <li><input type="checkbox" id="c1"><label for="c1">표지의 제목, 부제, 저자명, 카피 문구에 오류가 없는지 확인하셨습니까?</label></li>
+                <li><input type="checkbox" id="c2"><label for="c2">저자 소개(프로필)의 성명, 학력, 경력, 소속 등이 정확한지 확인하셨습니까?</label></li>
+                <li><input type="checkbox" id="c3"><label for="c3">추천사, 서문, 감사의 글 등 부가 원고에 누락이나 오류가 없는지 확인하셨습니까?</label></li>
+                <li><input type="checkbox" id="c4"><label for="c4">목차의 제목과 페이지 번호가 정확한지 확인하셨습니까?</label></li>
+                <li><input type="checkbox" id="c5"><label for="c5">본문의 오탈자, 맞춤법, 띄어쓰기 등을 검토하셨습니까?</label></li>
+                <li><input type="checkbox" id="c6"><label for="c6">인명, 지명, 연도, 수치, 인용문 등 사실관계에 오류가 없는지 확인하셨습니까?</label></li>
+                <li><input type="checkbox" id="c7"><label for="c7">사진, 그림, 표, 캡션 등이 올바르게 반영되었는지 확인하셨습니까?</label></li>
+                <li><input type="checkbox" id="c8"><label for="c8">페이지 누락, 중복, 이미지 누락 등 편집상 이상이 없는지 확인하셨습니까?</label></li>
+                <li><input type="checkbox" id="c9"><label for="c9">최종 교정본 전체를 검토하였으며 추가 수정 사항이 없음을 확인하셨습니까?</label></li>
+              </ul>
+            </div>
+          </details>
+
+          <div class="agreement">
+            <label for="agreeFinal">
+              <input type="checkbox" id="agreeFinal" disabled>
+              <span>본인은 최종 교정본을 직접 검토하였으며, 위 항목을 모두 확인하였습니다. 또한 최종 승인 이후 발견되는 오탈자, 내용 오류, 프로필 오류 및 기타 수정 사항에 대해서는 원칙적으로 저자의 책임으로 처리됨을 확인합니다.</span>
+            </label>
+            <p class="agreement-note" id="agreementNote">체크리스트 9개 항목을 모두 확인하면 동의 체크가 활성화됩니다.</p>
+            <div class="button-row">
+              <button class="btn" type="button">수정 요청 남기기</button>
+              <button class="btn btn-primary" type="button" id="submitApproval" disabled>최종 승인 동의</button>
+            </div>
+          </div>
+        </section>
+
+        <div class="hidden-state">참고: 일반 게시물 또는 관리자가 최종본으로 체크하지 않은 게시물에서는 위 체크리스트 영역이 표시되지 않습니다.</div>
+      </section>
+    </main>
+  </div>
+
+  <script>
+    const checks = Array.from(document.querySelectorAll(".checks input[type='checkbox']"));
+    const agree = document.getElementById("agreeFinal");
+    const submit = document.getElementById("submitApproval");
+    const progressText = document.getElementById("progressText");
+    const agreementNote = document.getElementById("agreementNote");
+
+    function refreshChecklist() {
+      const checkedCount = checks.filter((item) => item.checked).length;
+      const complete = checkedCount === checks.length;
+
+      progressText.textContent = checkedCount + " / " + checks.length + " 확인";
+      agree.disabled = !complete;
+      if (!complete) {
+        agree.checked = false;
+        submit.disabled = true;
+        agreementNote.textContent = "체크리스트 9개 항목을 모두 확인하면 동의 체크가 활성화됩니다.";
+      } else {
+        agreementNote.textContent = "최종 승인 문구를 확인한 뒤 동의 체크를 진행해 주세요.";
+      }
+    }
+
+    checks.forEach((item) => item.addEventListener("change", refreshChecklist));
+    agree.addEventListener("change", () => {
+      submit.disabled = !agree.checked;
+      agreementNote.textContent = agree.checked
+        ? "동의가 완료되었습니다. 최종 승인 동의 버튼을 누르면 기록됩니다."
+        : "최종 승인 문구를 확인한 뒤 동의 체크를 진행해 주세요.";
+    });
+
+    submit.addEventListener("click", () => {
+      alert("프로토타입: 최종 교정본 승인 동의가 저장됩니다.");
+    });
+  </script>
+</body>
+</html>
