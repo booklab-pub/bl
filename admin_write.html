@@ -1,0 +1,427 @@
+
+<!doctype html><HTML>
+<HEAD>
+<TITLE>북랩 관리자모드</TITLE>
+<META http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta http-equiv="X-UA-Compatible" content="IE=edge;chrome=1" /> <!-- IE 버전 중 jQuery가 안될 때 -->
+<!-- Noto Sans Korean 211123 -->
+<style type="text/css">
+  body { margin:0; background:#fff; color:#222; font-family:"Malgun Gothic", "Noto Sans KR", Arial, sans-serif; font-size:13px; }
+  table { border-collapse:collapse; }
+  input, textarea, select, button { font-family:inherit; font-size:13px; }
+  a { color:#0066b3; text-decoration:none; }
+  a:hover { text-decoration:underline; }
+  .t_name { width:210px; background:#e8f6fb; color:#0076a8; border:1px solid #b8ddea; padding:10px 12px; vertical-align:middle; }
+  .t_value { border:1px solid #b8ddea; padding:7px 12px; vertical-align:middle; }
+  .writeInput, .writeSelect, .writeTextarea { border:1px solid #c8c8c8; min-height:24px; }
+  .writeTextarea { padding:6px; line-height:1.5; }
+  .center { text-align:center; }
+  .txt_bottom { vertical-align:middle; }
+  .link_text { color:#0066cc; text-decoration:underline; }
+  .t_c { color:#008ac0; }
+  .img-replace { display:inline-block; min-width:68px; padding:7px 14px; margin:2px; border:1px solid #b8c8d8; border-radius:3px; background:#f7fbff; color:#22506f; font-weight:700; text-align:center; line-height:1.2; vertical-align:middle; }
+  #uploader { min-height:120px; border:1px dashed #b8ddea; background:#f9fcfe; }
+  .final-proof-help { display:inline-block; margin:3px 0 3px 12px; color:#888; }
+</style>
+</head><style type="text/css">
+				.plupload_filelist td {color:#75746d;font-size:12px;}
+				.ui-button-text {font-size:12px;}
+				</style><style type="text/css">.plupload_container {height:200px;min-height:200px;}
+.plupload_filelist_content {width:100%;}
+.plupload_header_content {padding:0 10px;}
+.plupload_content {top:0px;bottom:0px;left:0;right:0;width:100%;overflow:hidden;}
+.plupload_scroll {height:180px;width:100%;overflow-x:hidden;overflow-y:auto;}
+.plupload_cell {padding:3px 6px;}
+.plupload_file_size, .plupload_file_status, .plupload_file_action {position:absolute;top:0;right:0;}
+.plupload_file_name {width:75%;overflow:hidden;}
+.plupload_file_status {right:100px;text-align:right;width:50px;}
+.plupload_file_size {right:30px;text-align:right;min-width:60px;}
+.plupload_file_action {width:20px;}
+.plupload_header {height:1px;z-index:1000;background:none !important;border:none !important;}
+.plupload_header_content {height:1px;padding:0px;}
+.plupload_header_title {display:none;}
+.plupload_header_text {display:none;}
+.plupload_message {height:50px;}
+.plupload_filelist_header {display:none;} /* 파일명, 상태, 크기 */
+.plupload_filelist_footer {background:#ffffff;}
+</style><style type="text/css">
+.link_text {color:#ffa500;letter-spacing:-1px;font-size:12px;text-decoration:underline;}
+.ui-datepicker-trigger {margin:0 0 0 1px;cursor:pointer;}
+.a_text {text-decoration:none !important;color:#000000 !important;}
+.a_text span {border-bottom:1px solid #cccccc;}
+</style>
+<body style="margin:0;">
+<table width="100%" border="0" cellpadding="0" cellspacing="0">
+	<tr>
+		<td>
+			<div class="headerbar" style="text-align:left;width:100%;height:40px;line-height:40px;background:#177c9f;letter-spacing:-2px;"><span style="font-family:'Noto Sans KR',sans-serif;font-size:16px;color:#ffffff;letter-spacing:-2px;margin:0 0 0 30px;padding:0px;">프로젝트 최신글</span></div>		</td>
+	</tr>
+</table>
+<table width="100%" border="0" cellpadding="0" cellspacing="0">
+    <tr>
+        <td align="center" style="position:relative;">
+        	<input type="hidden" id="isMobile" value="" /> <!-- 모바일여부 -->
+        	<div style="margin-top:10px;"></div>
+        	<div id="id_fastformloading" style="position:absolute;top:30px;left:calc(15% + 220px);width:220px;z-index:2000;text-align:center;display:none;">
+				 param($m)
+  $tag = $m.Groups[1].Value
+  $alt = ''
+  if ($tag -match 'alt\s*=\s*"([^"]*)"') { $alt = $matches[1] }
+  elseif ($tag -match "alt\s*=\s*'([^']*)'") { $alt = $matches[1] }
+  if ([string]::IsNullOrWhiteSpace($alt)) { $alt = '버튼' }
+  '<span class="img-replace">' + [System.Net.WebUtility]::HtmlEncode($alt) + '</span>'
+
+			</div>
+        	<div id="id_layfastform" style="position:absolute;top:0px;left:15%;width:640px;height:600px;background:#ffffff;border-right:2px solid #7da6f4;border-bottom:2px solid #7da6f4;border-left:2px solid #7da6f4;display:none;z-index:1000;">
+        		<div id="id_fastform" style="overflow-y:scroll;overflow-x:hidden;height:540px;"></div>
+			</div>
+<form name="myform" id="myform" method="post" action="" style="margin:0px;" target="iframe_exe">
+	<INPUT TYPE="hidden" name="PGCONTS" value="4" />
+	<INPUT TYPE="hidden" name="mode" value="reply" />
+	<INPUT TYPE="hidden" name="viewno" value="158838" />
+	<INPUT TYPE="hidden" name="filetime" value="17810569017566" />
+	<input type="hidden" name="form_fno" id="form_fno" value="" /> <!-- 양식 첨부파일 no -->
+	<input type="hidden" name="temp_filepath" value="" /> <!-- 임시저장 폴더명 -->
+	<input type="hidden" name="no" id="gno" value="3727" />
+	<input type="hidden" name="parno" value="158838" />
+	<input type="hidden" name="thrno" value="" />
+	<input type="hidden" name="depno" value="" />
+	<input type="hidden" name="posno" value="" />
+	<input type="hidden" name="icon_recelist" value="" />
+	<input type="hidden" name="captflag" value="" /> <!-- 캡쳐삽입 -->
+	<input type="hidden" name="sign_ID" id="sign_ID" value="<br />
+pitapott＃pitapott<br />
+" />
+	<input type="hidden" id="authphone" value="010-9084-5339" /> <!-- 저자 연락처 -->
+	<input type="hidden" id="authagent" value="백중현|junghyunpaik@gmail.com|010-9084-5339|dohyunpaik" /> <!-- 대리작성 -->
+	<input type="hidden" name="prjnote" id="prjnote" value="" /> <!-- 프로젝트에서 넘어온 값으로 처리 -->
+			<div style="position:absolute;top:170px;right:20px;width:100px;z-index:100;">
+				<div id="id_icon_recelist" style="display:none;border:1px solid #b8d9e1;text-align:left;background:#f1f1f1;">
+					<div style="margin:5px 0 5px 10px;"><input type="checkbox" name="icon_rece" onClick="set_admin_write('icon_rece', this.value)" value="ksw1x" /><span id="id_ksw1x_name">구성우</span></div><div style="margin:5px 0 5px 10px;"><input type="checkbox" name="icon_rece" onClick="set_admin_write('icon_rece', this.value)" value="pitapott" /><span id="id_pitapott_name">김부경</span></div><div style="margin:5px 0 5px 10px;"><input type="checkbox" name="icon_rece" onClick="set_admin_write('icon_rece', this.value)" value="kykite3" /><span id="id_kykite3_name">김연</span></div><div style="margin:5px 0 5px 10px;"><input type="checkbox" name="icon_rece" onClick="set_admin_write('icon_rece', this.value)" value="hyeon1316" /><span id="id_hyeon1316_name">김현아</span></div><div style="margin:5px 0 5px 10px;"><input type="checkbox" name="icon_rece" onClick="set_admin_write('icon_rece', this.value)" value="ezbook" /><span id="id_ezbook_name">박기성</span></div><div style="margin:5px 0 5px 10px;"><input type="checkbox" name="icon_rece" onClick="set_admin_write('icon_rece', this.value)" value="zine" /><span id="id_zine_name">박진관</span></div><div style="margin:5px 0 5px 10px;"><input type="checkbox" name="icon_rece" onClick="set_admin_write('icon_rece', this.value)" value="sangjin" /><span id="id_sangjin_name">배상진</span></div><div style="margin:5px 0 5px 10px;"><input type="checkbox" name="icon_rece" onClick="set_admin_write('icon_rece', this.value)" value="ttsun10" /><span id="id_ttsun10_name">선일영</span></div><div style="margin:5px 0 5px 10px;"><input type="checkbox" name="icon_rece" onClick="set_admin_write('icon_rece', this.value)" value="intpub" /><span id="id_intpub_name">손일수</span></div><div style="margin:5px 0 5px 10px;"><input type="checkbox" name="icon_rece" onClick="set_admin_write('icon_rece', this.value)" value="ceo" /><span id="id_ceo_name">손형국</span></div><div style="margin:5px 0 5px 10px;"><input type="checkbox" name="icon_rece" onClick="set_admin_write('icon_rece', this.value)" value="shy19890" /><span id="id_shy19890_name">손화연</span></div><div style="margin:5px 0 5px 10px;"><input type="checkbox" name="icon_rece" onClick="set_admin_write('icon_rece', this.value)" value="design5" /><span id="id_design5_name">안유경</span></div><div style="margin:5px 0 5px 10px;"><input type="checkbox" name="icon_rece" onClick="set_admin_write('icon_rece', this.value)" value="rainbowlsk" /><span id="id_rainbowlsk_name">이수경</span></div><div style="margin:5px 0 5px 10px;"><input type="checkbox" name="icon_rece" onClick="set_admin_write('icon_rece', this.value)" value="wingzero2" /><span id="id_wingzero2_name">이창영</span></div><div style="margin:5px 0 5px 10px;"><input type="checkbox" name="icon_rece" onClick="set_admin_write('icon_rece', this.value)" value="sue" /><span id="id_sue_name">이현수</span></div><div style="margin:5px 0 5px 10px;"><input type="checkbox" name="icon_rece" onClick="set_admin_write('icon_rece', this.value)" value="design8" /><span id="id_design8_name">임진형</span></div><div style="margin:5px 0 5px 10px;"><input type="checkbox" name="icon_rece" onClick="set_admin_write('icon_rece', this.value)" value="hy0518" /><span id="id_hy0518_name">장하영</span></div>				</div>
+			</div>
+			<table width="95%" border="0" cellspacing="1" cellpadding="1" class="t_style">
+				<colgroup>
+    				<col width="15%" />
+    				<col width="35%" />
+    				<col width="10%" />
+    				<col width="40%" />
+  				</colgroup>
+  				<tr>
+			    <td class="t_name">저자</td>
+			    <td class="t_value">백중현 (dohyunpaik)</td>
+				<td class="t_name">프로젝트</td>
+			    <td class="t_value">목적 없이 바쁘게 사는 당신에게
+			    	<input type="hidden" name="prj_seq" id="prj_seq" value="4670" /><input type="hidden" name="usrid" id="usrid" value="" /><input type="hidden" name="author" value="백중현" />
+			    </td>
+			</tr>  				<tr>
+				    <td class="t_name">작성자</td>
+				    <td class="t_value" style="position:relative;">
+				    	<input type="text" name="name" value="" class="writeInput" style="width:100px;" />
+						<select name="mem_sel" onchange="set_admin_write_member('1', this.value);" class="writeSelect">
+							<option value="">::: 선택 :::</option>
+							<option value="구성우|ksw1x@hanmail.net|010-2238-0089">구성우</option><option value="김부경|pitapott@book.co.kr|02-2026-5779">김부경</option><option value="김연|kykite3@book.co.kr|02-2026-5748">김연</option><option value="김현아|hyeon1316@book.co.kr|02-2026-5780">김현아</option><option value="박기성|ezbook@book.co.kr|02-2026-3334">박기성</option><option value="박진관|jkpark@book.co.kr|02-2026-5776">박진관</option><option value="배상진||010-8609-5453">배상진</option><option value="선일영|sun@book.co.kr|010-2100-9774">선일영</option><option value="손일수|intpub@book.co.kr|02-2026-5748">손일수</option><option value="손형국|office@book.co.kr|010-4263-7000" selected="selected">손형국</option><option value="손화연|ok@book.co.kr|010-5000-2457">손화연</option><option value="안유경|design5@book.co.kr|02-2026-3231">안유경</option><option value="이수경|rainbowlsk@book.co.kr|010-2715-1086">이수경</option><option value="이창영||010-8782-0489">이창영</option><option value="이현수|design@book.co.kr|02-2026-3777">이현수</option><option value="임진형|design8@book.co.kr|02-2026-5565">임진형</option><option value="장하영|hy0518@book.co.kr|02-2026-5564">장하영</option><option value="self">직접입력</option>						</select>
+						<div style="position:absolute;top:10px;right:10px;z-index:10;">
+							<input type="checkbox" name="agntflag" id="chkauthagent" onClick="set_admin_write_member('3', '')" /><span class="t_c">대리작성</span>
+						</div>
+					</td>
+					<td class="t_name">서명</td>
+				    <td class="t_value">
+				    	<select name="sign_no" onChange="set_admin_write('sign', '')" class="writeSelect" style="width:150px;">
+							<option value="">::: 선택 :::</option>
+							<option value="62">김부경<option value="69">김연<option value="55">김현아<option value="46">박진관<option value="5">선일영<option value="67">손일수<option value="3">손형국<option value="66">손화연<option value="58">안유경<option value="68">이수경<option value="11">이현수<option value="65">임진형						</select>
+				    	<a href="javascript:;" onClick="win_admin_write('sign')"><span class="link_text">서명 추가</span></a>
+					</td>
+				</tr>
+				<tr height="30">
+				    <td class="t_name">이메일</td>
+				    <td class="t_value">
+				    	<input type="text" name="email" value="" class="writeInput" style="width:calc(100% - 25px);" />
+					</td>
+				    <td class="t_name">휴대폰</td>
+				    <td class="t_value">
+				    	<input type="text" name="hp" value="" class="writeInput" style="width:calc(100% - 25px);" />
+					</td>
+				</tr>
+				<tr>
+				    <td class="t_name">자주 쓰는 문구</td>
+				    <td class="t_value" colspan="3" style="position:relative;">
+				    	<select name="form_cate" onChange="set_admin_write('form1', '')" class="writeSelect" style="width:150px;">
+							<option value="">::: 선택 :::</option>
+						</select>
+						<select name="form_no" onChange="set_admin_write('form2', this.value)" class="writeSelect" style="width:50%;">
+							<option value="">::: 선택 :::</option>
+						</select>
+						<a href="javascript:;" onClick="win_admin_write('form')"><span class="link_text">자주 쓰는 문구 검색</span></a>
+						<span style="margin:0 10px;"></span>
+						<a href="javascript:;" onClick="ajax_admin_write('formfopen', '');"><span class="link_text">최근 사용한 문구</span></a>
+						<div id="id_formfopen" style="display:none;"></div>
+						<div id="id_loading" style="position:absolute;top:22px;left:calc(50% + 280px);width:220px;z-index:10;text-align:center;display:none;">
+							 param($m)
+  $tag = $m.Groups[1].Value
+  $alt = ''
+  if ($tag -match 'alt\s*=\s*"([^"]*)"') { $alt = $matches[1] }
+  elseif ($tag -match "alt\s*=\s*'([^']*)'") { $alt = $matches[1] }
+  if ([string]::IsNullOrWhiteSpace($alt)) { $alt = '버튼' }
+  '<span class="img-replace">' + [System.Net.WebUtility]::HtmlEncode($alt) + '</span>'
+
+						</div>
+					</td>
+				</tr>
+				<tr height="30">
+				    <td class="t_name">제목</td>
+				    <td class="t_value" colspan="3" style="position:relative;">
+				    	<select name="cate" id="cate" class="writeSelect" style="width:100px;margin:0 5px 0 0;">
+			<option value="">::분류선택::</option>
+			<option value="1" selected="selected">교정/편집<option value="2">디자인<option value="11">도서정가<option value="3">인쇄<option value="4">홍보/마케팅<option value="5">출판계약<option value="10">도서판매<option value="6">인세<option value="7">주문/배송<option value="8">계약해지<option value="9">기타
+		</select><input type="text" name="title" id="title" value="RE: RE: 잔금 입금이 확인되었습니다" class="writeInput" style="width:calc(100% - 270px);"
+						 onKeyup="change_admin_write('title', this.value);" />				    	<span style="margin:0 0 0 5px;"></span>
+				    	<input type="checkbox" name="titflag" id="titflag" onClick="set_admin_write('titflag', '')" /><span style="letter-spacing:-1px;">쪽지</span>
+				    	<input type="checkbox" id="icon_flag" onClick="set_admin_write('icon_rece', '')" title="icon 수신" /><span style="letter-spacing:-1px;">icon 전달하기</span>
+					</td>
+				</tr>
+								<tr>
+				    <td class="t_value" colspan="4" style="padding:5px 10px;">
+				    	<div id="id_form_file"></div>
+<div style="float:left;margin:0px;line-height:100%;">
+							<a id="btn_file_browser" class="plupload_button plupload_add ui-button ui-widget ui-state-default ui-corner-all ui-button-text-icon-primary" role="button" aria-disabled="false" style="z-index:1;">
+								<span class="ui-button-icon-primary ui-icon ui-icon-circle-plus" style="left:1em;"></span>
+								<span class="ui-button-text" style="width:80px;background:#ffa500;color:#ffffff;font-size:12px;border-radius:3px;">파일 첨부</span></a>
+							<span style="vertical-align:middle;">파일을 추가하려면 왼쪽 버튼을 클릭하세요.</span>
+						</div>						<div style="float:left;margin:2px 0 5px 0;width:100%;"><div id="uploader" style="width:100%;">
+			<p>Your browser doesn't have Flash, Silverlight or HTML5 support.</p>
+		</div></div>
+						<input type="hidden" name="filelist" value="" /> <!-- 메일 미리보기 -->
+		 			</td>
+       			</tr>
+       			<tr>
+				    <td class="t_name" style="position:relative;">내용
+				    	<!-- a href="javascript:;" onClick="ajax_admin_write('fastform_list', '');"> param($m)
+  $tag = $m.Groups[1].Value
+  $alt = ''
+  if ($tag -match 'alt\s*=\s*"([^"]*)"') { $alt = $matches[1] }
+  elseif ($tag -match "alt\s*=\s*'([^']*)'") { $alt = $matches[1] }
+  if ([string]::IsNullOrWhiteSpace($alt)) { $alt = '버튼' }
+  '<span class="img-replace">' + [System.Net.WebUtility]::HtmlEncode($alt) + '</span>'
+</a -->
+				    	<a href="javascript:;" onClick="win_admin_write('formfast');"> param($m)
+  $tag = $m.Groups[1].Value
+  $alt = ''
+  if ($tag -match 'alt\s*=\s*"([^"]*)"') { $alt = $matches[1] }
+  elseif ($tag -match "alt\s*=\s*'([^']*)'") { $alt = $matches[1] }
+  if ([string]::IsNullOrWhiteSpace($alt)) { $alt = '버튼' }
+  '<span class="img-replace">' + [System.Net.WebUtility]::HtmlEncode($alt) + '</span>'
+</a>
+				    </td>
+				    <td class="t_value" colspan="3">
+				    	<div style="margin:5px 0;">
+				    	<!-- cheidtor.js 파일의 위치를 지정합니다. -->
+<textarea id="raincontents" name="raincontents"><br /><br />==================== 원본 내용 ====================<blockquote style="border-left:2px solid #888;margin:0 0 0 0.5ex;padding:1ex;">작성자: 백도현<br />수신자: 김부경, 임진형<br />작성일: 2026-06-10 10:15:30<br /><br /><br /><br />
+<br /><br />
+<br /><br />
+네 변동사항 없습니다 최대한 빠른 인쇄 부탁드립니다<br /><br />
+<br /><br />
+<br /><br />
+<br /><br />
+<br /><br />
+<br /><br />
+<br /><br />
+<br /><br />
+<br /><br />
+<br /><br />
+<br /><br />
+<br /><br />
+==================== 원본 내용 ====================<br /><br />
+작성자: 김부경<br /><br />
+수신자: 백중현<br /><br />
+작성일: 2026-06-10 10:12:44<br /><br />
+<br /><br />
+안녕하세요, 선생님.<br /><br />
+<br /><br />
+&nbsp;<br /><br />
+<br /><br />
+잔금 입금이 확인되었습니다.<br /><br />
+<br /><br />
+출판 과정 동안 고생 많으셨습니다.<br /><br />
+<br /><br />
+&nbsp;<br /><br />
+<br /><br />
+표지 및 본문에 대하여 더 이상 수정이 없으시다면,<br /><br />
+<br /><br />
+이대로 확정하겠다는 코멘트 부탁드립니다.<br /><br />
+<br /><br />
+&nbsp;<br /><br />
+<br /><br />
+회신 주시는 대로 인쇄를 진행하도록 하겠습니다.<br /><br />
+<br /><br />
+&nbsp;<br /><br />
+<br /><br />
+&nbsp;<br /><br />
+<br /><br />
+감사합니다.<br /><br />
+<br /><br />
+<br /><br />
+<br /><br />
+<br /><br />
+<br /><br /><br /><br />
+(주)북랩<br /><br />
+담당 편집자 김부경<br /><br />
+Tel. 02-2026-5779＃<br /><br />
+<br /><br />
+담당 편집자 김부경<br /><br />
+Tel. 02-2026-5779<br /><br />
+</blockquote></textarea>
+
+<!-- 에디터를 화면에 출력합니다. -->
+</div>
+					</td>
+				</tr>
+				<tr>
+				    <td class="t_name"><div>서명</div>
+				    	<div style="margin:5px 0 5px 10px;">
+				    	<a href="javascript:;" onClick="document.myform.sign_content.value='';document.myform.sign_content.focus();return false;" title="서명 내용 지우기"><u style="color:#8888ff;font-style:italic;">지우기</u></a>
+				    	</div>
+				   	</td>
+				    <td class="t_value">
+				    	<textarea name="sign_content" id="sign_content" class="writeTextarea" style="width:calc(100% - 15px);height:100px;border:1px solid #ffffff;" readonly="readonly"><br />
+(주)북랩<br />
+담당 편집자 김부경<br />
+Tel. 02-2026-5779＃<br />
+<br />
+담당 편집자 김부경<br />
+Tel. 02-2026-5779<br />
+</textarea>
+					</td>
+					<td class="t_name">서명<br />&nbsp;(직접 입력)</td>
+				    <td class="t_value">
+				    	<textarea name="sign_addconts" class="writeTextarea" style="width:calc(100% - 25px);height:100px;"><br /></textarea>
+					</td>
+				</tr>
+				<tr height="45">
+					<td class="t_name">&#52572;&#51333; &#44368;&#51221;&#48376; &#54869;&#51064;</td>
+					<td class="t_value" colspan="3">
+						<label for="final_proof_checklist_yn" style="display:inline-block;margin:3px 0;color:#000000;cursor:pointer;">
+							<input type="checkbox" name="final_proof_checklist_yn" id="final_proof_checklist_yn" value="Y" class="txt_bottom" />
+							&#51200;&#51088; &#54868;&#47732;&#50640; &#52572;&#51333; &#44368;&#51221;&#48376; &#54869;&#51064; &#52404;&#53356;&#47532;&#49828;&#53944; &#54364;&#49884;
+						</label>
+						<span style="display:inline-block;margin:3px 0 3px 12px;color:#888888;">
+							&#51064;&#49604; &#51649;&#51204; &#52572;&#51333;&#48376; &#44172;&#49884;&#47932;&#50640;&#47564; &#52404;&#53356;&#54616;&#49464;&#50836;. &#52404;&#53356; &#49884; &#51200;&#51088; &#49345;&#49464;&#48372;&#44592; &#54868;&#47732;&#50640; &#54869;&#51064; &#47928;&#44396;&#50752; &#52404;&#53356;&#47532;&#49828;&#53944;&#44032; &#54364;&#49884;&#46121;&#45768;&#45796;.
+						</span>
+					</td>
+				</tr>
+	   			<tr height="30">
+	   				<td class="t_name">마감설정</td>
+	   				<td class="t_value" colspan="3">
+	   					<div style="margin:5px 0;">
+							<input type="radio" name="finflag" value="3" checked="checked" onClick="set_admin_write('finflag', this.value)" class="txt_bottom" />날짜 지정
+							<input type="text" name="finday" id="finday" value="" class="writeInput center" style="width:100px;background:#ffffff;" autocomplete="off" />
+							<span style="margin:0 5px;"></span>
+							<select name="finhour" id="finhour" class="writeSelect" style="width:40px;color:#000000;background:#ffffff;">
+								<option value="00">0</option><option value="01">1</option><option value="02">2</option><option value="03">3</option><option value="04">4</option><option value="05">5</option><option value="06">6</option><option value="07">7</option><option value="08">8</option><option value="09">9</option><option value="10">10</option><option value="11">11</option><option value="12">12</option><option value="13">13</option><option value="14">14</option><option value="15">15</option><option value="16">16</option><option value="17">17</option><option value="18">18</option><option value="19">19</option><option value="20">20</option><option value="21">21</option><option value="22">22</option><option value="23">23</option>							</select><span class="t_c">시</span>
+							<select name="finminute" id="finminute" class="writeSelect" style="width:40px;color:#000000;background:#ffffff;">
+								<option value="00">0</option><option value="10">10</option><option value="20">20</option><option value="30">30</option><option value="40">40</option><option value="50">50</option>							</select><span class="t_c">분</span> <span style="color:#888888;">지정한 날짜까지 마감해 달라는 요청이 저자에게 전달됩니다.</span>
+						</div>
+						<div style="margin:5px 0;">
+							<input type="radio" name="finflag" value="2" onClick="set_admin_write('finflag', this.value)" class="txt_bottom" />긴급
+							<span style="margin:0 10px;"></span><span style="color:#ff0000;">긴급</span> <span style="color:#888888;">표시가 된 글과 문자가 저자에게 전달됩니다.</span>
+						</div>
+						<div style="margin:5px 0;">
+							<input type="radio" name="finflag" value="1" onClick="set_admin_write('finflag', this.value)" class="txt_bottom" />즉시
+							<span style="margin:0 10px;"></span><span style="color:#888888;">(기본값) 빠른 처리를 요청하는 글과 문자가 저자에게 전달됩니다.</span>
+						</div>
+						<div style="margin:5px 0;">
+							<input type="radio" name="finflag" value="0" onClick="set_admin_write('finflag', this.value)" class="txt_bottom" />마감시한 없음
+						</div>
+						<div style="color:#888888;margin:5px 0 5px 10px;">
+			※ 새 글 작성시 <strong>날짜 지정</strong>, <strong>긴급</strong>, <strong>즉시</strong>인 경우
+			<input type="text" name="finphone" id="finphone" value="010-9084-5339" class="writeInput center" style="width:120px;margin:0 0 0 10px;background:#ffffff;" autocomplete="off" />
+			번으로 문자가 자동 발송됩니다.
+		</div>	   				</td>
+	   			</tr>
+       			<tr>
+				    <td class="t_name">메일로 보내기
+				    	<input type="hidden" name="mailform" value="normal" /> <!-- 메일 폼 -->
+				    	<input type="checkbox" name="sendmailflag" id="sendmailflag" onClick="win_admin_write('sendmail')" />
+				    </td>
+				    <td class="t_value center" colspan="3">
+				    	<table width="100%" border="0" cellspacing="0" cellpadding="0">
+				    		<tr>
+				    			<td width="100" class="t_value"><span class="t_c">보내는 사람</span></td>
+				    			<td width="220" class="t_value"><input type="text" name="sendmailsend" id="sendmailsend" value="junghyunpaik@gmail.com" class="writeInput" style="width:200px;" /></td>
+				    			<td align="left" rowspan="2"><span style="color:#888888;margin:0 0 0 10px;">`메일로 보내기`를 체크하면 미리보기가 활성화됩니다.</span></td>
+				    		</tr>
+				    		<tr>
+				    			<td class="t_value"><span class="t_c">받는 사람</span></td> <!-- sendmailemail sendmailrece -->
+				    			<td class="t_value"><input type="text" name="sendmailrece" id="sendmailrece" value="junghyunpaik@gmail.com" class="writeInput" style="width:200px;" /></td>
+				    		</tr>
+				    	</table>
+					</td>
+				</tr>
+								<tr>
+				    <td class="t_name">리마인더(알림 설정)</td>
+				    <td class="t_value" colspan="3">
+				    	<span class="t_c">날짜 지정</span>
+				    	<input type="text" name="resvdYmd" id="resvdYmd" value="" class="writeInput center" style="width:100px;" />
+						<span style="margin:0 5px;"></span>
+						<select name="resvdhi" id="resvdhi" class="writeSelect" style="width:60px;color:#000000;font-size:12px;">
+							<option value="">시간
+							<option value="0000">&nbsp; 0<option value="0100">&nbsp; 1<option value="0200">&nbsp; 2<option value="0300">&nbsp; 3<option value="0400">&nbsp; 4<option value="0500">&nbsp; 5<option value="0600">&nbsp; 6<option value="0700">&nbsp; 7<option value="0800">&nbsp; 8<option value="0900">&nbsp; 9<option value="1000">&nbsp; 10<option value="1100">&nbsp; 11<option value="1200">&nbsp; 12<option value="1300">&nbsp; 13<option value="1400">&nbsp; 14<option value="1500">&nbsp; 15<option value="1600">&nbsp; 16<option value="1700">&nbsp; 17<option value="1800">&nbsp; 18<option value="1900">&nbsp; 19<option value="2000">&nbsp; 20<option value="2100">&nbsp; 21<option value="2200">&nbsp; 22<option value="2300">&nbsp; 23						</select><span class="t_c">시</span>
+						<span style="margin:0 10px;"></span><span style="color:#888888;">중요한 일정을 놓치지 않도록 지정한 날짜에 이 글을 아이콘으로 전송합니다.</span>
+					</td>
+				</tr>
+								<tr>
+				    <td class="t_name">지출결의서 등록<input type="checkbox" name="parg1" id="parg1" onClick="change_admin_write('parg1', '')" />
+				    </td>
+				    <td class="t_value" colspan="3">
+				    	<span class="t_c">원고 제목</span>
+				    	<input type="text" name="parg2" id="parg2" value="" class="writeInput" style="width:250px;" onClick="change_admin_write('parg2', this.value);" />
+				    	<span style="margin:0 10px;"></span>
+				    	<span class="t_c">지급액</span>
+				    	<input type="text" name="parg3" id="parg3" value="" class="writeInput" style="ime-mode:disabled;width:100px;"
+	 	 					onKeydown="return onlyNumber(event);" onkeyup="removeChar(event);change_admin_write_price('parg3', this.value);" /><span class="t_c">원</span>
+				    	<span style="margin:0 10px;"></span>
+				    	<span class="t_c">지급일</span>
+				    	<input type="text" name="parg4" id="parg4" value="" class="writeInput center" style="width:80px;" />
+					</td>
+				</tr>
+     		</table>
+     		<div style="margin-top:20px;"></div>
+			<table border="0" cellpadding="0" cellspacing="0" width="95%">
+       			<tr>
+         			<td align="center" style="position:relative;">
+         				 param($m)
+  $tag = $m.Groups[1].Value
+  $alt = ''
+  if ($tag -match 'alt\s*=\s*"([^"]*)"') { $alt = $matches[1] }
+  elseif ($tag -match "alt\s*=\s*'([^']*)'") { $alt = $matches[1] }
+  if ([string]::IsNullOrWhiteSpace($alt)) { $alt = '버튼' }
+  '<span class="img-replace">' + [System.Net.WebUtility]::HtmlEncode($alt) + '</span>'
+&nbsp;&nbsp;
+						<a href="javascript:;" onClick="location.reload();"> param($m)
+  $tag = $m.Groups[1].Value
+  $alt = ''
+  if ($tag -match 'alt\s*=\s*"([^"]*)"') { $alt = $matches[1] }
+  elseif ($tag -match "alt\s*=\s*'([^']*)'") { $alt = $matches[1] }
+  if ([string]::IsNullOrWhiteSpace($alt)) { $alt = '버튼' }
+  '<span class="img-replace">' + [System.Net.WebUtility]::HtmlEncode($alt) + '</span>'
+</a>&nbsp;&nbsp;
+						<a href="./admin_list.php?no=3727"> param($m)
+  $tag = $m.Groups[1].Value
+  $alt = ''
+  if ($tag -match 'alt\s*=\s*"([^"]*)"') { $alt = $matches[1] }
+  elseif ($tag -match "alt\s*=\s*'([^']*)'") { $alt = $matches[1] }
+  if ([string]::IsNullOrWhiteSpace($alt)) { $alt = '버튼' }
+  '<span class="img-replace">' + [System.Net.WebUtility]::HtmlEncode($alt) + '</span>'
+</a>&nbsp;&nbsp;
+											</td>
+       			</tr>
+     		</table>
+</form>
+			<div style="margin-top:50px;"></div>
+        </td>
+    </tr>
+</table>
+</body>
+<div id="id_iframeexetemp"></div>
+
+</html>
+
