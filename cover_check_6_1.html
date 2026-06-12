@@ -1,0 +1,1084 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>표지·판권 면 대조 검수</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif; background: #f4f3ef; color: #1a1a1a; min-height: 100vh; font-size: 14px; }
+
+.header { background: #1a1a1a; color: #fff; padding: 18px 32px; display: flex; align-items: baseline; gap: 16px; }
+.header h1 { font-size: 17px; font-weight: 500; }
+.header .sub { font-size: 12px; color: #888; }
+
+.wrap { max-width: 1200px; margin: 0 auto; padding: 28px 24px; }
+
+/* 업로드 2열 */
+.upload-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px; }
+.upload-card { background: #fff; border-radius: 10px; border: 0.5px solid #e0ddd6; overflow: hidden; }
+.card-head { padding: 12px 16px; border-bottom: 0.5px solid #eee; display: flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 500; color: #555; text-transform: uppercase; letter-spacing: .3px; }
+.card-head .badge { font-size: 10px; padding: 2px 7px; border-radius: 4px; font-weight: 500; }
+.badge-cover { background: #e8f0fe; color: #1a56db; }
+.badge-body  { background: #e8f7ee; color: #1a7a4a; }
+
+.drop-zone { margin: 16px; border: 1.5px dashed #d0cdc5; border-radius: 8px; padding: 28px 16px; text-align: center; cursor: pointer; transition: all .15s; }
+.drop-zone:hover, .drop-zone.drag { border-color: #888; background: #faf9f7; }
+.drop-zone .ico { font-size: 26px; margin-bottom: 8px; }
+.drop-zone p { font-size: 13px; color: #777; line-height: 1.6; }
+.drop-zone p strong { color: #1a1a1a; }
+.drop-zone.loaded { border-color: #3a9a5c; background: #f0faf4; }
+.drop-zone.loaded p { color: #1a7a4a; }
+input[type=file] { display: none; }
+
+/* 분석 버튼 */
+.btn-row { text-align: center; margin-bottom: 28px; }
+.btn-analyze { padding: 11px 36px; background: #1a1a1a; color: #fff; border: none; border-radius: 8px; font-size: 14px; font-weight: 500; cursor: pointer; transition: background .15s; }
+.btn-analyze:hover { background: #333; }
+.btn-analyze:disabled { opacity: .4; cursor: not-allowed; }
+
+/* 진행 바 */
+.progress-wrap { margin-bottom: 20px; display: none; }
+.progress-bar { height: 3px; background: #e8e6e0; border-radius: 99px; overflow: hidden; }
+.progress-fill { height: 100%; background: #1a1a1a; border-radius: 99px; transition: width .3s; }
+.progress-label { font-size: 12px; color: #888; margin-top: 6px; text-align: center; }
+
+/* 결과 패널 */
+.result-panel { background: #fff; border-radius: 10px; border: 0.5px solid #e0ddd6; overflow: hidden; display: none; }
+.result-head { padding: 14px 20px; border-bottom: 0.5px solid #eee; display: flex; align-items: center; gap: 12px; }
+.result-head h2 { font-size: 14px; font-weight: 500; }
+.overall-badge { font-size: 12px; padding: 3px 10px; border-radius: 5px; font-weight: 500; }
+.ok-all  { background: #e8f7ee; color: #1a7a4a; }
+.has-err { background: #fdecea; color: #c0392b; }
+.has-warn{ background: #fff8e1; color: #b45309; }
+
+/* 체크 항목 테이블 */
+.check-table { width: 100%; border-collapse: collapse; }
+.check-table th { padding: 10px 20px; text-align: left; font-size: 11px; font-weight: 500; color: #888; text-transform: uppercase; letter-spacing: .3px; background: #faf9f7; border-bottom: 0.5px solid #eee; }
+.check-table td { padding: 13px 20px; vertical-align: top; border-bottom: 0.5px solid #f5f4f0; font-size: 13px; }
+.check-table tr:last-child td { border-bottom: none; }
+.check-table td.label { font-weight: 500; color: #444; width: 130px; white-space: nowrap; }
+.check-table td.val { color: #1a1a1a; width: 35%; word-break: break-all; }
+.check-table td.val .missing { color: #bbb; font-style: italic; }
+.check-table td.val .raw { font-size: 11px; color: #999; margin-top: 3px; }
+.check-table td.status { width: 100px; }
+.check-table td.note { color: #666; font-size: 12px; }
+.col-sub { display: block; font-size: 10px; color: #aaa; font-weight: 400; margin-bottom: 2px; text-transform: uppercase; letter-spacing: .3px; }
+mark.core-hl { background: #fff176; color: inherit; border-radius: 2px; padding: 0 1px; font-weight: 600; }
+mark.diff-del { background: #ffe0e0; color: #b42318; border: 1.5px solid #ff1f3d; border-radius: 2px; padding: 0 2px; font-weight: 700; }
+mark.diff-ins { background: #e8f7ee; color: #1a7a4a; border-radius: 2px; padding: 0 2px; font-weight: 700; }
+
+.tag { display: inline-flex; align-items: center; gap: 5px; padding: 3px 9px; border-radius: 5px; font-size: 12px; font-weight: 500; }
+.tag-ok   { background: #e8f7ee; color: #1a7a4a; }
+.tag-err  { background: #fdecea; color: #c0392b; }
+.tag-warn { background: #fff8e1; color: #b45309; }
+.tag-info { background: #e8f0fe; color: #1a56db; }
+.tag::before { font-size: 11px; }
+.tag-ok::before   { content: '✓'; }
+.tag-err::before  { content: '✗'; }
+.tag-warn::before { content: '△'; }
+.tag-info::before { content: '―'; }
+
+/* 미리보기 2열 */
+.preview-grid { display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: auto auto; gap: 0; margin-top: 20px; }
+.preview-card { border-top: 0.5px solid #eee; }
+.preview-card-head { padding: 8px 20px; font-size: 11px; font-weight: 500; color: #888; background: #faf9f7; letter-spacing: .2px; text-transform: uppercase; }
+.preview-card.span-col { grid-column: 1 / 2; }
+.preview-card.body-card { grid-column: 2 / 3; grid-row: 1 / 3; border-left: 0.5px solid #eee; }
+.preview-canvas-wrap { padding: 12px 16px; background: #e8e6e0; text-align: center; }
+.preview-canvas-wrap canvas { max-width: 100%; border-radius: 3px; }
+
+.spinner { display: inline-block; width: 14px; height: 14px; border: 2px solid #ddd; border-top-color: #555; border-radius: 50%; animation: spin .7s linear infinite; vertical-align: middle; margin-right: 6px; }
+@keyframes spin { to { transform: rotate(360deg); } }
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.3} }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>표지 · 판권 면 대조 검수</h1>
+  <span class="sub">표지 PDF와 본문 PDF를 업로드하면 주요 항목을 자동으로 대조합니다</span>
+</div>
+
+<div class="wrap">
+  <div class="upload-grid">
+    <!-- 표지 -->
+    <div class="upload-card">
+      <div class="card-head">
+        <span class="badge badge-cover">표지</span> 표지 PDF
+      </div>
+      <div class="drop-zone" id="dz-cover" onclick="document.getElementById('fi-cover').click()">
+        <div class="ico">🖼</div>
+        <p><strong>표지 PDF</strong>를 드래그하거나<br>클릭하여 업로드</p>
+      </div>
+      <input type="file" id="fi-cover" accept=".pdf">
+    </div>
+    <!-- 본문 -->
+    <div class="upload-card">
+      <div class="card-head">
+        <span class="badge badge-body">본문</span> 본문 PDF
+      </div>
+      <div class="drop-zone" id="dz-body" onclick="document.getElementById('fi-body').click()">
+        <div class="ico">📄</div>
+        <p><strong>본문 PDF</strong>를 드래그하거나<br>클릭하여 업로드</p>
+      </div>
+      <input type="file" id="fi-body" accept=".pdf">
+    </div>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn-analyze" id="btn-analyze" disabled>대조 검수 시작</button>
+  </div>
+
+  <div class="progress-wrap" id="progress-wrap">
+    <div class="progress-bar"><div class="progress-fill" id="progress-fill" style="width:0%"></div></div>
+    <div class="progress-label" id="progress-label">분석 중...</div>
+  </div>
+
+  <div class="result-panel" id="result-panel">
+    <div class="result-head">
+      <h2>대조 결과</h2>
+      <span class="overall-badge" id="overall-badge"></span>
+    </div>
+    <table class="check-table">
+      <thead>
+        <tr>
+          <th>항목</th>
+          <th>표지</th>
+          <th>판권 면</th>
+          <th>결과</th>
+          <th>비고</th>
+        </tr>
+      </thead>
+      <tbody id="result-tbody"></tbody>
+    </table>
+
+    <div class="preview-grid">
+      <div class="preview-card span-col">
+        <div class="preview-card-head">표1 — 앞표지</div>
+        <div class="preview-canvas-wrap" id="cover1-preview"></div>
+      </div>
+      <div class="preview-card body-card">
+        <div class="preview-card-head">판권 면</div>
+        <div class="preview-canvas-wrap" id="body-preview"></div>
+      </div>
+      <div class="preview-card" id="spine-preview-card" style="display:none">
+        <div class="preview-card-head">책등</div>
+        <div class="preview-canvas-wrap" id="spine-preview" style="max-height:300px;overflow:hidden;"></div>
+      </div>
+      <div class="preview-card span-col">
+        <div class="preview-card-head">표4 — 뒤표지</div>
+        <div class="preview-canvas-wrap" id="cover4-preview"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+const pdfjsLib = await import('https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.2.67/pdf.min.mjs');
+pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.2.67/pdf.worker.min.mjs';
+
+let coverFile = null, bodyFile = null;
+let coverDoc = null, bodyDoc = null;
+
+// ── 드래그 앤 드롭 ──
+function setupDrop(dzId, inputId, onLoad) {
+  const dz = document.getElementById(dzId);
+  const fi = document.getElementById(inputId);
+  dz.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('drag'); });
+  dz.addEventListener('dragleave', () => dz.classList.remove('drag'));
+  dz.addEventListener('drop', e => {
+    e.preventDefault(); dz.classList.remove('drag');
+    const f = e.dataTransfer.files[0];
+    if (f && f.type === 'application/pdf') onLoad(f, dz);
+  });
+  fi.addEventListener('change', e => {
+    if (e.target.files[0]) onLoad(e.target.files[0], dz);
+  });
+}
+
+setupDrop('dz-cover', 'fi-cover', (f, dz) => {
+  coverFile = f;
+  dz.classList.add('loaded');
+  dz.querySelector('p').innerHTML = `<strong>${f.name}</strong><br>업로드 완료`;
+  checkReady();
+});
+setupDrop('dz-body', 'fi-body', (f, dz) => {
+  bodyFile = f;
+  dz.classList.add('loaded');
+  dz.querySelector('p').innerHTML = `<strong>${f.name}</strong><br>업로드 완료`;
+  checkReady();
+});
+
+function checkReady() {
+  document.getElementById('btn-analyze').disabled = !(coverFile && bodyFile);
+}
+document.getElementById('btn-analyze').addEventListener('click', runAnalysis);
+
+// ── 진행 표시 ──
+function setProgress(pct, label) {
+  const pw = document.getElementById('progress-wrap');
+  pw.style.display = 'block';
+  document.getElementById('progress-fill').style.width = pct + '%';
+  document.getElementById('progress-label').textContent = label;
+  if (pct >= 100) setTimeout(() => pw.style.display = 'none', 500);
+}
+
+// ── PDF 텍스트 아이템 추출 (공통) ──
+async function getPageItems(pdfDoc, pageNum) {
+  const page = await pdfDoc.getPage(pageNum);
+  const content = await page.getTextContent();
+  const vp = page.getViewport({ scale: 1 });
+  const items = content.items
+    .filter(i => i.str && i.str.trim())
+    .map(i => ({
+      text: i.str.trim(),
+      x: i.transform[4],
+      y: i.transform[5],       // PDF 좌표: 아래=0, 위=최대
+      screenY: vp.height - i.transform[5],
+      size: i.height || i.transform[0],
+    }));
+  return { items, page, vp };
+}
+
+// ── 표지 파싱 ──
+// 표1(앞표지): 큰 제목 + 저자   표4(뒤표지): 정가 + ISBN
+// 감지 전략:
+//   ① 책등: 1글자 세로쓰기 컬럼 자동 감지
+//   ② 표4: '값 ' / 'book.co.kr' 등 북랩 표4 고유 텍스트의 x 위치 → 책등 왼/오른쪽 판별
+//   ③ 표1: 책등 반대편 전체
+async function parseCover(doc) {
+  const { items, page, vp } = await getPageItems(doc, 1);
+  const pw = vp.width, ph = vp.height;
+  const isSpread = pw > ph * 1.3;
+
+  let title = '', coreTitle = '', author = '', isbn = null, price = '', spineTitle = '';
+
+  if (isSpread) {
+    // ① 책등 자동 감지
+    const xBuckets = {};
+    for (const it of items) {
+      if ([...it.text].length === 1) {
+        const key = Math.round(it.x / 12) * 12;
+        if (!xBuckets[key]) xBuckets[key] = [];
+        xBuckets[key].push(it);
+      }
+    }
+    let spineMin = pw, spineMax = 0;
+    for (const g of Object.values(xBuckets)) {
+      if (g.length >= 4) {
+        spineMin = Math.min(spineMin, ...g.map(i => i.x));
+        spineMax = Math.max(spineMax, ...g.map(i => i.x + 12));
+      }
+    }
+    if (spineMax <= spineMin) { spineMin = pw * 0.47; spineMax = pw * 0.52; }
+
+    // ② 표4 위치 감지: 북랩 표4 고유 텍스트로 책등 어느쪽인지 판별
+    const back4Markers = ['값 ', '00,000원', 'book.co.kr', 'www.book.co.kr'];
+    const marker = items.find(it => back4Markers.some(m => it.text.includes(m)));
+    const back4IsLeft = marker ? marker.x < spineMin : true; // 없으면 왼쪽 기본
+
+    // ③ 구역 확정
+    // 전개도: 표3(뒷날개) | 표4(뒤표지) | 책등 | 표1(앞표지) | 표2(앞날개)
+    // 표2(앞날개) 폭 ≈ 전체 폭의 18% (저자명 첫 글자가 경계선 왼쪽에 배치되는 경우 포함)
+    const flapWidth = pw * 0.18;
+    const back4X0 = back4IsLeft ? 0               : spineMax;
+    const back4X1 = back4IsLeft ? spineMin        : pw;
+    const cov1X0  = back4IsLeft ? spineMax        : flapWidth;
+    const cov1X1  = back4IsLeft ? pw - flapWidth  : spineMin;
+    const flap2X0 = back4IsLeft ? pw - flapWidth  : 0;
+    const flap2X1 = back4IsLeft ? pw              : flapWidth;
+
+    const back4Items = items.filter(i => i.x >= back4X0 && i.x < back4X1);
+    const cov1Items  = items.filter(i => i.x >= cov1X0  && i.x < cov1X1);
+    const spineItems = items.filter(i => i.x >= spineMin && i.x < spineMax);
+
+    // ── 표1: 제목 ──
+    // fullTitle: 최대폰트 28% 이상 + y 상단 60% 이내 (부제목 포함, 하단 광고문구 제외)
+    // coreTitle: 최대폰트 90% 이상 (가장 크게 쓰인 핵심 제목만)
+    const maxSz = Math.max(...cov1Items.map(i => i.size), 0);
+    const yLimit = ph * 0.6;
+    const titleCands = cov1Items.filter(i => i.size >= maxSz * 0.28 && i.screenY < yLimit);
+    titleCands.sort((a, b) => b.y - a.y);
+    title = groupByY(titleCands, 8)
+      .map(line => line.sort((a, b) => a.x - b.x).map(i => i.text).join(''))
+      .join(' ').replace(/\s+/g, ' ').trim();
+
+    // coreTitle: 최대폰트의 90% 이상만
+    const coreTitleCands = cov1Items.filter(i => i.size >= maxSz * 0.9);
+    coreTitleCands.sort((a, b) => b.y - a.y);
+    const coreTitleRaw = groupByY(coreTitleCands, 8)
+      .map(line => line.sort((a, b) => a.x - b.x).map(i => i.text).join(''))
+      .join(' ').replace(/\s+/g, ' ').trim();
+    // coreTitle이 없으면 title 전체를 핵심으로
+    coreTitle = coreTitleRaw || title;
+
+    // ── 저자: 표2(앞날개) 우선 → 표1 '지음' 순 ──
+    // 표4가 왼쪽이면 표2 = 맨 오른쪽, 표4가 오른쪽이면 표2 = 맨 왼쪽
+    const flap2Items = items.filter(i => i.x >= flap2X0 && i.x < flap2X1);
+
+    if (flap2Items.length > 0) {
+      // ── 전략1: 앞날개 최대 폰트 아이템 = 저자명 ──
+      // 앞날개 구조: [저자명(최대 폰트)] [직함(중간 폰트)] [소개글(소폰트)]
+      // 최대 폰트의 80% 이상인 아이템만 저자명으로 취함
+      const f2MaxSz = Math.max(...flap2Items.map(i => i.size), 0);
+      const nameItems = flap2Items.filter(i => i.size >= f2MaxSz * 0.8);
+      if (nameItems.length > 0) {
+        nameItems.sort((a, b) => a.screenY - b.screenY || a.x - b.x);
+        // y별로 그룹화 → 각 라인 텍스트 합치기
+        author = groupByY(nameItems, 8)
+          .map(line => line.sort((a, b) => a.x - b.x).map(i => i.text).join(''))
+          .join(', ').replace(/,\s*,/g, ',').replace(/\s+/g, ' ').trim();
+        // 공동저자 구분: ', ' 또는 ' ' 연결 (trailing comma 제거)
+        author = author.replace(/,\s*$/, '').trim();
+      }
+
+      // ── 전략2(폴백): 1글자 세로쓰기 컬럼 ──
+      if (!author) {
+        const f2xBuckets = {};
+        for (const it of flap2Items) {
+          if ([...it.text].length === 1) {
+            const key = Math.round(it.x / 12) * 12;
+            if (!f2xBuckets[key]) f2xBuckets[key] = [];
+            f2xBuckets[key].push(it);
+          }
+        }
+        let bestCol = null, bestSz = 0;
+        for (const g of Object.values(f2xBuckets)) {
+          if (g.length >= 2) {
+            const sz = Math.max(...g.map(i => i.size));
+            if (sz > bestSz) { bestSz = sz; bestCol = g; }
+          }
+        }
+        if (bestCol) {
+          bestCol.sort((a, b) => a.screenY - b.screenY);
+          author = bestCol.map(i => i.text).join('');
+        }
+      }
+    }
+
+    // 폴백: 표1에서 '지음' 인근
+    if (!author) {
+      const jieum = cov1Items.find(i => i.text.trim() === '지음');
+      if (jieum) {
+        const near = cov1Items.filter(i =>
+          i !== jieum && Math.abs(i.y - jieum.y) < 25 &&
+          !['지음', '지 음'].includes(i.text.trim())
+        );
+        author = near.sort((a,b)=>a.x-b.x).map(i=>i.text).join('').replace('지음','').trim();
+      }
+    }
+
+    // ── 표4: 정가 ──
+    const priceRe = /(\d{2,3},\d{3})\s*원/;
+    const priceIt = back4Items.find(i => priceRe.test(i.text));
+    if (priceIt) price = priceIt.text.replace(/^값\s*/, '').trim();
+    else {
+      const ph2 = back4Items.find(i => /\d{2},\d{3}원/.test(i.text));
+      if (ph2) price = ph2.text.replace(/^값\s*/, '').trim();
+    }
+
+    // ── 표4: ISBN (텍스트 레이어 있을 경우) ──
+    const ISBN_RE = /979-\d{2}-\d{4}-\d{3}-\d|978-\d{2}-\d{4}-\d{3}-\d/;
+    for (const it of [...back4Items, ...items]) {
+      const m = it.text.match(ISBN_RE);
+      if (m) { isbn = m[0]; break; }
+    }
+
+    // ── 책등 제목 (spineMin/spineMax는 이 블록 안에서만 유효) ──
+    {
+      const sxMin = spineMin - 10;
+      const sxMax = spineMax + 10;
+      const spineItems2 = items.filter(i => i.x >= sxMin && i.x < sxMax);
+      if (spineItems2.length > 0) {
+        const sg = groupSpineByCol(spineItems2, coreTitle || title);
+        spineTitle = sg.title || '';
+      }
+    }
+
+  } else {
+    // 단면 표지
+    const maxSz = Math.max(...items.map(i => i.size), 0);
+    title = groupByY(items.filter(i => i.size >= maxSz * 0.6).sort((a,b)=>b.y-a.y), 8)
+      .map(l => l.sort((a,b)=>a.x-b.x).map(i=>i.text).join('')).join(' ').trim();
+    // 단면: 최대폰트 90% 이상 = 핵심 제목
+    const coreRaw = groupByY(items.filter(i => i.size >= maxSz * 0.9).sort((a,b)=>b.y-a.y), 8)
+      .map(l => l.sort((a,b)=>a.x-b.x).map(i=>i.text).join('')).join(' ').trim();
+    coreTitle = coreRaw || title;
+    const jieum = items.find(i => i.text.trim() === '지음');
+    if (jieum) author = items
+      .filter(i => i !== jieum && Math.abs(i.y-jieum.y) < 25 && i.text.trim() !== '지음')
+      .sort((a,b)=>a.x-b.x).map(i=>i.text).join('').trim();
+    const priceRe = /(\d{2,3},\d{3})\s*원/;
+    const pi = items.find(i => priceRe.test(i.text) && !i.text.includes('|'));
+    if (pi) price = pi.text.replace(/^값\s*/, '').trim();
+    const ISBN_RE = /979-\d{2}-\d{4}-\d{3}-\d|978-\d{2}-\d{4}-\d{3}-\d/;
+    for (const it of items) { const m = it.text.match(ISBN_RE); if (m) { isbn = m[0]; break; } }
+  }
+
+  return { title, coreTitle, author, isbn, price, spineTitle };
+}
+
+
+// 책등 세로쓰기: x컬럼 기준으로 글자를 묶은 뒤 폰트 크기별로 제목/저자 구분
+// 북랩 책등 구조(매뉴얼 p.26): 제목(위) → 저자명(중) → 로고(하)
+// 세로쓰기이므로 같은 컬럼(x좌표가 비슷한 것끼리)을 하나로 묶고,
+// 컬럼 내에서 y(screenY) 오름차순으로 정렬하여 문자열 합산.
+// 여러 컬럼이 있을 경우 앞표지 핵심 제목과의 유사도 + 폰트 크기로 제목 컬럼을 고른다.
+function groupSpineByCol(spineItems, frontTitle = '') {
+  if (!spineItems.length) return { title: '', author: '' };
+
+  // 1. x좌표 기준으로 컬럼 클러스터링 (간격 14px 이내면 같은 컬럼)
+  const sorted = spineItems.slice().sort((a, b) => a.x - b.x);
+  const cols = [[sorted[0]]];
+  for (let i = 1; i < sorted.length; i++) {
+    const prev = cols[cols.length - 1];
+    const prevMaxX = Math.max(...prev.map(p => p.x));
+    if (sorted[i].x - prevMaxX <= 14) {
+      prev.push(sorted[i]);
+    } else {
+      cols.push([sorted[i]]);
+    }
+  }
+
+  // 2. 각 컬럼을 screenY 오름차순으로 정렬해 텍스트 합산, 대표 폰트 크기 계산
+  const colData = cols.map(col => {
+    col.sort((a, b) => a.screenY - b.screenY);
+    const text = col.map(i => i.text).join('');
+    const avgSize = col.reduce((s, i) => s + i.size, 0) / col.length;
+    const maxSize = Math.max(...col.map(i => i.size));
+    const cleanText = stripSpineNoise(text);
+    const similarity = frontTitle ? stringSimilarity(cleanText, frontTitle) : 0;
+    const score = avgSize + similarity * avgSize * 1.8 + Math.min(cleanText.length, 18) * 0.15;
+    return { text, cleanText, avgSize, maxSize, similarity, score, items: col };
+  });
+
+  // 3. 앞표지 핵심 제목과 가장 닮은 큰 컬럼 = 제목
+  //    '지음' 텍스트를 포함하지 않는 컬럼 중 두 번째로 큰 것 = 저자
+  colData.sort((a, b) => b.score - a.score);
+
+  const titleCol = colData[0];
+  const title = titleCol ? titleCol.cleanText || titleCol.text : '';
+
+  // 저자: '지음' 제외, 나머지 컬럼 중 두 번째로 큰 폰트
+  let author = '';
+  for (const col of colData.slice(1)) {
+    const t = col.text.replace('지음', '').trim();
+    if (t) { author = t; break; }
+  }
+
+  return { title, author };
+}
+
+// ── 판권 면 파싱 ──
+async function parseCopyright(doc) {
+  const total = doc.numPages;
+  // 앞 5 + 뒤 20 페이지 검색
+  const searchRange = new Set([
+    ...Array.from({length: Math.min(5,total)}, (_,i) => i+1),
+    ...Array.from({length: Math.min(20,total)}, (_,i) => total-i),
+  ]);
+  const REQUIRED = ['발행일','지은이','펴낸이','펴낸곳','출판등록','ISBN'];
+
+  let bestPage = null, bestText = '';
+  for (const pn of [...searchRange].sort((a,b)=>a-b)) {
+    const { items } = await getPageItems(doc, pn);
+    const text = items.map(i => i.text).join(' ');
+    if (REQUIRED.every(f => text.includes(f))) {
+      bestPage = pn; bestText = text; break;
+    }
+  }
+  if (!bestPage) return null;
+
+  const { items, page, vp } = await getPageItems(doc, bestPage);
+  const pw = vp.width;
+  const isSpread = pw > vp.height * 1.3;
+  const rightBound = isSpread ? pw / 2 : pw;
+  const leftItems = items.filter(i => i.x < rightBound);
+  const text = leftItems.map(i => i.text).join(' ');
+
+  // ── 제목: 판권 면 실선 위의 텍스트 ──
+  let title = '';
+  let coreTitle = '';
+  {
+    const sorted = [...leftItems].sort((a, b) => a.screenY - b.screenY);
+    if (sorted.length > 0) {
+      let cutY = null;
+      for (let i = 1; i < sorted.length; i++) {
+        const gap = sorted[i].screenY - sorted[i-1].screenY;
+        if (gap > 12) { cutY = sorted[i-1].screenY + gap / 2; break; }
+      }
+      const titleItems = cutY !== null
+        ? sorted.filter(i => i.screenY <= cutY)
+        : [sorted[0]];
+      title = groupByY(titleItems, 6)
+        .map(line => line.sort((a,b) => a.x - b.x).map(i => i.text).join(''))
+        .join(' ').replace(/\s+/g, ' ').trim();
+
+      // coreTitle: 제목 영역 내 최대폰트 90% 이상
+      const maxTSz = Math.max(...titleItems.map(i => i.size), 0);
+      const coreItems = titleItems.filter(i => i.size >= maxTSz * 0.9);
+      coreTitle = groupByY(coreItems, 6)
+        .map(line => line.sort((a,b) => a.x - b.x).map(i => i.text).join(''))
+        .join(' ').replace(/\s+/g, ' ').trim() || title;
+    }
+  }
+
+  // 저자: '지은이' 레이블 오른쪽 값
+  const author = extractLabelValue(leftItems, '지은이');
+
+  // ISBN (종이책)
+  const ISBN_RE = /979-\d{2}-\d{4}-\d{3}-\d|978-\d{2}-\d{4}-\d{3}-\d/g;
+  const isbns = [];
+  for (const i of leftItems) {
+    let m;
+    while ((m = ISBN_RE.exec(i.text)) !== null) isbns.push(m[0]);
+  }
+  const isbn = isbns.find(s => {
+    // 뒤따르는 텍스트에 (종이책)이 있으면 우선
+    const idx = leftItems.findIndex(i => i.text.includes(s));
+    const nearby = leftItems.slice(idx, idx+3).map(i=>i.text).join(' ');
+    return nearby.includes('종이책');
+  }) || isbns[0] || null;
+
+  // 정가: 판권에는 보통 없음 → null
+  const price = null;
+
+  return { title, coreTitle, author, isbn, price, pageNum: bestPage, page, vp };
+}
+
+// ── 공통 유틸 ──
+function groupByY(items, tolerance = 5) {
+  if (!items.length) return [];
+  const lines = [[items[0]]];
+  for (let i = 1; i < items.length; i++) {
+    const lastGroup = lines[lines.length - 1];
+    const refY = lastGroup[0].y;
+    if (Math.abs(items[i].y - refY) <= tolerance) lastGroup.push(items[i]);
+    else lines.push([items[i]]);
+  }
+  return lines;
+}
+
+function extractLabelValue(items, label) {
+  const lbl = items.find(i => i.text.trim() === label || i.text.startsWith(label));
+  if (!lbl) return '';
+  const same = items.filter(i =>
+    Math.abs(i.screenY - lbl.screenY) < 8 && i.x > lbl.x + 5
+  );
+  if (same.length) return same.sort((a,b)=>a.x-b.x).map(i=>i.text).join('').trim();
+  // 바로 다음 y 라인
+  const nextLine = items.filter(i =>
+    i.screenY > lbl.screenY + 2 && i.screenY < lbl.screenY + 20
+  );
+  return nextLine.sort((a,b)=>a.x-b.x).map(i=>i.text).join('').trim();
+}
+
+function normalize(s) {
+  if (!s) return '';
+  return s.replace(/\s+/g, '').replace(/[　 ]/g, '').toLowerCase()
+          .replace(/（/g,'(').replace(/）/g,')');
+}
+
+function stripSpineNoise(s) {
+  return String(s || '')
+    .replace(/지음/g, '')
+    .replace(/북랩/g, '')
+    .replace(/booklab/ig, '')
+    .replace(/[|·•]/g, '')
+    .replace(/\s+/g, '')
+    .trim();
+}
+
+function lcsLength(a, b) {
+  const aa = [...normalize(a)];
+  const bb = [...normalize(b)];
+  if (!aa.length || !bb.length) return 0;
+  const dp = Array(bb.length + 1).fill(0);
+  for (const ca of aa) {
+    let prev = 0;
+    for (let j = 0; j < bb.length; j++) {
+      const tmp = dp[j + 1];
+      dp[j + 1] = ca === bb[j] ? prev + 1 : Math.max(dp[j + 1], dp[j]);
+      prev = tmp;
+    }
+  }
+  return dp[bb.length];
+}
+
+function stringSimilarity(a, b) {
+  const na = normalize(a);
+  const nb = normalize(b);
+  if (!na || !nb) return 0;
+  const common = lcsLength(na, nb);
+  return common / Math.max(na.length, nb.length);
+}
+
+// 핵심값이 전체값에 포함되는지 (공백 무시)
+function containsCore(full, core) {
+  if (!full || !core) return false;
+  return normalize(full).includes(normalize(core));
+}
+
+function compareVal(a, b, coreA, coreB) {
+  if (!a && !b) return 'info';
+  if (!a || !b) return 'warn';
+  // 핵심값이 있으면 핵심값 기준으로 판정
+  const ca = coreA || a, cb = coreB || b;
+  if (normalize(ca) === normalize(cb)) return 'ok';
+  if (containsCore(a, cb) || containsCore(b, ca)) return 'ok';
+  // ISBN: 하이픈 제거 비교
+  if (a.replace(/-/g,'') === b.replace(/-/g,'')) return 'ok';
+  if (normalize(a) === normalize(b)) return 'ok';
+  return 'err';
+}
+
+// 전체 문자열 안에서 핵심 부분을 <mark>로 감싸 반환
+function highlightCore(full, core) {
+  if (!full) return '<span class="missing">추출 불가</span>';
+  if (!core) return `<span>${escHtml(full)}</span>`;
+  const nFull = normalize(full);
+  const nCore = normalize(core);
+  const idx = nFull.indexOf(nCore);
+  if (idx === -1) return `<span>${escHtml(full)}</span>`;
+
+  // 정규화 문자열의 [idx, idx+nCore.length) 범위를
+  // 원본 full 문자열의 위치로 역추적
+  // normalize는 공백 제거 + 소문자만 하므로, full을 순회하며 매핑
+  const map = []; // map[i] = full에서 normalize된 i번째 문자의 원본 인덱스
+  for (let i = 0; i < full.length; i++) {
+    const nc = full[i].replace(/\s/g,'').toLowerCase()
+                      .replace(/（/g,'(').replace(/）/g,')');
+    if (nc !== '') map.push(i);
+  }
+  const origStart = map[idx] !== undefined ? map[idx] : 0;
+  const origEnd   = map[idx + nCore.length - 1] !== undefined
+                  ? map[idx + nCore.length - 1] + 1
+                  : full.length;
+
+  const before = escHtml(full.slice(0, origStart));
+  const marked = escHtml(full.slice(origStart, origEnd));
+  const after  = escHtml(full.slice(origEnd));
+  return `<span>${before}<mark class="core-hl">${marked}</mark>${after}</span>`;
+}
+
+function normalizedCharsWithMap(s) {
+  const chars = [];
+  for (let i = 0; i < String(s || '').length; i++) {
+    const n = normalize(s[i]);
+    for (const ch of [...n]) chars.push({ ch, index: i });
+  }
+  return chars;
+}
+
+function isHangulChar(ch) {
+  return /[가-힣]/.test(ch || '');
+}
+
+function expandShortHangulRanges(source, ranges) {
+  return ranges.map(([start, end]) => {
+    if (end - start > 2) return [start, end];
+    let s = start;
+    let e = end;
+    if (isHangulChar(source[s]) && isHangulChar(source[s - 1])) s -= 1;
+    if (isHangulChar(source[e - 1]) && isHangulChar(source[e])) e += 1;
+    return [s, e];
+  });
+}
+
+function mergeRanges(ranges) {
+  if (!ranges.length) return [];
+  const sorted = ranges.slice().sort((a, b) => a[0] - b[0] || a[1] - b[1]);
+  const merged = [sorted[0].slice()];
+  for (const [start, end] of sorted.slice(1)) {
+    const last = merged[merged.length - 1];
+    if (start <= last[1]) last[1] = Math.max(last[1], end);
+    else merged.push([start, end]);
+  }
+  return merged;
+}
+
+function lcsMatchedSourceIndexes(source, target) {
+  const a = normalizedCharsWithMap(source);
+  const b = normalizedCharsWithMap(target);
+  if (!a.length || !b.length) return { chars: a, matched: new Set() };
+
+  const dp = Array.from({ length: a.length + 1 }, () => Array(b.length + 1).fill(0));
+  for (let i = a.length - 1; i >= 0; i--) {
+    for (let j = b.length - 1; j >= 0; j--) {
+      dp[i][j] = a[i].ch === b[j].ch ? dp[i + 1][j + 1] + 1 : Math.max(dp[i + 1][j], dp[i][j + 1]);
+    }
+  }
+
+  const matched = new Set();
+  let i = 0, j = 0;
+  while (i < a.length && j < b.length) {
+    if (a[i].ch === b[j].ch) {
+      matched.add(a[i].index);
+      i++; j++;
+    } else if (dp[i + 1][j] >= dp[i][j + 1]) {
+      i++;
+    } else {
+      j++;
+    }
+  }
+  return { chars: a, matched };
+}
+
+function rangesFromPredicate(chars, predicate) {
+  const ranges = [];
+  let start = null, prev = null;
+  for (const item of chars) {
+    if (!predicate(item)) continue;
+    if (start === null) {
+      start = item.index;
+      prev = item.index;
+    } else if (item.index <= prev + 1) {
+      prev = item.index;
+    } else {
+      ranges.push([start, prev + 1]);
+      start = prev = item.index;
+    }
+  }
+  if (start !== null) ranges.push([start, prev + 1]);
+  return ranges;
+}
+
+function diffRanges(source, target) {
+  const { chars, matched } = lcsMatchedSourceIndexes(source, target);
+  const ranges = rangesFromPredicate(chars, item => !matched.has(item.index));
+  return expandShortHangulRanges(String(source || ''), ranges);
+}
+
+function commonRanges(source, target, diffRangesForSource = []) {
+  const { chars, matched } = lcsMatchedSourceIndexes(source, target);
+  const diffSet = new Set();
+  for (const [start, end] of diffRangesForSource) {
+    for (let i = start; i < end; i++) diffSet.add(i);
+  }
+  return rangesFromPredicate(chars, item => matched.has(item.index) && !diffSet.has(item.index));
+}
+
+function findCoreRange(full, core) {
+  const nFull = normalize(full);
+  const nCore = normalize(core);
+  if (!nFull || !nCore) return null;
+  const idx = nFull.indexOf(nCore);
+  if (idx === -1) return null;
+
+  const map = [];
+  for (let i = 0; i < String(full || '').length; i++) {
+    const n = normalize(full[i]);
+    for (const _ of [...n]) map.push(i);
+  }
+  const start = map[idx] ?? 0;
+  const end = map[idx + nCore.length - 1] !== undefined ? map[idx + nCore.length - 1] + 1 : String(full || '').length;
+  return [start, end];
+}
+
+function bestComparableRange(full, reference) {
+  const src = normalizedCharsWithMap(full);
+  const refLen = [...normalize(reference)].length;
+  if (!src.length || !refLen || src.length <= refLen) return [0, String(full || '').length];
+
+  let best = { score: -1, start: 0, end: Math.min(src.length, refLen) };
+  const minLen = Math.max(1, refLen - 2);
+  const maxLen = Math.min(src.length, refLen + 2);
+  for (let start = 0; start < src.length; start++) {
+    for (let len = minLen; len <= maxLen && start + len <= src.length; len++) {
+      const piece = src.slice(start, start + len).map(c => c.ch).join('');
+      const score = stringSimilarity(piece, reference);
+      if (score > best.score) best = { score, start, end: start + len };
+    }
+  }
+
+  const startIdx = src[best.start]?.index ?? 0;
+  const endIdx = src[best.end - 1]?.index !== undefined ? src[best.end - 1].index + 1 : String(full || '').length;
+  return [startIdx, endIdx];
+}
+
+function highlightDiffInRange(full, reference, markClass, range) {
+  if (!full) return '<span class="missing">추출 불가</span>';
+  const [start, end] = range || [0, String(full || '').length];
+  const before = escHtml(full.slice(0, start));
+  const middle = full.slice(start, end);
+  const after = escHtml(full.slice(end));
+  const markedMiddle = highlightDiffText(middle, reference, markClass).replace(/^<span>|<\/span>$/g, '');
+  return `<span>${before}${markedMiddle}${after}</span>`;
+}
+
+function highlightCommonInRange(full, reference, range) {
+  if (!full) return '<span class="missing">추출 불가</span>';
+  const [start, end] = range || [0, String(full || '').length];
+  const before = escHtml(full.slice(0, start));
+  const middle = full.slice(start, end);
+  const after = escHtml(full.slice(end));
+  const markedMiddle = highlightCommonText(middle, reference).replace(/^<span>|<\/span>$/g, '');
+  return `<span>${before}${markedMiddle}${after}</span>`;
+}
+
+function highlightDiffInsideCore(full, core, reference, markClass) {
+  const range = findCoreRange(full, core) || bestComparableRange(full, reference);
+  return highlightDiffInRange(full, reference, markClass, range);
+}
+
+function highlightDiffText(full, reference, markClass) {
+  if (!full) return '<span class="missing">추출 불가</span>';
+  const diffs = mergeRanges(diffRanges(full, reference));
+  const commons = mergeRanges(commonRanges(full, reference, diffs));
+  const ranges = [
+    ...commons.map(range => ({ range, cls: 'core-hl' })),
+    ...diffs.map(range => ({ range, cls: markClass })),
+  ].sort((a, b) => a.range[0] - b.range[0] || (a.cls === markClass ? -1 : 1));
+  if (!ranges.length) return `<span>${escHtml(full)}</span>`;
+
+  let html = '';
+  let pos = 0;
+  for (const { range: [start, end], cls } of ranges) {
+    if (end <= pos) continue;
+    const safeStart = Math.max(start, pos);
+    if (safeStart > pos) html += escHtml(full.slice(pos, safeStart));
+    html += `<mark class="${cls}">${escHtml(full.slice(safeStart, end))}</mark>`;
+    pos = end;
+  }
+  html += escHtml(full.slice(pos));
+  return `<span>${html}</span>`;
+}
+
+function highlightCommonText(full, reference) {
+  if (!full) return '<span class="missing">추출 불가</span>';
+  const ranges = mergeRanges(commonRanges(full, reference));
+  if (!ranges.length) return `<span>${escHtml(full)}</span>`;
+
+  let html = '';
+  let pos = 0;
+  for (const [start, end] of ranges) {
+    html += escHtml(full.slice(pos, start));
+    html += `<mark class="core-hl">${escHtml(full.slice(start, end))}</mark>`;
+    pos = end;
+  }
+  html += escHtml(full.slice(pos));
+  return `<span>${html}</span>`;
+}
+
+// ── 페이지 렌더 ──
+async function renderCropCanvas(page, vp, x0, y0, x1, y1, container) {
+  const scale = Math.min(460 / (x1 - x0), 600 / (y1 - y0), 2.0);
+  const cropVp = page.getViewport({ scale, offsetX: -x0 * scale, offsetY: -y0 * scale });
+  const canvas = document.createElement('canvas');
+  canvas.width  = Math.round((x1 - x0) * scale);
+  canvas.height = Math.round((y1 - y0) * scale);
+  const ctx = canvas.getContext('2d');
+  ctx.save(); ctx.rect(0, 0, canvas.width, canvas.height); ctx.clip();
+  await page.render({ canvasContext: ctx, viewport: cropVp }).promise;
+  ctx.restore();
+  container.innerHTML = '';
+  container.appendChild(canvas);
+}
+
+async function renderPageToCanvas(page, vp, isSpread, container) {
+  const scale = Math.min(500 / (isSpread ? vp.width/2 : vp.width), 1.5);
+  const rightBound = isSpread ? vp.width / 2 : vp.width;
+  const cropVp = page.getViewport({ scale });
+  const canvas = document.createElement('canvas');
+  canvas.width = Math.round(rightBound * scale);
+  canvas.height = Math.round(vp.height * scale);
+  const ctx = canvas.getContext('2d');
+  ctx.save(); ctx.rect(0, 0, canvas.width, canvas.height); ctx.clip();
+  await page.render({ canvasContext: ctx, viewport: cropVp }).promise;
+  ctx.restore();
+  container.innerHTML = '';
+  container.appendChild(canvas);
+}
+
+// ── 메인 분석 ──
+async function runAnalysis() {
+  const btn = document.getElementById('btn-analyze');
+  btn.disabled = true;
+
+  setProgress(5, '표지 PDF 불러오는 중...');
+  const coverBuf = await coverFile.arrayBuffer();
+  coverDoc = await pdfjsLib.getDocument({ data: coverBuf }).promise;
+
+  setProgress(20, '본문 PDF 불러오는 중...');
+  const bodyBuf = await bodyFile.arrayBuffer();
+  bodyDoc = await pdfjsLib.getDocument({ data: bodyBuf }).promise;
+
+  setProgress(40, '표지 분석 중...');
+  const coverData = await parseCover(coverDoc);
+
+  setProgress(65, '판권 면 탐색 중...');
+  const bodyData = await parseCopyright(bodyDoc);
+
+  setProgress(85, '미리보기 렌더링 중...');
+
+  // 표지 미리보기 (표1, 표4 분리 렌더)
+  const cvPage = await coverDoc.getPage(1);
+  const cvVp = cvPage.getViewport({ scale: 1 });
+  const cvSpread = cvVp.width > cvVp.height * 1.3;
+  const cvItems = (await getPageItems(coverDoc, 1)).items;
+
+  if (cvSpread) {
+    // 책등 위치 재계산
+    const xBk = {};
+    for (const it of cvItems) {
+      if ([...it.text].length === 1) {
+        const k = Math.round(it.x/12)*12;
+        if (!xBk[k]) xBk[k] = [];
+        xBk[k].push(it);
+      }
+    }
+    let sm = cvVp.width, sx = 0;
+    for (const g of Object.values(xBk)) {
+      if (g.length >= 4) { sm = Math.min(sm,...g.map(i=>i.x)); sx = Math.max(sx,...g.map(i=>i.x+12)); }
+    }
+    if (sx <= sm) { sm = cvVp.width*0.47; sx = cvVp.width*0.52; }
+
+    // 표4 방향
+    const markers = ['값 ','00,000원','book.co.kr'];
+    const mk = cvItems.find(it => markers.some(m=>it.text.includes(m)));
+    const b4Left = mk ? mk.x < sm : true;
+    const fw = cvVp.width * 0.17;
+    const c1x0 = b4Left ? sx       : fw;
+    const c1x1 = b4Left ? cvVp.width - fw : sm;
+    const c4x0 = b4Left ? 0        : sx;
+    const c4x1 = b4Left ? sm       : cvVp.width;
+
+    await renderCropCanvas(cvPage, cvVp, c1x0, 0, c1x1, cvVp.height, document.getElementById('cover1-preview'));
+    await renderCropCanvas(cvPage, cvVp, c4x0, 0, c4x1, cvVp.height, document.getElementById('cover4-preview'));
+
+    // 책등 미리보기: xBuckets에서 계산한 sm/sx를 그대로 사용 (±10px 여유)
+    {
+      const sxMin2 = Math.max(0, sm - 10);
+      const sxMax2 = Math.min(cvVp.width, sx + 10);
+      document.getElementById('spine-preview-card').style.display = '';
+      await renderCropCanvas(cvPage, cvVp, sxMin2, 0, sxMax2, cvVp.height, document.getElementById('spine-preview'));
+    }
+  } else {
+    await renderPageToCanvas(cvPage, cvVp, false, document.getElementById('cover1-preview'));
+    document.getElementById('cover4-preview').innerHTML = '<p style="padding:16px;color:#999;font-size:12px;">단면 표지</p>';
+  }
+
+  // 판권 면 미리보기
+  if (bodyData) {
+    const isSpread = bodyData.vp.width > bodyData.vp.height * 1.3;
+    await renderPageToCanvas(bodyData.page, bodyData.vp, isSpread, document.getElementById('body-preview'));
+  }
+
+  setProgress(100, '완료');
+  renderResult(coverData, bodyData);
+  btn.disabled = false;
+}
+
+// ── 결과 렌더 ──
+function renderResult(cv, bd) {
+  const panel = document.getElementById('result-panel');
+  panel.style.display = 'block';
+  panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+  const rows = [
+    {
+      label: '도서 제목',
+      cvVal: cv.title,
+      bdVal: bd ? bd.title : null,
+      cvCore: cv.coreTitle,
+      bdCore: bd ? bd.coreTitle : null,
+      note: '',
+    },
+    {
+      label: '책등 제목',
+      cvVal: cv.spineTitle || null,
+      bdVal: cv.title || null,
+      cvCore: cv.spineTitle || null,   // 책등은 이미 핵심만 추출됨
+      bdCore: cv.coreTitle || null,    // 앞표지 핵심과 비교
+      note: '책등 ↔ 앞표지 제목 대조',
+      spineRow: true,
+    },
+    {
+      label: '저자',
+      cvVal: cv.author,
+      bdVal: bd ? bd.author : null,
+      cvCore: null, bdCore: null,
+      note: '',
+    },
+    {
+      label: 'ISBN (종이책)',
+      cvVal: cv.isbn,
+      bdVal: bd ? bd.isbn : null,
+      cvCore: null, bdCore: null,
+      note: cv.isbn === null ? '표지 바코드가 이미지 형식 — 텍스트 추출 불가' : '',
+    },
+    {
+      label: '정가',
+      cvVal: cv.price,
+      bdVal: bd ? bd.price : null,
+      cvCore: null, bdCore: null,
+      note: '판권 면에는 정가 미기재 (표지 단독 확인)',
+    },
+  ];
+
+  let errCnt = 0, warnCnt = 0;
+  const tbody = document.getElementById('result-tbody');
+  tbody.innerHTML = '';
+
+  rows.forEach(row => {
+    const status = compareVal(row.cvVal, row.bdVal, row.cvCore, row.bdCore);
+    if (status === 'err') errCnt++;
+    if (status === 'warn') warnCnt++;
+
+    const tagMap = {
+      ok:   '<span class="tag tag-ok">일치</span>',
+      err:  '<span class="tag tag-err">불일치</span>',
+      warn: '<span class="tag tag-warn">미확인</span>',
+      info: '<span class="tag tag-info">해당없음</span>',
+    };
+
+    const col1Label = row.spineRow ? '책등' : '표지';
+    const col2Label = row.spineRow ? '앞표지' : '판권 면';
+
+    // 각 셀: 전체 텍스트 안에서 핵심 부분 강조
+    // 책등 행은 제목으로 인정한 공통 부분을 노란색으로, 불일치 부분을 별도 색으로 표시한다.
+    let cvHtml;
+    let bdHtml;
+    if (row.spineRow) {
+      const frontCore = row.bdCore || row.bdVal;
+      const spineRange = bestComparableRange(row.cvVal, frontCore);
+      cvHtml = status === 'err'
+        ? highlightDiffInRange(row.cvVal, frontCore, 'diff-del', spineRange)
+        : highlightCommonInRange(row.cvVal, frontCore, spineRange);
+      bdHtml = status === 'err'
+        ? highlightDiffInsideCore(row.bdVal, row.bdCore, row.cvVal, 'diff-ins')
+        : highlightCore(row.bdVal, row.bdCore);
+    } else {
+      cvHtml = highlightCore(row.cvVal, row.cvCore);
+      bdHtml = highlightCore(row.bdVal, row.bdCore);
+    }
+
+    const tr = document.createElement('tr');
+    if (row.spineRow) tr.style.background = '#fffbf0';
+    tr.innerHTML = `
+      <td class="label">${row.label}</td>
+      <td class="val"><span class="col-sub">${col1Label}</span>${cvHtml}</td>
+      <td class="val"><span class="col-sub">${col2Label}</span>${bdHtml}</td>
+      <td class="status">${tagMap[status]}</td>
+      <td class="note">${row.note}</td>`;
+    tbody.appendChild(tr);
+  });
+
+  // 전체 결과 배지
+  const badge = document.getElementById('overall-badge');
+  if (errCnt > 0) {
+    badge.textContent = `불일치 ${errCnt}건`; badge.className = 'overall-badge has-err';
+  } else if (warnCnt > 0) {
+    badge.textContent = `미확인 ${warnCnt}건`; badge.className = 'overall-badge has-warn';
+  } else {
+    badge.textContent = '전 항목 일치'; badge.className = 'overall-badge ok-all';
+  }
+}
+
+function escHtml(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+</script>
+</body>
+</html>
