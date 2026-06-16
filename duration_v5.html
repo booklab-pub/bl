@@ -347,19 +347,13 @@ const AMPM  = ['오전','오후'];
 const HOURS = Array.from({length:12}, (_,i) => String(i+1).padStart(2,'0')); // 01~12
 const MINS  = Array.from({length:60}, (_,i) => String(i).padStart(2,'0'));   // 00~59
 
-// ── State: 현재 시각으로 초기화 ──
-const _now = new Date();
-const _nowH24 = _now.getHours();
-const _nowM   = _now.getMinutes();
-const _nowAmpm = _nowH24 >= 12 ? 1 : 0;
-// HOURS = ['01','02',...,'12'], index 0~11
-// 12시(정오/자정)는 HOURS[11]='12', 1시는 HOURS[0]='01'
-const _h12 = _nowH24 % 12; // 0이면 12시
-const _nowH12 = _h12 === 0 ? 11 : _h12 - 1; // index into HOURS
-
+// ── State: 고정 초기값 ──
+// HOURS index: 0='01' ~ 11='12'
+// 시작: 오후 10:00 → ampm=1, hour=9, min=0
+// 종료: 오전 04:50 → ampm=0, hour=3, min=50
 const state = {
-  start: { ampm: _nowAmpm, hour: _nowH12, min: _nowM },
-  end:   { ampm: _nowAmpm, hour: _nowH12, min: _nowM },
+  start: { ampm: 1, hour: 9,  min: 0  },
+  end:   { ampm: 0, hour: 3,  min: 50 },
 };
 
 // ── Build drum ──
