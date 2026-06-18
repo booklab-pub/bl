@@ -186,14 +186,6 @@
     font-weight: 500;
   }
 
-  /* negative duration warning */
-  .result-warn {
-    font-size: 12px;
-    color: #ff6b6b;
-    margin-top: 2px;
-    display: none;
-  }
-
   /* 아이폰 12 미니 (375px) 이하: 세로 레이아웃으로 전환 */
   @media (max-width: 400px) {
     .pickers-row {
@@ -250,7 +242,6 @@
     <p class="result-label">소요 시간</p>
     <p class="result-value" id="result-value">0<span class="accent">h</span> 00<span class="accent">m</span></p>
     <p class="result-sub" id="result-sub"></p>
-    <p class="result-warn" id="result-warn">⚠ 종료 시각이 시작 시각보다 이릅니다</p>
   </div>
 </div>
 
@@ -300,16 +291,11 @@ function calculate() {
 
   let diff = endMin - startMin;
 
-  const warn = document.getElementById('result-warn');
   const sub  = document.getElementById('result-sub');
   const val  = document.getElementById('result-value');
 
   if (diff < 0) {
-    // treat as next-day
     diff += 24 * 60;
-    warn.style.display = 'block';
-  } else {
-    warn.style.display = 'none';
   }
 
   const h = Math.floor(diff / 60);
