@@ -12,13 +12,20 @@
 <body>
 
 <h2>게시판 링크 → 크롬 이동 테스트</h2>
-<p>게시판 글 주소를 입력하고 이동 버튼을 누르면, 엣지일 경우 크롬으로 강제 이동을 시도합니다.</p>
+<p>게시판 글 주소를 입력하면, 그 주소가 담긴 <b>공유용 링크</b>를 만들어줍니다. 그 링크를 메신저로 보내세요.</p>
 
 <div class="info-box">
   <label for="urlInput" style="display:block; margin-bottom:6px; font-weight:bold;">게시판 글 주소 입력:</label>
   <input type="text" id="urlInput" placeholder="https://www.book.co.kr/MWebhard/admin_view.php?..."
     style="width:100%; box-sizing:border-box; padding:8px; font-size:14px; border:1px solid #ccc; border-radius:4px;">
-  <button id="goBtn" style="margin-top:10px; padding:8px 16px; background:#3d75a8; color:#fff; border:none; border-radius:4px; cursor:pointer; font-size:14px;">이동</button>
+  <div style="margin-top:10px;">
+    <button id="makeLinkBtn" style="padding:8px 16px; background:#3d75a8; color:#fff; border:none; border-radius:4px; cursor:pointer; font-size:14px;">공유용 링크 만들기</button>
+    <button id="goBtn" style="padding:8px 16px; background:#777; color:#fff; border:none; border-radius:4px; cursor:pointer; font-size:14px;">바로 이동(내 테스트용)</button>
+  </div>
+  <div id="shareLinkBox" style="display:none; margin-top:14px; padding:10px; background:#fff; border:1px solid #b8d9e1; border-radius:4px;">
+    <div style="font-size:13px; color:#555; margin-bottom:6px;">아래 링크를 복사해서 메신저로 보내세요:</div>
+    <input type="text" id="shareLinkText" readonly style="width:100%; box-sizing:border-box; padding:6px; font-size:13px; border:1px solid #ccc; border-radius:4px;">
+  </div>
 </div>
 
 <div class="info-box">
@@ -28,15 +35,18 @@
 
 <script>
 (function(){
-  var STORAGE_KEY = 'lastBoardUrl';
   var urlInput = document.getElementById('urlInput');
   var goBtn = document.getElementById('goBtn');
+  var makeLinkBtn = document.getElementById('makeLinkBtn');
+  var shareLinkBox = document.getElementById('shareLinkBox');
+  var shareLinkText = document.getElementById('shareLinkText');
 
-  // 마지막으로 입력했던 주소를 기억해서 다시 채워줌
-  try {
-    var saved = localStorage.getItem(STORAGE_KEY);
-    if (saved) urlInput.value = saved;
-  } catch(e) {}
+  // 링크의 ?url= 파라미터로 전달받은 주소가 있으면 자동으로 채워줌 (받는 사람 쪽)
+  var params = new URLSearchParams(window.location.search);
+  var incomingUrl = params.get('url');
+  if (incomingUrl) {
+    urlInput.value = incomingUrl;
+  }
 
   var ua = navigator.userAgent;
   var isEdge = ua.indexOf('Edg/') > -1;
@@ -48,14 +58,38 @@
       alert('게시판 글 주소를 입력해주세요.');
       return;
     }
-    try { localStorage.setItem(STORAGE_KEY, targetUrl); } catch(e) {}
-
     if (isEdge) {
-      window.location.href = 'googlechrome:' + targetUrl;
+      var fallback = function(){
+        prompt('아래 주소를 복사해서 크롬 주소창에 붙여넣어 주세요:', targetUrl);
+      };
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(targetUrl).then(function(){
+          alert('주소가 복사되었습니다.\n크롬을 직접 열어서 주소창에 붙여넣기(Ctrl+V) 해주세요.');
+        }).catch(fallback);
+      } else {
+        fallback();
+      }
     } else {
       window.location.href = targetUrl;
     }
   }
+
+  makeLinkBtn.onclick = function(){
+    var targetUrl = urlInput.value.trim();
+    if (!targetUrl) {
+      alert('게시판 글 주소를 먼저 입력해주세요.');
+      return;
+    }
+    var base = window.location.origin + window.location.pathname;
+    var shareLink = base + '?url=' + encodeURIComponent(targetUrl);
+    shareLinkText.value = shareLink;
+    shareLinkBox.style.display = 'block';
+    shareLinkText.focus();
+    shareLinkText.select();
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(shareLink).catch(function(){});
+    }
+  };
 
   goBtn.onclick = function(){
     goToUrl(urlInput.value.trim());
@@ -63,6 +97,14 @@
   urlInput.addEventListener('keydown', function(e){
     if (e.key === 'Enter') goToUrl(urlInput.value.trim());
   });
+
+  // 받는 사람 쪽: 링크로 들어왔고 엣지일 경우, 자동으로 안내를 띄워줌
+  if (incomingUrl && isEdge) {
+    goToUrl(incomingUrl);
+  } else if (incomingUrl && !isEdge) {
+    // 크롬으로 정상 진입한 경우 바로 이동
+    window.location.href = incomingUrl;
+  }
 })();
 </script>
 
