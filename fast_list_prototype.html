@@ -1,0 +1,477 @@
+﻿<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>빠른 입력 프로토타입</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      color: #222;
+      background: #f6f7f9;
+      font-family: "Malgun Gothic", "Apple SD Gothic Neo", sans-serif;
+      font-size: 14px;
+    }
+    button, input, textarea, select {
+      font: inherit;
+    }
+    .popup {
+      width: 970px;
+      max-width: 100%;
+      min-height: 100vh;
+      margin: 0 auto;
+      background: #fff;
+      border-left: 1px solid #c9d1dc;
+      border-right: 1px solid #c9d1dc;
+    }
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 48px;
+      padding: 0 16px;
+      color: #fff;
+      background: #315f9f;
+      font-size: 18px;
+      font-weight: 700;
+    }
+    .close {
+      border: 0;
+      color: #fff;
+      background: transparent;
+      font-size: 26px;
+      line-height: 1;
+      cursor: pointer;
+    }
+    .subject {
+      padding: 8px 0;
+      text-align: center;
+      color: #183f86;
+      font-size: 25px;
+      font-weight: 800;
+      border-bottom: 1px solid #abc3da;
+    }
+    .searchbar {
+      display: flex;
+      justify-content: center;
+      gap: 5px;
+      padding: 7px;
+      background: #e3eef7;
+      border-bottom: 1px solid #b8ccdc;
+    }
+    .searchbar select,
+    .searchbar input {
+      height: 27px;
+      border: 1px solid #b9c4cf;
+      background: #fff;
+    }
+    .searchbar input {
+      width: 210px;
+      padding: 0 8px;
+    }
+    .btn {
+      height: 27px;
+      padding: 0 12px;
+      border: 1px solid #315f9f;
+      border-radius: 3px;
+      color: #fff;
+      background: #416cab;
+      cursor: pointer;
+      font-weight: 700;
+    }
+    .toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 9px 4px 6px;
+    }
+    .toolbar a {
+      color: #174a9c;
+      font-weight: 700;
+      text-decoration: none;
+    }
+    .toolbar .add {
+      margin-left: 8px;
+      color: #c44324;
+    }
+    .count {
+      font-weight: 700;
+    }
+    .count strong {
+      color: #064dd5;
+    }
+    .list {
+      width: 100%;
+      border-collapse: collapse;
+      table-layout: fixed;
+      border-top: 2px solid #5d9bd7;
+      border-bottom: 1px solid #d6dce5;
+    }
+    .list th {
+      height: 31px;
+      color: #222;
+      background: #f1f3f5;
+      border: 1px solid #e1e4e8;
+      font-weight: 700;
+    }
+    .list td {
+      min-height: 42px;
+      padding: 6px 8px;
+      border: 1px solid #e1e4e8;
+      vertical-align: middle;
+    }
+    .list tbody tr:nth-child(odd) {
+      background: #fafafa;
+    }
+    .list tbody tr:hover {
+      background: #fffbd3;
+    }
+    .no,
+    .shortcut,
+    .apply-cell,
+    .actions {
+      text-align: center;
+      white-space: nowrap;
+    }
+    .title-link {
+      display: inline-block;
+      color: #333;
+      font-weight: 700;
+      text-decoration: none;
+      border-bottom: 1px solid #aaa;
+    }
+    .title-link:hover {
+      color: #174a9c;
+      border-bottom-color: #174a9c;
+    }
+    .preview {
+      margin-top: 4px;
+      overflow: hidden;
+      color: #70757d;
+      font-size: 12px;
+      line-height: 1.45;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+    }
+    .keycap {
+      display: inline-block;
+      min-width: 54px;
+      padding: 3px 6px;
+      border: 1px solid #bac5d2;
+      border-bottom-color: #8a96a6;
+      border-radius: 4px;
+      background: #fff;
+      color: #30435b;
+      font-size: 12px;
+      font-weight: 700;
+      line-height: 1.2;
+    }
+    .apply {
+      min-width: 60px;
+      height: 26px;
+      padding: 0 13px;
+      border: 1px solid #b8cde7;
+      border-radius: 1px;
+      color: #1f4d7a;
+      background: linear-gradient(#ffffff, #f3f8ff);
+      cursor: pointer;
+      font-size: 13px;
+      line-height: 24px;
+    }
+    .apply:hover,
+    .apply:focus {
+      border-color: #f39800;
+      color: #d86400;
+      background: linear-gradient(#fffaf2, #fff0dc);
+      outline: none;
+    }
+    .actions button {
+      height: 26px;
+      margin: 0 1px;
+      padding: 0 6px;
+      border: 1px solid #ccd3db;
+      border-radius: 3px;
+      background: #fff;
+      cursor: pointer;
+    }
+    .actions button:hover {
+      background: #f2f5f8;
+    }
+    .actions .delete {
+      color: #c43f3a;
+    }
+    .tester {
+      margin-top: 10px;
+      padding: 10px 12px;
+      border-top: 1px solid #d9e0e8;
+      background: #f8fafc;
+    }
+    .tester-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 7px;
+    }
+    .tester-title {
+      font-weight: 800;
+      color: #1f3f73;
+    }
+    .status {
+      color: #6a7280;
+      font-size: 12px;
+    }
+    .target-title {
+      width: 100%;
+      height: 32px;
+      margin-bottom: 7px;
+      padding: 0 9px;
+      border: 1px solid #bfc9d5;
+      background: #fff;
+    }
+    .target-content {
+      width: 100%;
+      min-height: 118px;
+      padding: 10px;
+      border: 1px solid #bfc9d5;
+      background: #fff;
+      resize: vertical;
+      line-height: 1.55;
+    }
+    .detail {
+      display: none;
+      margin-top: 10px;
+      padding: 10px;
+      border: 1px solid #cbd8e6;
+      background: #fff;
+    }
+    .detail.open {
+      display: block;
+    }
+    .detail-title {
+      margin-bottom: 5px;
+      color: #1f3f73;
+      font-weight: 800;
+    }
+  </style>
+</head>
+<body>
+  <main class="popup">
+    <div class="topbar">
+      <span>자주 쓰는 문구</span>
+      <button class="close" type="button" aria-label="닫기">x</button>
+    </div>
+
+    <div class="subject">빠른 입력</div>
+
+    <div class="searchbar">
+      <select aria-label="검색 기준">
+        <option>제목</option>
+        <option>내용</option>
+      </select>
+      <input id="searchWord" type="search" placeholder="검색어" />
+      <button class="btn" type="button" id="searchBtn">검색</button>
+    </div>
+
+    <div class="toolbar">
+      <div>
+        <a href="#">전체목록</a>
+        <span style="color:#c8c8c8;">|</span>
+        <a class="add" href="#">내용추가</a>
+      </div>
+      <div class="count">검색: <strong id="resultCount">4</strong>건</div>
+    </div>
+
+    <table class="list" aria-label="빠른 입력 목록">
+      <colgroup>
+        <col style="width:7%;" />
+        <col style="width:52%;" />
+        <col style="width:13%;" />
+        <col style="width:12%;" />
+        <col style="width:16%;" />
+      </colgroup>
+      <thead>
+        <tr>
+          <th>No</th>
+          <th>제목 / 내용</th>
+          <th>단축키</th>
+          <th>입력</th>
+          <th>관리</th>
+        </tr>
+      </thead>
+      <tbody id="quickList"></tbody>
+    </table>
+
+    <section class="tester" aria-label="입력 테스트 영역">
+      <div class="tester-head">
+        <div class="tester-title">입력 테스트</div>
+        <div class="status" id="status">이 빠른 입력 창이 선택된 상태에서만 Alt+1~Alt+4가 적용됩니다.</div>
+      </div>
+      <input class="target-title" id="targetTitle" placeholder="선택한 제목이 여기에 들어옵니다." />
+      <textarea class="target-content" id="targetContent" placeholder="선택한 내용이 여기에 입력됩니다."></textarea>
+      <div class="detail" id="detailBox">
+        <div class="detail-title" id="detailTitle"></div>
+        <div id="detailContent"></div>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    var quickItems = [
+      {
+        no: 7,
+        title: "테스트 3",
+        content: "안녕하세요.\n테스트용 빠른 입력 문구입니다.\n입력 버튼을 누르면 하단 입력 테스트 영역에 이 내용이 들어갑니다."
+      },
+      {
+        no: 6,
+        title: "테스트 2",
+        content: "두 번째 테스트 문구입니다.\n제목을 누르면 내용 보기, 입력 버튼을 누르면 실제 입력으로 분리했습니다."
+      },
+      {
+        no: 5,
+        title: "테스트",
+        content: "목록에서 내용을 먼저 확인한 뒤 필요한 문구만 입력할 수 있도록 구성한 예시입니다."
+      },
+      {
+        no: 4,
+        title: "화살표",
+        content: "→\n←\n↑\n↓"
+      }
+    ];
+
+    var list = document.getElementById("quickList");
+    var resultCount = document.getElementById("resultCount");
+    var status = document.getElementById("status");
+    var targetTitle = document.getElementById("targetTitle");
+    var targetContent = document.getElementById("targetContent");
+    var detailBox = document.getElementById("detailBox");
+    var detailTitle = document.getElementById("detailTitle");
+    var detailContent = document.getElementById("detailContent");
+    var searchWord = document.getElementById("searchWord");
+
+    function escapeHtml(value) {
+      return String(value)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#39;");
+    }
+
+    function previewText(value) {
+      var text = value.replace(/\s+/g, " ").trim();
+      return text.length > 70 ? text.slice(0, 70) + "..." : text;
+    }
+
+    function render(items) {
+      list.innerHTML = items.map(function(item, index) {
+        var shortcut = index < 9 ? "Alt+" + (index + 1) : "";
+        return [
+          '<tr data-index="' + index + '">',
+          '<td class="no">' + item.no + '</td>',
+          '<td>',
+          '<a href="#" class="title-link" data-action="view" data-index="' + index + '">' + escapeHtml(item.title) + '</a>',
+          '<div class="preview">' + escapeHtml(previewText(item.content)) + '</div>',
+          '</td>',
+          '<td class="shortcut">' + (shortcut ? '<span class="keycap">' + shortcut + '</span>' : "") + '</td>',
+          '<td class="apply-cell"><button class="apply" type="button" accesskey="' + (index + 1) + '" data-action="apply" data-index="' + index + '">입력</button></td>',
+          '<td class="actions">',
+          '<button type="button" data-action="view" data-index="' + index + '">보기</button>',
+          '<button type="button" data-action="edit" data-index="' + index + '">수정</button>',
+          '<button class="delete" type="button" data-action="delete" data-index="' + index + '">삭제</button>',
+          '</td>',
+          '</tr>'
+        ].join("");
+      }).join("");
+      resultCount.textContent = items.length;
+    }
+
+    function getVisibleItem(index) {
+      var rows = Array.prototype.slice.call(list.querySelectorAll("tr"));
+      var row = rows[index];
+      if (!row) return null;
+      return quickItems[Number(row.getAttribute("data-index"))];
+    }
+
+    function applyItem(item) {
+      targetTitle.value = item.title;
+      targetContent.value = item.content;
+      status.textContent = "'" + item.title + "' 내용이 입력 테스트 영역에 들어갔습니다.";
+      detailBox.classList.remove("open");
+      targetContent.focus();
+    }
+
+    function viewItem(item) {
+      detailTitle.textContent = item.title;
+      detailContent.innerHTML = escapeHtml(item.content).replace(/\n/g, "<br>");
+      detailBox.classList.add("open");
+      status.textContent = "'" + item.title + "' 내용을 확인 중입니다. 아직 입력되지는 않았습니다.";
+    }
+
+    function filterList() {
+      var keyword = searchWord.value.trim().toLowerCase();
+      var filtered = quickItems.filter(function(item) {
+        return !keyword ||
+          item.title.toLowerCase().indexOf(keyword) > -1 ||
+          item.content.toLowerCase().indexOf(keyword) > -1;
+      });
+      render(filtered);
+      status.textContent = keyword ? "검색 결과를 표시했습니다." : "전체 목록을 표시했습니다.";
+    }
+
+    list.addEventListener("click", function(event) {
+      var control = event.target.closest("[data-action]");
+      if (!control) return;
+      event.preventDefault();
+
+      var item = getVisibleItem(Number(control.getAttribute("data-index")));
+      var action = control.getAttribute("data-action");
+      if (!item) return;
+
+      if (action === "apply") {
+        applyItem(item);
+      } else if (action === "view") {
+        viewItem(item);
+      } else if (action === "edit") {
+        status.textContent = "프로토타입에서는 수정 화면 이동 대신 상태만 표시합니다: " + item.title;
+      } else if (action === "delete") {
+        status.textContent = "프로토타입에서는 삭제하지 않고 동작 위치만 확인합니다: " + item.title;
+      }
+    });
+
+    document.getElementById("searchBtn").addEventListener("click", filterList);
+    searchWord.addEventListener("keydown", function(event) {
+      if (event.key === "Enter") {
+        event.preventDefault();
+        filterList();
+      }
+    });
+
+    function shortcutIndex(event) {
+      if (!event.altKey || event.ctrlKey) return -1;
+      if (/^[1-9]$/.test(event.key)) return Number(event.key) - 1;
+      if (/^Digit[1-9]$/.test(event.code)) return Number(event.code.replace("Digit", "")) - 1;
+      if (/^Numpad[1-9]$/.test(event.code)) return Number(event.code.replace("Numpad", "")) - 1;
+      return -1;
+    }
+
+    function handleShortcut(event) {
+      var idx = shortcutIndex(event);
+      if (idx >= 0 && idx <= 8) {
+        var item = getVisibleItem(idx);
+        if (item) {
+          event.preventDefault();
+          event.stopPropagation();
+          applyItem(item);
+        }
+      }
+    }
+
+    window.addEventListener("keydown", handleShortcut, true);
+    window.addEventListener("keyup", handleShortcut, true);
+
+    render(quickItems);
+  </script>
+</body>
+</html>
