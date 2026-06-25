@@ -1,0 +1,446 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>빠른 입력 프로토타입 - 팝업 테이블</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      color: #18212f;
+      background: #d9d9d9;
+      font-family: "Malgun Gothic", "Apple SD Gothic Neo", sans-serif;
+      font-size: 14px;
+    }
+    button, input, textarea {
+      font: inherit;
+    }
+    .popup {
+      width: 965px;
+      height: 965px;
+      margin: 0 auto;
+      overflow: hidden;
+      background: #fff;
+      border: 1px solid #9aa7b4;
+      box-shadow: 0 2px 8px rgba(15, 23, 42, .18);
+    }
+    .header {
+      display: grid;
+      grid-template-columns: 38px 1fr auto;
+      gap: 12px;
+      align-items: center;
+      padding: 12px 14px 9px;
+      border-bottom: 1px solid #bdd0e5;
+      background: #f8fbff;
+    }
+    .logo {
+      display: grid;
+      place-items: center;
+      width: 32px;
+      height: 32px;
+      border-radius: 6px;
+      color: #fff;
+      background: #1f2937;
+      font-size: 18px;
+      font-weight: 800;
+    }
+    .search {
+      width: 100%;
+      height: 36px;
+      padding: 0 11px;
+      border: 0;
+      border-bottom: 2px solid #0d6cc5;
+      outline: none;
+      background: #fff;
+      font-size: 16px;
+    }
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      white-space: nowrap;
+    }
+    .hint {
+      grid-column: 2 / 4;
+      color: #3f4d63;
+      font-size: 13px;
+    }
+    .link-btn {
+      height: 28px;
+      padding: 0 10px;
+      border: 1px solid #c8d5e4;
+      border-radius: 3px;
+      color: #174a7c;
+      background: linear-gradient(#fff, #f4f8fd);
+      cursor: pointer;
+    }
+    .link-btn.primary {
+      border-color: #edb26d;
+      color: #c34f00;
+      background: linear-gradient(#fffaf2, #fff0dc);
+      font-weight: 700;
+    }
+    .summary-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 36px;
+      padding: 0 14px;
+      border-bottom: 1px solid #d9e2ec;
+      background: #ffffff;
+    }
+    .count strong {
+      color: #0b64c0;
+    }
+    .shortcut-note {
+      color: #5f6f83;
+      font-size: 12px;
+    }
+    .table-wrap {
+      height: 250px;
+      overflow: auto;
+      border-bottom: 1px solid #d9e2ec;
+    }
+    table {
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 0;
+      table-layout: fixed;
+    }
+    thead th {
+      position: sticky;
+      top: 0;
+      z-index: 1;
+      height: 34px;
+      border-bottom: 1px solid #cbd7e6;
+      border-right: 1px solid #e1e7ef;
+      color: #25354a;
+      background: #eef6ff;
+      font-weight: 800;
+    }
+    thead th:last-child,
+    tbody td:last-child {
+      border-right: 0;
+    }
+    tbody tr {
+      background: #fff;
+    }
+    tbody tr:nth-child(odd) {
+      background: #fbfdff;
+    }
+    tbody tr:hover,
+    tbody tr.active {
+      background: #d7ecff;
+    }
+    tbody td {
+      min-height: 58px;
+      padding: 8px 10px;
+      border-bottom: 1px solid #e7edf4;
+      border-right: 1px solid #edf1f5;
+      vertical-align: middle;
+    }
+    .no,
+    .shortcut-cell,
+    .actions {
+      text-align: center;
+      white-space: nowrap;
+      vertical-align: middle;
+    }
+    .content-title {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 4px;
+    }
+    .title {
+      color: #172033;
+      font-weight: 800;
+    }
+    .preview {
+      overflow: hidden;
+      color: #536275;
+      line-height: 1.45;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+    }
+    .keycap {
+      display: inline-block;
+      min-width: 54px;
+      padding: 3px 6px;
+      border: 1px solid #b8c5d3;
+      border-bottom-color: #8795a6;
+      border-radius: 4px;
+      background: #fff;
+      color: #30435b;
+      font-size: 12px;
+      font-weight: 800;
+      line-height: 1.2;
+    }
+    .mini:hover,
+    .mini:focus {
+      border-color: #f39800;
+      color: #d86400;
+      background: linear-gradient(#fffaf2, #fff0dc);
+      outline: none;
+    }
+    .actions {
+      padding-top: 0;
+      padding-bottom: 0;
+    }
+    .action-row {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 3px;
+      min-height: 58px;
+    }
+    .mini {
+      height: 24px;
+      padding: 0 7px;
+      border: 1px solid #c8d5e4;
+      border-radius: 3px;
+      color: #26374f;
+      background: #fff;
+      cursor: pointer;
+      font-size: 12px;
+    }
+    .mini.delete {
+      color: #b42318;
+    }
+    .tester {
+      height: 596px;
+      padding: 12px 14px 14px;
+      background: #f8fafc;
+    }
+    .tester-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 8px;
+      color: #334155;
+      font-size: 12px;
+    }
+    .tester-head strong {
+      color: #173b66;
+      font-size: 14px;
+    }
+    .target {
+      width: 100%;
+      height: 538px;
+      padding: 10px;
+      border: 1px solid #bdc9d8;
+      background: #fff;
+      resize: none;
+      line-height: 1.55;
+      outline: none;
+    }
+  </style>
+</head>
+<body>
+  <main class="popup" aria-label="빠른 입력 팝업">
+    <section class="header">
+      <div class="logo" aria-hidden="true">↵</div>
+      <input class="search" id="searchWord" type="search" placeholder="내용, 제목 검색" autocomplete="off" />
+      <div class="header-actions">
+        <button class="link-btn" type="button" id="resetBtn">전체목록</button>
+        <button class="link-btn primary" type="button">내용추가</button>
+      </div>
+      <div class="hint">빠른 입력 창이 선택된 상태에서만 Alt+1~Alt+4가 적용됩니다. 하이라이트된 행을 클릭하면 바로 입력됩니다.</div>
+    </section>
+
+    <section class="summary-bar">
+      <div class="count">검색: <strong id="resultCount">4</strong>건</div>
+      <div class="shortcut-note">행 클릭 또는 단축키로 적용</div>
+    </section>
+
+    <section class="table-wrap">
+      <table aria-label="빠른 입력 목록">
+        <colgroup>
+          <col style="width:7%;" />
+          <col style="width:66%;" />
+          <col style="width:12%;" />
+          <col style="width:15%;" />
+        </colgroup>
+        <thead>
+          <tr>
+            <th>No</th>
+            <th>내용</th>
+            <th>단축키</th>
+            <th>관리</th>
+          </tr>
+        </thead>
+        <tbody id="quickList"></tbody>
+      </table>
+    </section>
+
+    <section class="tester" aria-label="입력 테스트 영역">
+      <div class="tester-head">
+        <strong>입력 테스트</strong>
+        <span id="status">항목을 클릭하거나 Alt+숫자를 눌러보세요.</span>
+      </div>
+      <textarea class="target" id="targetContent" placeholder="선택한 내용이 여기에 입력됩니다."></textarea>
+    </section>
+  </main>
+
+  <script>
+    var quickItems = [
+      {
+        no: 27,
+        title: "테스트 3",
+        trigger: ";gab",
+        content: "안녕하세요.\n테스트용 빠른 입력 문구입니다.\n입력 버튼을 누르면 하단 입력 테스트 영역에 이 내용이 들어갑니다."
+      },
+      {
+        no: 18,
+        title: "편집 일정 안내",
+        trigger: ";b5",
+        content: "46배판 교재는 일반 단행본보다 편집·조판 공정이 복잡하고 다양한 구성 요소를 정리해야 하므로 작업 기간이 더 깁니다."
+      },
+      {
+        no: 9,
+        title: "확인 요청",
+        trigger: ";cys",
+        content: "목록에서 내용을 먼저 확인한 뒤 필요한 문구만 입력할 수 있도록 구성한 예시입니다."
+      },
+      {
+        no: 3,
+        title: "화살표",
+        trigger: ";arr",
+        content: "→\n←\n↑\n↓"
+      }
+    ];
+
+    var list = document.getElementById("quickList");
+    var searchWord = document.getElementById("searchWord");
+    var resultCount = document.getElementById("resultCount");
+    var targetContent = document.getElementById("targetContent");
+    var status = document.getElementById("status");
+    var visibleItems = quickItems.slice();
+
+    function escapeHtml(value) {
+      return String(value)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#39;");
+    }
+
+    function preview(value) {
+      return value.replace(/\s+/g, " ").trim();
+    }
+
+    function render(items) {
+      visibleItems = items;
+      list.innerHTML = items.map(function(item, index) {
+        return [
+          '<tr data-index="' + index + '"' + (index === 0 ? ' class="active"' : '') + '>',
+          '<td class="no">' + item.no + '</td>',
+          '<td>',
+          '<div class="content-title"><span class="title">' + escapeHtml(item.title) + '</span></div>',
+          '<div class="preview">' + escapeHtml(preview(item.content)) + '</div>',
+          '</td>',
+          '<td class="shortcut-cell"><span class="keycap">Alt+' + (index + 1) + '</span></td>',
+          '<td class="actions"><div class="action-row">',
+          '<button class="mini" type="button" data-action="view" data-index="' + index + '">보기</button>',
+          '<button class="mini" type="button" data-action="edit" data-index="' + index + '">수정</button>',
+          '<button class="mini delete" type="button" data-action="delete" data-index="' + index + '">삭제</button>',
+          '</div></td>',
+          '</tr>'
+        ].join("");
+      }).join("");
+      resultCount.textContent = items.length;
+    }
+
+    function selectRow(row) {
+      list.querySelectorAll("tr").forEach(function(item) {
+        item.classList.remove("active");
+      });
+      row.classList.add("active");
+    }
+
+    function applyItem(item) {
+      targetContent.value = item.content;
+      status.textContent = item.trigger + " 입력 완료";
+      targetContent.focus();
+    }
+
+    function filterList() {
+      var keyword = searchWord.value.trim().toLowerCase();
+      render(quickItems.filter(function(item) {
+        return !keyword ||
+          item.title.toLowerCase().indexOf(keyword) > -1 ||
+          item.content.toLowerCase().indexOf(keyword) > -1;
+      }));
+      status.textContent = keyword ? "검색 결과를 표시했습니다." : "전체 목록을 표시했습니다.";
+    }
+
+    list.addEventListener("click", function(event) {
+      var row = event.target.closest("tr");
+      if (!row) return;
+      selectRow(row);
+
+      var control = event.target.closest("[data-action]");
+      if (!control) {
+        var clickedItem = visibleItems[Number(row.getAttribute("data-index"))];
+        if (clickedItem) applyItem(clickedItem);
+        return;
+      }
+      event.preventDefault();
+
+      var item = visibleItems[Number(control.getAttribute("data-index"))];
+      var action = control.getAttribute("data-action");
+      if (!item) return;
+
+      if (action === "view") {
+        status.textContent = item.trigger + " 내용을 확인하는 자리입니다.";
+      } else if (action === "edit") {
+        status.textContent = item.trigger + " 수정 화면으로 이동하는 자리입니다.";
+      } else if (action === "delete") {
+        status.textContent = item.trigger + " 삭제 확인을 띄우는 자리입니다.";
+      }
+    });
+
+    list.addEventListener("dblclick", function(event) {
+      var row = event.target.closest("tr");
+      if (!row) return;
+      var item = visibleItems[Number(row.getAttribute("data-index"))];
+      if (item) applyItem(item);
+    });
+
+    searchWord.addEventListener("input", filterList);
+    document.getElementById("resetBtn").addEventListener("click", function() {
+      searchWord.value = "";
+      filterList();
+      searchWord.focus();
+    });
+
+    function shortcutIndex(event) {
+      if (!event.altKey || event.ctrlKey) return -1;
+      if (/^[1-9]$/.test(event.key)) return Number(event.key) - 1;
+      if (/^Digit[1-9]$/.test(event.code)) return Number(event.code.replace("Digit", "")) - 1;
+      if (/^Numpad[1-9]$/.test(event.code)) return Number(event.code.replace("Numpad", "")) - 1;
+      return -1;
+    }
+
+    function handleShortcut(event) {
+      var idx = shortcutIndex(event);
+      if (idx < 0) return;
+
+      var item = visibleItems[idx];
+      if (item) {
+        event.preventDefault();
+        event.stopPropagation();
+        applyItem(item);
+      }
+    }
+
+    window.addEventListener("keydown", handleShortcut, true);
+    window.addEventListener("keyup", handleShortcut, true);
+
+    render(quickItems);
+    searchWord.focus();
+  </script>
+</body>
+</html>
