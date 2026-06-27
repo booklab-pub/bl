@@ -1,0 +1,681 @@
+﻿<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>저자 클레임 접수 및 처리</title>
+  <style>
+    :root {
+      --bg: #ffffff;
+      --panel: #ffffff;
+      --head: #e8f5fb;
+      --line: #acd5e7;
+      --line-strong: #9bbfd2;
+      --text: #111111;
+      --muted: #666666;
+      --field: #ffffff;
+      --focus: #2f77bb;
+      --button: #2e6fa8;
+      --button-soft: #f7fbff;
+      --danger: #c73b3b;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: "Malgun Gothic", "맑은 고딕", Arial, sans-serif;
+      font-size: 13px;
+    }
+
+    .app {
+      width: 100%;
+      max-width: 1240px;
+      margin: 0 auto;
+      padding: 0 10px 18px;
+    }
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
+      min-height: 46px;
+      margin: 0 -10px 10px;
+      padding: 0 40px;
+      color: #ffffff;
+      background: #235284;
+      background-image: repeating-linear-gradient(135deg, rgba(255,255,255,.05) 0, rgba(255,255,255,.05) 1px, transparent 1px, transparent 4px);
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 20px;
+      font-weight: 700;
+      letter-spacing: 0;
+    }
+
+    .manual-note {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      color: #e9f5ff;
+      white-space: nowrap;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 0;
+    }
+
+    .grid > div {
+      min-width: 0;
+    }
+
+    .top-pair {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    }
+
+    .top-pair .rows + .rows {
+      border-left: 1px solid var(--line);
+    }
+
+    .top-pair .row:last-child {
+      border-bottom: 0;
+    }
+    fieldset {
+      margin: 0;
+      padding: 0;
+      border: 1px solid var(--line);
+      border-radius: 0;
+      background: var(--panel);
+    }
+
+    fieldset + fieldset,
+    .grid > div + div fieldset:first-child {
+      border-top: 0;
+    }
+
+    legend {
+      width: 100%;
+      padding: 8px 12px;
+      border-bottom: 1px solid var(--line);
+      background: var(--head);
+      color: #0070a8;
+      font-weight: 700;
+    }
+
+    .rows {
+      display: grid;
+      gap: 0;
+    }
+
+    .row {
+      display: grid;
+      grid-template-columns: 150px minmax(0, 1fr);
+      gap: 0;
+      align-items: center;
+      min-height: 40px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .row:last-child {
+      border-bottom: 0;
+    }
+
+    .row.two {
+      grid-template-columns: 150px minmax(0, 1fr) 150px minmax(0, 1fr);
+    }
+
+    .row.comp {
+      grid-template-columns: 150px minmax(0, 1fr) 70px 150px 80px minmax(0, 1fr);
+    }
+
+    .row.attach,
+    .row.author-search {
+      grid-template-columns: 150px minmax(0, 1fr) 64px;
+    }
+
+    label {
+      align-self: stretch;
+      display: flex;
+      align-items: center;
+      padding: 0 12px;
+      border-right: 1px solid var(--line);
+      background: var(--head);
+      color: #0070a8;
+      font-weight: 600;
+      line-height: 1.2;
+    }
+
+    .required::after {
+      content: " *";
+      color: var(--danger);
+      font-weight: 700;
+    }
+
+    input,
+    select,
+    textarea {
+      width: 100%;
+      min-width: 0;
+      border: 1px solid var(--line-strong);
+      border-radius: 0;
+      background: var(--field);
+      color: var(--text);
+      font: inherit;
+      outline: none;
+    }
+
+    input,
+    select {
+      height: 29px;
+      padding: 3px 7px;
+    }
+
+    textarea {
+      display: block;
+      min-height: 64px;
+      padding: 7px 8px;
+      resize: vertical;
+      line-height: 1.35;
+    }
+
+    .row > input,
+    .row > select,
+    .row > textarea {
+      width: calc(100% - 16px);
+      margin: 5px 8px;
+    }
+
+    textarea.large {
+      min-height: 150px;
+    }
+
+    textarea.mid {
+      min-height: 92px;
+    }
+
+    input[readonly] {
+      background: #f3f8fb;
+      color: #4c5c6d;
+    }
+
+    input:focus,
+    select:focus,
+    textarea:focus {
+      border-color: var(--focus);
+      box-shadow: 0 0 0 2px rgba(47, 119, 187, .14);
+      background: #fff;
+    }
+
+    .button {
+      height: 30px;
+      border: 1px solid #1f4779;
+      border-radius: 3px;
+      background: linear-gradient(#3c73b8, var(--button));
+      color: #fff;
+      font: inherit;
+      font-weight: 700;
+      cursor: pointer;
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, .28), 0 1px 2px rgba(15, 31, 50, .15);
+    }
+
+    .button:hover {
+      background: linear-gradient(#447fc9, #285993);
+    }
+
+    .button:active {
+      transform: translateY(1px);
+      box-shadow: inset 0 1px 3px rgba(0, 0, 0, .18);
+    }
+
+    .button.secondary {
+      border-color: #9cafc3;
+      background: linear-gradient(#ffffff, var(--button-soft));
+      color: #23384f;
+    }
+
+    .button.secondary:hover {
+      background: linear-gradient(#ffffff, #e1ebf6);
+    }
+
+    .button.danger {
+      border-color: #9e2f2f;
+      background: linear-gradient(#d85a5a, #b53a3a);
+    }
+
+    .button.small,
+    .button.search-author {
+      width: 58px;
+      padding: 0;
+      margin-right: 8px;
+    }
+
+    .actions {
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+      margin-top: 16px;
+      padding: 12px;
+      border: 1px solid var(--line);
+      border-radius: 0;
+      background: #ffffff;
+    }
+
+    .actions .button {
+      width: 110px;
+      height: 36px;
+      font-size: 14px;
+    }
+
+    .status {
+      min-height: 34px;
+      margin-top: 8px;
+      padding: 8px 10px;
+      border: 1px solid var(--line);
+      border-radius: 0;
+      background: #f8fafc;
+      color: var(--muted);
+      line-height: 1.3;
+    }
+
+    .status.error {
+      border-color: #e0a3a3;
+      background: #fff2f2;
+      color: #9b2e2e;
+    }
+
+    .status.ok {
+      border-color: #9bc8a5;
+      background: #f1fbf3;
+      color: #27703a;
+    }
+
+    .records {
+      height: 180px;
+      overflow: auto;
+      border: 1px solid var(--line);
+      border-radius: 0;
+      background: #fff;
+      margin: 8px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+
+    th,
+    td {
+      border-bottom: 1px solid #e5ebf2;
+      padding: 6px 7px;
+      text-align: left;
+      white-space: nowrap;
+    }
+
+    th {
+      position: sticky;
+      top: 0;
+      background: #f1f5fa;
+      color: #33465b;
+      font-weight: 700;
+    }
+
+    .hidden {
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <header class="topbar">
+      <h1>저자 클레임 접수 및 처리</h1>
+      <div class="manual-note">
+        <span>처리 기준은 사내 사고 대응 및 보상 매뉴얼을 참고하세요.</span>
+        <button class="button" type="button" id="manualBtn">매뉴얼 보기</button>
+      </div>
+    </header>
+
+    <form id="claimForm" novalidate>
+      <section class="grid">
+        <div>
+          <fieldset class="top-info">
+            <legend>접수 정보</legend>
+            <div class="top-pair">
+              <div class="rows">
+                <div class="row">
+                  <label for="claimNo">클레임 NO</label>
+                  <input id="claimNo" name="claimNo" readonly>
+                </div>
+                <div class="row">
+                  <label for="dateTime">접수일시</label>
+                  <input id="dateTime" name="dateTime" readonly>
+                </div>
+                <div class="row">
+                  <label class="required" for="receiver">접수자</label>
+                  <input id="receiver" name="receiver" autocomplete="off">
+                </div>
+                <div class="row">
+                  <label for="channel">접수경로</label>
+                  <select id="channel" name="channel"></select>
+                </div>
+              </div>
+              <div class="rows">
+                <div class="row author-search">
+                  <label for="customer">저자명</label>
+                  <input id="customer" name="customer" autocomplete="off">
+                  <button class="button search-author" type="button" id="authorSearchBtn">검색</button>
+                </div>
+                <div class="row">
+                  <label for="contact">연락처</label>
+                  <input id="contact" name="contact" autocomplete="off">
+                </div>
+                <div class="row">
+                  <label for="book">도서명(ISBN)</label>
+                  <input id="book" name="book" autocomplete="off">
+                </div>
+                <div class="row">
+                  <label for="bookStatus">도서상태</label>
+                  <select id="bookStatus" name="bookStatus"></select>
+                </div>
+              </div>
+            </div>
+          </fieldset>
+        </div>
+
+        <div>
+          <fieldset>
+            <div class="rows">
+              <div class="row two">
+                <label class="required" for="type">클레임 유형</label>
+                <select id="type" name="type"></select>
+                <label for="priority">우선순위</label>
+                <select id="priority" name="priority"></select>
+              </div>
+              <div class="row">
+                <label class="required" for="title">제목</label>
+                <input id="title" name="title" autocomplete="off">
+              </div>
+              <div class="row">
+                <label class="required" for="content">내용</label>
+                <textarea class="large" id="content" name="content"></textarea>
+              </div>
+              <div class="row">
+                <label class="required" for="request">저자 요청사항</label>
+                <textarea class="mid" id="request" name="request"></textarea>
+              </div>
+            </div>
+          </fieldset>
+        </div>
+
+        <div>
+          <fieldset>
+            <legend>처리 정보</legend>
+            <div class="rows">
+              <div class="row two">
+                <label for="status">처리상태</label>
+                <select id="status" name="status"></select>
+                <label for="handler">처리담당자</label>
+                <input id="handler" name="handler" autocomplete="off">
+              </div>
+              <div class="row">
+                <label for="action">처리내용/조치</label>
+                <textarea class="mid" id="action" name="action"></textarea>
+              </div>
+              <div class="row">
+                <label for="damage">사안의 중대성</label>
+                <select id="damage" name="damage"></select>
+              </div>
+              <div class="row comp">
+                <label for="compType">보상 합의안</label>
+                <select id="compType" name="compType"></select>
+                <label for="compAmount">금액</label>
+                <input id="compAmount" name="compAmount" inputmode="numeric" autocomplete="off">
+                <label for="complete">완료일시</label>
+                <input id="complete" name="complete" autocomplete="off">
+              </div>
+              <div class="row attach">
+                <label for="attach">첨부파일</label>
+                <input id="attach" name="attach" readonly>
+                <button class="button small" type="button" id="browseBtn">찾기</button>
+                <input class="hidden" id="fileInput" type="file">
+              </div>
+              <div class="row">
+                <label class="required" for="memo">사장 지시사항</label>
+                <textarea class="mid" id="memo" name="memo"></textarea>
+              </div>
+            </div>
+          </fieldset>
+
+          <div class="actions">
+            <button class="button" type="submit">저장</button>
+            <button class="button secondary" type="button" id="listBtn">목록</button>
+            <button class="button secondary" type="button" id="downloadBtn">CSV 저장</button>
+            <button class="button secondary" type="button" id="resetBtn">초기화</button>
+            <button class="button danger" type="button" id="closeBtn">닫기</button>
+          </div>
+
+          <div class="status" id="statusBox">필수항목을 입력한 뒤 저장하면 브라우저에 임시 보관됩니다.</div>
+        </div>
+      </section>
+    </form>
+  </main>
+
+  <script>
+    const lists = {
+      claimTypes: ["교정·교열·편집", "표지·본문 디자인", "제목·판권 등 오식", "파본", "오배송", "판매 및 인세", "기타"],
+      channels: ["전화", "이메일", "게시판", "카카오톡", "방문", "기타"],
+      priorities: ["긴급", "보통", "낮음"],
+      statuses: ["접수", "처리중", "완료", "보류"],
+      compTypes: ["없음(출간 후 수정)", "표지갈이", "수정본 재제작", "개별교환", "유상 표지갈이(저자부담)", "환불", "기타"],
+      bookStatuses: ["출간 전", "출간 직후(출고 완료, 증정본 미배송)", "출간 직후(출고 완료, 증정본 배송)", "구발행 도서"],
+      damageScopes: ["경미(출간 후 수정 대상)", "중대(재제작 검토 대상)", "제작불량(인쇄/제본/후가공)", "판단보류/조사필요"]
+    };
+
+    const fields = [
+      "claimNo", "dateTime", "receiver", "channel", "customer", "contact", "book", "bookStatus",
+      "type", "priority", "title", "content", "request", "status", "handler", "action", "damage",
+      "compType", "compAmount", "complete", "attach", "memo"
+    ];
+    const headers = ["클레임NO", "접수일시", "접수자", "접수경로", "저자명", "연락처", "도서명(ISBN)", "도서상태", "클레임유형", "우선순위", "제목", "내용", "저자요청사항", "처리상태", "처리담당자", "처리내용", "사안의 중대성", "보상 합의안", "보상금액", "완료일시", "첨부파일", "사장 지시사항"];
+    const storageKey = "claimPrototypeRecords";
+    const form = document.getElementById("claimForm");
+    const statusBox = document.getElementById("statusBox");
+
+    function fillSelect(id, values, placeholder) {
+      const select = document.getElementById(id);
+      select.innerHTML = "";
+      if (placeholder) {
+        select.append(new Option(placeholder, ""));
+      }
+      values.forEach(value => select.append(new Option(value, value)));
+    }
+
+    function pad(value) {
+      return String(value).padStart(2, "0");
+    }
+
+    function nowText() {
+      const date = new Date();
+      return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}`;
+    }
+
+    function todayKey() {
+      const date = new Date();
+      return `${date.getFullYear()}${pad(date.getMonth() + 1)}${pad(date.getDate())}`;
+    }
+
+    function getRecords() {
+      try {
+        return JSON.parse(localStorage.getItem(storageKey)) || [];
+      } catch {
+        return [];
+      }
+    }
+
+    function setRecords(records) {
+      localStorage.setItem(storageKey, JSON.stringify(records));
+    }
+
+    function generateClaimNo() {
+      const prefix = `CLM-${todayKey()}-`;
+      const count = getRecords().filter(record => record.claimNo && record.claimNo.startsWith(prefix)).length + 1;
+      return `${prefix}${pad(count)}`;
+    }
+
+    function setStatus(message, kind) {
+      statusBox.textContent = message;
+      statusBox.className = `status${kind ? ` ${kind}` : ""}`;
+    }
+
+    function resetForm(keepStatus) {
+      form.reset();
+      document.getElementById("claimNo").value = generateClaimNo();
+      document.getElementById("dateTime").value = nowText();
+      document.getElementById("channel").value = "전화";
+      document.getElementById("bookStatus").value = "출간 전";
+      document.getElementById("type").value = "";
+      document.getElementById("priority").value = "보통";
+      document.getElementById("status").value = "접수";
+      document.getElementById("damage").value = "경미(출간 후 수정 대상)";
+      document.getElementById("compType").value = "없음(출간 후 수정)";
+      if (!keepStatus) {
+        setStatus("필수항목을 입력한 뒤 저장하면 브라우저에 임시 보관됩니다.");
+      }
+    }
+
+    function collectData() {
+      return Object.fromEntries(fields.map(id => [id, document.getElementById(id).value.trim()]));
+    }
+
+    function validate(data) {
+      const required = [
+        ["receiver", "접수자"],
+        ["type", "클레임 유형"],
+        ["title", "제목"],
+        ["content", "내용"],
+        ["request", "저자 요청사항"],
+        ["memo", "사장 지시사항"]
+      ];
+      return required.filter(([id]) => !data[id]).map(([, label]) => label);
+    }
+
+    function renderRecords() {
+      const body = document.getElementById("recordsBody");
+      if (!body) return;
+      const records = getRecords().slice(-8).reverse();
+      body.innerHTML = records.length
+        ? records.map(record => `<tr><td>${escapeHtml(record.claimNo)}</td><td>${escapeHtml(record.receiver)}</td><td>${escapeHtml(record.title)}</td><td>${escapeHtml(record.status)}</td></tr>`).join("")
+        : `<tr><td colspan="4">저장된 접수 내역이 없습니다.</td></tr>`;
+    }
+
+    function escapeHtml(value) {
+      return String(value || "").replace(/[&<>"']/g, match => ({
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        '"': "&quot;",
+        "'": "&#39;"
+      }[match]));
+    }
+
+    function csvEscape(value) {
+      return `"${String(value || "").replace(/"/g, '""')}"`;
+    }
+
+    function downloadCsv() {
+      const records = getRecords();
+      if (!records.length) {
+        setStatus("CSV로 저장할 접수 내역이 없습니다.", "error");
+        return;
+      }
+      const lines = [headers.join(",")].concat(records.map(record => fields.map(id => csvEscape(record[id])).join(",")));
+      const blob = new Blob(["\ufeff" + lines.join("\r\n") + "\r\n"], { type: "text/csv;charset=utf-8" });
+      const link = document.createElement("a");
+      link.href = URL.createObjectURL(blob);
+      link.download = "클레임접수.csv";
+      link.click();
+      URL.revokeObjectURL(link.href);
+      setStatus("CSV 파일을 만들었습니다.", "ok");
+    }
+
+    fillSelect("channel", lists.channels);
+    fillSelect("bookStatus", lists.bookStatuses);
+    fillSelect("type", lists.claimTypes, "선택");
+    fillSelect("priority", lists.priorities);
+    fillSelect("status", lists.statuses);
+    fillSelect("damage", lists.damageScopes);
+    fillSelect("compType", lists.compTypes);
+
+    document.getElementById("authorSearchBtn").addEventListener("click", () => {
+      setStatus("저자 검색은 DB 연동 시 저자 정보를 불러오도록 연결합니다.");
+    });
+
+    document.getElementById("browseBtn").addEventListener("click", () => document.getElementById("fileInput").click());
+    document.getElementById("fileInput").addEventListener("change", event => {
+      const file = event.target.files[0];
+      document.getElementById("attach").value = file ? file.name : "";
+    });
+
+    document.getElementById("manualBtn").addEventListener("click", () => {
+      window.open("도서_제작_사고_대응_및_보상_매뉴얼.pdf", "_blank");
+    });
+
+    document.getElementById("listBtn").addEventListener("click", () => {
+      window.open("claim_list.html", "_blank");
+    });
+    document.getElementById("resetBtn").addEventListener("click", resetForm);
+    document.getElementById("downloadBtn").addEventListener("click", downloadCsv);
+    document.getElementById("closeBtn").addEventListener("click", () => {
+      window.close();
+      setStatus("브라우저 정책상 닫히지 않으면 탭을 직접 닫아주세요. 입력 중인 내용은 초기화되지 않았습니다.");
+    });
+
+    form.addEventListener("submit", event => {
+      event.preventDefault();
+      const data = collectData();
+      const missing = validate(data);
+      if (missing.length) {
+        setStatus(`다음 필수항목을 입력해주세요: ${missing.join(", ")}`, "error");
+        document.getElementById(missing[0] === "클레임 유형" ? "type" : {
+          "접수자": "receiver",
+          "제목": "title",
+          "내용": "content",
+          "저자 요청사항": "request",
+          "사장 지시사항": "memo"
+        }[missing[0]]).focus();
+        return;
+      }
+      const records = getRecords();
+      records.push(data);
+      setRecords(records);
+      setStatus(`저장되었습니다. 클레임 NO: ${data.claimNo}`, "ok");
+      renderRecords();
+      resetForm(true);
+    });
+
+    resetForm();
+    renderRecords();
+  </script>
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
+
+

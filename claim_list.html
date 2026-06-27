@@ -1,0 +1,141 @@
+﻿<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>저자 클레임 목록</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: #ffffff;
+      color: #111111;
+      font-family: "Malgun Gothic", "맑은 고딕", Arial, sans-serif;
+      font-size: 13px;
+    }
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      min-height: 46px;
+      padding: 0 40px;
+      color: #ffffff;
+      background: #235284;
+      background-image: repeating-linear-gradient(135deg, rgba(255,255,255,.05) 0, rgba(255,255,255,.05) 1px, transparent 1px, transparent 4px);
+    }
+    h1 { margin: 0; font-size: 20px; }
+    main { max-width: 1240px; margin: 12px auto 18px; padding: 0 10px; }
+    .list-links {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin: 0 0 6px;
+      color: #001f70;
+      font-weight: 700;
+    }
+    .list-links a {
+      color: #001f70;
+      text-decoration: none;
+    }
+    .list-links a:hover { text-decoration: underline; }
+    .toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 10px;
+      border: 1px solid #acd5e7;
+      background: #e8f5fb;
+      color: #0070a8;
+      font-weight: 700;
+    }
+    .button {
+      height: 30px;
+      padding: 0 14px;
+      border: 1px solid #1f4779;
+      border-radius: 3px;
+      background: linear-gradient(#3c73b8, #2e6fa8);
+      color: #ffffff;
+      font: inherit;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      border: 1px solid #acd5e7;
+      border-top: 0;
+    }
+    th, td {
+      border-bottom: 1px solid #d7e8f1;
+      padding: 8px 9px;
+      text-align: left;
+      white-space: nowrap;
+    }
+    th {
+      background: #f1f7fb;
+      color: #33465b;
+      font-weight: 700;
+    }
+    td.title { white-space: normal; }
+    .empty { padding: 22px 10px; color: #666666; text-align: center; }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <h1>저자 클레임 목록</h1>
+    <button class="button" type="button" id="writeBtn">접수 화면</button>
+  </header>
+  <main>
+    <div class="list-links">
+      <a href="claim_list.html">전체 목록</a>
+      <span>|</span>
+      <a href="claim_prototype.html">내용 추가</a>
+    </div>
+    <div class="toolbar">
+      <span>접수 내역</span>
+      <span id="totalCount">0건</span>
+    </div>
+    <table>
+      <thead>
+        <tr>
+          <th>클레임 NO</th>
+          <th>접수일시</th>
+          <th>저자명</th>
+          <th>도서명(ISBN)</th>
+          <th>클레임 유형</th>
+          <th>제목</th>
+          <th>처리상태</th>
+          <th>처리담당자</th>
+          <th>사안의 중대성</th>
+          <th>보상 합의안</th>
+        </tr>
+      </thead>
+      <tbody id="listBody"></tbody>
+    </table>
+  </main>
+  <script>
+    const storageKey = "claimPrototypeRecords";
+    const body = document.getElementById("listBody");
+    const records = JSON.parse(localStorage.getItem(storageKey) || "[]").reverse();
+
+    function escapeHtml(value) {
+      return String(value || "").replace(/[&<>"']/g, match => ({
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        '"': "&quot;",
+        "'": "&#39;"
+      }[match]));
+    }
+
+    document.getElementById("totalCount").textContent = `${records.length}건`;
+    body.innerHTML = records.length
+      ? records.map(record => `<tr><td>${escapeHtml(record.claimNo)}</td><td>${escapeHtml(record.dateTime)}</td><td>${escapeHtml(record.customer)}</td><td>${escapeHtml(record.book)}</td><td>${escapeHtml(record.type)}</td><td class="title">${escapeHtml(record.title)}</td><td>${escapeHtml(record.status)}</td><td>${escapeHtml(record.handler)}</td><td>${escapeHtml(record.damage)}</td><td>${escapeHtml(record.compType)}</td></tr>`).join("")
+      : `<tr><td class="empty" colspan="10">저장된 접수 내역이 없습니다.</td></tr>`;
+
+    document.getElementById("writeBtn").addEventListener("click", () => {
+      location.href = "claim_prototype.html";
+    });
+  </script>
+</body>
+</html>
