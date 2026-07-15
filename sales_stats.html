@@ -61,7 +61,6 @@
     }
     .date-input { width: 112px; padding: 0 9px; }
     .combo { position: relative; width: 300px; }
-    .combo.book { width: 370px; }
     .combo-input { width: 100%; padding: 0 62px 0 34px; }
     .combo-input::placeholder { color: #98a2b3; }
     .combo-input:focus { border-color: var(--focus); box-shadow: 0 0 0 3px rgba(28,100,209,.14); }
@@ -75,8 +74,25 @@
     .combo.is-selected .combo-input { border-color: #419261; background: #f6fff9; }
     .combo.is-selected .combo-state { color: #176b37; background: #dff4e6; }
     .combo.has-error .combo-input { border-color: var(--danger); }
-    .field-help { margin-top: 5px; color: var(--muted); font-size: 11px; }
-    .field-help.error { color: var(--danger); }
+    .book-lookup { position: relative; display: flex; width: 350px; }
+    .search-select, .book-search-input {
+      height: 34px;
+      border: 1px solid #bfc8d4;
+      background: #fff;
+      color: var(--text);
+      outline: none;
+    }
+    .search-select { width: 82px; padding: 0 5px; border-radius: 3px 0 0 3px; }
+    .book-search-input { width: 212px; margin-left: -1px; padding: 0 9px; }
+    .book-search-input:focus { position: relative; border-color: var(--focus); box-shadow: 0 0 0 3px rgba(28,100,209,.14); }
+    .lookup-button {
+      width: 56px; height: 34px; margin-left: -1px;
+      border: 1px solid #6d7e94; border-radius: 0 3px 3px 0;
+      color: #344054; background: #f7f8fa; cursor: pointer;
+    }
+    .lookup-button:hover { background: #e9edf2; }
+    .book-lookup .suggestions { top: 38px; left: 82px; width: 268px; right: auto; }
+    .book-lookup.open .suggestions { display: block; }
 
     .suggestions {
       position: absolute;
@@ -148,6 +164,10 @@
     .result-table th { color: #111; background: #f3f3f3; font-weight: 500; }
     .result-table tbody tr:nth-child(odd) { background: #fafafa; }
     .result-table tbody tr:hover { background: #ffff88; }
+    .result-table .detail-column { display: none; }
+    .result-table.show-details col.detail-column { display: table-column; }
+    .result-table.show-details th.detail-column,
+    .result-table.show-details td.detail-column { display: table-cell; }
     .result-table td.store, .result-table td.book-title { overflow: hidden; text-align: left; text-overflow: ellipsis; white-space: nowrap; }
     .result-table .muted-cell { color: #98a2b3; }
     .quantity-link { color: #45452e; text-decoration: none; border-bottom: 1px solid #bfc0ad; }
@@ -181,24 +201,24 @@
           <div>
             <div class="combo" id="storeCombo">
               <span class="combo-icon" aria-hidden="true">⌕</span>
-              <input class="combo-input" id="storeSearch" type="text" placeholder="서점명·코드·주소 검색" autocomplete="off" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="storeList">
+              <input class="combo-input" id="storeSearch" type="text" autocomplete="off" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="storeList">
               <span class="combo-state">선택 전</span>
               <div class="suggestions" id="storeList" role="listbox"></div>
             </div>
-            <div class="field-help" id="storeHelp">목록에서 정확한 거래 서점을 선택하세요.</div>
           </div>
         </div>
 
         <div class="field-group">
           <label class="field-label" for="bookSearch">도서명</label>
-          <div>
-            <div class="combo book" id="bookCombo">
-              <span class="combo-icon" aria-hidden="true">⌕</span>
-              <input class="combo-input" id="bookSearch" type="text" placeholder="도서명·ISBN·저자 검색" autocomplete="off" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="bookList">
-              <span class="combo-state">선택 전</span>
-              <div class="suggestions" id="bookList" role="listbox"></div>
-            </div>
-            <div class="field-help" id="bookHelp">동명 도서는 ISBN과 저자·출판사로 구분합니다.</div>
+          <div class="book-lookup" id="bookLookup">
+            <select class="search-select" id="bookKey" aria-label="도서 검색 기준">
+              <option value="title">도서명</option>
+              <option value="isbn">ISBN</option>
+              <option value="author">저자명</option>
+            </select>
+            <input class="book-search-input" id="bookSearch" type="text" autocomplete="off">
+            <button class="lookup-button" id="bookLookupButton" type="button">찾기</button>
+            <div class="suggestions" id="bookList" role="listbox"></div>
           </div>
         </div>
 
@@ -219,27 +239,21 @@
       <span class="result-count">검색: <strong id="resultCount">8</strong> 건</span>
     </div>
 
-    <table class="result-table">
+    <table class="result-table" id="resultTable">
       <colgroup>
-        <col style="width:5%"><col style="width:10%"><col style="width:14%"><col style="width:23%">
+        <col style="width:5%"><col style="width:10%"><col class="detail-column" style="width:14%"><col class="detail-column" style="width:23%">
         <col style="width:9%"><col style="width:9%"><col style="width:9%"><col style="width:14%"><col style="width:7%">
       </colgroup>
       <thead>
-        <tr><th>No</th><th>입력시점</th><th>서점명</th><th>도서명</th><th>출고수량</th><th>반품수량</th><th>판매수량</th><th>판매금액(천)</th><th>관리</th></tr>
+        <tr><th>No</th><th>입력시점</th><th class="detail-column">서점명</th><th class="detail-column">도서명</th><th>출고수량</th><th>반품수량</th><th>판매수량</th><th>판매금액(천)</th><th>관리</th></tr>
       </thead>
       <tbody id="resultBody"></tbody>
     </table>
   </main>
 
+  <script src="store_data.js"></script>
   <script>
-    const stores = [
-      { id: 'S0012', name: '교보문고', branch: '광화문점', address: '서울 종로구 종로 1' },
-      { id: 'S0018', name: '교보문고', branch: '강남점', address: '서울 서초구 강남대로 465' },
-      { id: 'S0041', name: '영풍문고', branch: '종각종로본점', address: '서울 종로구 청계천로 41' },
-      { id: 'S0057', name: '영풍문고', branch: '스타필드 코엑스몰점', address: '서울 강남구 영동대로 513' },
-      { id: 'S0074', name: '알라딘 중고서점', branch: '신촌점', address: '서울 서대문구 연세로 21' },
-      { id: 'S0083', name: '알라딘 중고서점', branch: '부산서면점', address: '부산 부산진구 중앙대로 704' }
-    ];
+    const stores = window.STORE_DATA;
 
     const books = [
       { id: 'B1041', title: '소년이 온다', isbn: '9788936434120', author: '한강', publisher: '창비' },
@@ -251,14 +265,14 @@
     ];
 
     const rows = [
-      { no: 4215, date: '2026-07-15', storeId: 'S0012', bookId: 'B1041', out: 294, back: 1, sales: 293, amount: '3,563' },
-      { no: 4214, date: '2026-07-14', storeId: 'S0018', bookId: 'B1173', out: 518, back: 127, sales: 391, amount: '5,297' },
-      { no: 4213, date: '2026-07-13', storeId: 'S0041', bookId: 'B1041', out: 605, back: 0, sales: 605, amount: '7,246' },
-      { no: 4212, date: '2026-07-10', storeId: 'S0057', bookId: 'B2012', out: 156, back: 0, sales: 156, amount: '1,921' },
-      { no: 4211, date: '2026-07-09', storeId: 'S0074', bookId: 'B1208', out: 422, back: 0, sales: 422, amount: '5,037' },
-      { no: 4210, date: '2026-07-08', storeId: 'S0083', bookId: 'B2095', out: 408, back: 0, sales: 408, amount: '4,596' },
-      { no: 4209, date: '2026-07-07', storeId: 'S0012', bookId: 'B3022', out: 235, back: 165, sales: 70, amount: '781' },
-      { no: 4208, date: '2026-07-06', storeId: 'S0041', bookId: 'B2012', out: 272, back: 0, sales: 272, amount: '3,307' }
+      { no: 4215, date: '2026-07-15', storeId: '10747', bookId: 'B1041', out: 294, back: 1, sales: 293, amount: '3,563' },
+      { no: 4214, date: '2026-07-14', storeId: '10044', bookId: 'B1173', out: 518, back: 127, sales: 391, amount: '5,297' },
+      { no: 4213, date: '2026-07-13', storeId: '10148', bookId: 'B1041', out: 605, back: 0, sales: 605, amount: '7,246' },
+      { no: 4212, date: '2026-07-10', storeId: '10136', bookId: 'B2012', out: 156, back: 0, sales: 156, amount: '1,921' },
+      { no: 4211, date: '2026-07-09', storeId: '10146', bookId: 'B1208', out: 422, back: 0, sales: 422, amount: '5,037' },
+      { no: 4210, date: '2026-07-08', storeId: '90049', bookId: 'B2095', out: 408, back: 0, sales: 408, amount: '4,596' },
+      { no: 4209, date: '2026-07-07', storeId: '10072', bookId: 'B3022', out: 235, back: 165, sales: 70, amount: '781' },
+      { no: 4208, date: '2026-07-06', storeId: '10103', bookId: 'B2012', out: 272, back: 0, sales: 272, amount: '3,307' }
     ];
 
     let selectedStore = null;
@@ -279,8 +293,6 @@
       const combo = document.getElementById(config.comboId);
       const input = document.getElementById(config.inputId);
       const list = document.getElementById(config.listId);
-      const help = document.getElementById(config.helpId);
-      const defaultHelp = help.textContent;
       let activeIndex = -1;
       let filtered = [];
 
@@ -289,8 +301,8 @@
         if (config.type === 'store') selectedStore = value;
         else selectedBook = value;
       }
-      function label(item) { return config.type === 'store' ? `${item.name} ${item.branch}` : item.title; }
-      function searchText(item) { return config.type === 'store' ? `${item.name} ${item.branch} ${item.address} ${item.id}` : `${item.title} ${item.isbn} ${item.author} ${item.publisher}`; }
+      function label(item) { return config.type === 'store' ? item.name : item.title; }
+      function searchText(item) { return config.type === 'store' ? `${item.name} ${item.id}` : `${item.title} ${item.isbn} ${item.author} ${item.publisher}`; }
 
       function draw(query = '') {
         const normalized = query.trim().toLowerCase();
@@ -299,7 +311,7 @@
         const heading = normalized ? `‘${escapeHtml(query.trim())}’ 검색 결과 ${filtered.length}건` : '최근 선택 · 전체 목록';
         list.innerHTML = `<div class="suggestion-heading">${heading}</div>` + (filtered.length ? filtered.map((item, index) => {
           if (config.type === 'store') {
-            return `<button class="suggestion" type="button" role="option" data-index="${index}"><span class="suggestion-main"><strong>${highlight(item.name, query)} ${highlight(item.branch, query)}</strong><span class="suggestion-code">${highlight(item.id, query)}</span></span><span class="suggestion-meta">${highlight(item.address, query)}</span></button>`;
+            return `<button class="suggestion" type="button" role="option" data-index="${index}"><span class="suggestion-main"><strong>${highlight(item.name, query)}</strong><span class="suggestion-code">${highlight(item.id, query)}</span></span></button>`;
           }
           return `<button class="suggestion" type="button" role="option" data-index="${index}"><span class="suggestion-main"><strong>${highlight(item.title, query)}</strong><span class="suggestion-code">ISBN ${highlight(item.isbn, query)}</span></span><span class="suggestion-meta">${highlight(item.author, query)} · ${highlight(item.publisher, query)}</span></button>`;
         }).join('') : '<div class="no-result">일치하는 항목이 없습니다.<br>코드나 ISBN으로 다시 검색해 보세요.</div>');
@@ -313,8 +325,6 @@
         combo.classList.remove('has-error');
         combo.classList.add('is-selected');
         combo.querySelector('.combo-state').textContent = '선택됨';
-        help.classList.remove('error');
-        help.textContent = config.type === 'store' ? `${item.id} · ${item.address}` : `ISBN ${item.isbn} · ${item.author} · ${item.publisher}`;
         close();
         updateSummary();
       }
@@ -323,13 +333,12 @@
         if (!keepText) input.value = '';
         combo.classList.remove('is-selected');
         combo.querySelector('.combo-state').textContent = '선택 전';
-        help.textContent = defaultHelp;
         updateSummary();
       }
       function invalidate() {
         combo.classList.add('has-error');
-        help.classList.add('error');
-        help.textContent = '입력한 항목을 자동완성 목록에서 선택해 주세요.';
+        alert('서점을 목록에서 선택해 주세요.');
+        input.focus();
       }
 
       input.addEventListener('focus', open);
@@ -355,14 +364,79 @@
       return { input, clearSelection, invalidate, getSelected };
     }
 
-    const storeControl = setupCombo({ type:'store', comboId:'storeCombo', inputId:'storeSearch', listId:'storeList', helpId:'storeHelp', items:stores });
-    const bookControl = setupCombo({ type:'book', comboId:'bookCombo', inputId:'bookSearch', listId:'bookList', helpId:'bookHelp', items:books });
+    const storeControl = setupCombo({ type:'store', comboId:'storeCombo', inputId:'storeSearch', listId:'storeList', items:stores });
+
+    function setupBookLookup() {
+      const lookup = document.getElementById('bookLookup');
+      const key = document.getElementById('bookKey');
+      const input = document.getElementById('bookSearch');
+      const button = document.getElementById('bookLookupButton');
+      const list = document.getElementById('bookList');
+      let matches = [];
+
+      function choose(book) {
+        selectedBook = book;
+        input.value = key.value === 'isbn' ? book.isbn : key.value === 'author' ? book.author : book.title;
+        lookup.classList.remove('open');
+        updateSummary();
+      }
+
+      function findBooks() {
+        const query = input.value.trim();
+        if (!query) {
+          alert('검색어를 입력해 주세요.');
+          input.focus();
+          return;
+        }
+        const normalized = query.toLowerCase();
+        matches = books.filter(book => {
+          if (key.value === 'isbn') return book.isbn === query;
+          if (key.value === 'author') return book.author.toLowerCase().includes(normalized);
+          return book.title.toLowerCase().includes(normalized);
+        });
+        if (matches.length === 1) {
+          choose(matches[0]);
+          return;
+        }
+        if (!matches.length) {
+          lookup.classList.remove('open');
+          alert('검색된 도서가 없습니다.');
+          return;
+        }
+        list.innerHTML = `<div class="suggestion-heading">검색 결과 ${matches.length}건</div>` + matches.map((book, index) => `<button class="suggestion" type="button" role="option" data-index="${index}"><span class="suggestion-main"><strong>${highlight(book.title, query)}</strong><span class="suggestion-code">ISBN ${highlight(book.isbn, query)}</span></span><span class="suggestion-meta">${highlight(book.author, query)} · ${escapeHtml(book.publisher)}</span></button>`).join('');
+        lookup.classList.add('open');
+      }
+
+      function clearSelection(keepText = true) {
+        selectedBook = null;
+        if (!keepText) input.value = '';
+        lookup.classList.remove('open');
+        updateSummary();
+      }
+
+      input.addEventListener('input', () => { if (selectedBook) clearSelection(true); });
+      input.addEventListener('keydown', event => {
+        if (event.key === 'Enter') { event.preventDefault(); findBooks(); }
+        if (event.key === 'Escape') lookup.classList.remove('open');
+      });
+      key.addEventListener('change', () => clearSelection(false));
+      button.addEventListener('click', findBooks);
+      list.addEventListener('mousedown', event => {
+        const option = event.target.closest('.suggestion');
+        if (option) { event.preventDefault(); choose(matches[Number(option.dataset.index)]); }
+      });
+      document.addEventListener('mousedown', event => { if (!lookup.contains(event.target)) lookup.classList.remove('open'); });
+
+      return { input, clearSelection, getSelected: () => selectedBook };
+    }
+
+    const bookControl = setupBookLookup();
 
     function updateSummary() {
       const summary = document.getElementById('selectedSummary');
       const chips = document.getElementById('selectedChips');
       const content = [];
-      if (selectedStore) content.push(`<span class="chip">서점: <strong>${escapeHtml(selectedStore.name)} ${escapeHtml(selectedStore.branch)}</strong> <small>${selectedStore.id}</small><button type="button" data-clear="store" aria-label="선택한 서점 삭제">×</button></span>`);
+      if (selectedStore) content.push(`<span class="chip">서점: <strong>${escapeHtml(selectedStore.name)}</strong> <small>${selectedStore.id}</small><button type="button" data-clear="store" aria-label="선택한 서점 삭제">×</button></span>`);
       if (selectedBook) content.push(`<span class="chip">도서: <strong>${escapeHtml(selectedBook.title)}</strong> <small>${selectedBook.isbn}</small><button type="button" data-clear="book" aria-label="선택한 도서 삭제">×</button></span>`);
       chips.innerHTML = content.join(' ');
       summary.classList.toggle('visible', content.length > 0);
@@ -373,17 +447,19 @@
       if (!button) return;
       if (button.dataset.clear === 'store') storeControl.clearSelection(false);
       else bookControl.clearSelection(false);
-      renderRows();
+      renderRows(Boolean(selectedStore || selectedBook));
     });
 
     function renderRows(filter = false) {
       const body = document.getElementById('resultBody');
+      const showDetails = filter && Boolean(selectedStore || selectedBook);
+      document.getElementById('resultTable').classList.toggle('show-details', showDetails);
       const visibleRows = rows.filter(row => (!filter || !selectedStore || row.storeId === selectedStore.id) && (!filter || !selectedBook || row.bookId === selectedBook.id));
       body.innerHTML = visibleRows.map(row => {
         const store = stores.find(item => item.id === row.storeId);
         const book = books.find(item => item.id === row.bookId);
-        return `<tr><td>${row.no}</td><td>${row.date}</td><td class="store" title="${escapeHtml(store.address)}">${escapeHtml(store.name)} ${escapeHtml(store.branch)}</td><td class="book-title" title="ISBN ${book.isbn} · ${escapeHtml(book.author)}">${escapeHtml(book.title)}</td><td><a class="quantity-link" href="#">${row.out}</a></td><td>${row.back ? `<a class="quantity-link" href="#">${row.back}</a>` : '<span class="muted-cell">-</span>'}</td><td>${row.sales}</td><td>${row.amount}</td><td><button class="view-button" type="button">보기</button></td></tr>`;
-      }).join('') || '<tr><td class="empty-state" colspan="9" style="display:table-cell">선택한 조건에 해당하는 목업 데이터가 없습니다.</td></tr>';
+        return `<tr><td>${row.no}</td><td>${row.date}</td><td class="store detail-column" title="거래처 코드 ${store.id}">${escapeHtml(store.name)}</td><td class="book-title detail-column" title="ISBN ${book.isbn} · ${escapeHtml(book.author)}">${escapeHtml(book.title)}</td><td><a class="quantity-link" href="#">${row.out}</a></td><td>${row.back ? `<a class="quantity-link" href="#">${row.back}</a>` : '<span class="muted-cell">-</span>'}</td><td>${row.sales}</td><td>${row.amount}</td><td><button class="view-button" type="button">보기</button></td></tr>`;
+      }).join('') || `<tr><td class="empty-state" colspan="${showDetails ? 9 : 7}" style="display:table-cell">선택한 조건에 해당하는 목업 데이터가 없습니다.</td></tr>`;
       document.getElementById('resultCount').textContent = visibleRows.length;
     }
 
@@ -391,7 +467,11 @@
       event.preventDefault();
       let invalid = false;
       if (storeControl.input.value.trim() && !selectedStore) { storeControl.invalidate(); invalid = true; }
-      if (bookControl.input.value.trim() && !selectedBook) { bookControl.invalidate(); invalid = true; }
+      if (bookControl.input.value.trim() && !selectedBook) {
+        alert('도서 검색의 찾기 버튼을 눌러 도서를 확정해 주세요.');
+        bookControl.input.focus();
+        invalid = true;
+      }
       if (!invalid) renderRows(true);
     });
 
