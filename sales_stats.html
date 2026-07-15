@@ -1,0 +1,401 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>도서 출고 및 반품 내역 - 검색 개선 목업</title>
+  <style>
+    :root {
+      --blue: #28518f;
+      --blue-dark: #173e79;
+      --blue-soft: #eef5ff;
+      --cyan-soft: #eef9fc;
+      --line: #d7dde5;
+      --text: #1f2937;
+      --muted: #667085;
+      --danger: #c9362b;
+      --focus: #1c64d1;
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      color: var(--text);
+      background: #fff;
+      font-family: "Noto Sans KR", "Malgun Gothic", Arial, sans-serif;
+      font-size: 13px;
+    }
+    button, input { font: inherit; }
+    .top-line { height: 5px; background: var(--blue); }
+    main { width: calc(100% - 80px); min-width: 1100px; margin: 0 auto; }
+    h1 {
+      margin: 4px 0 5px;
+      color: var(--blue-dark);
+      font-size: 25px;
+      line-height: 34px;
+      text-align: center;
+      letter-spacing: -1px;
+    }
+
+    .search-panel {
+      position: relative;
+      z-index: 10;
+      display: flex;
+      align-items: flex-start;
+      gap: 14px;
+      min-height: 66px;
+      padding: 10px 14px;
+      border: 1px solid #b9dbe5;
+      background: var(--cyan-soft);
+    }
+    .field-group { display: flex; align-items: flex-start; gap: 6px; }
+    .field-label { padding-top: 8px; color: #176286; white-space: nowrap; }
+    .date-row { display: flex; align-items: center; gap: 5px; }
+    .date-input, .combo-input {
+      height: 34px;
+      border: 1px solid #bfc8d4;
+      border-radius: 3px;
+      background: #fff;
+      color: var(--text);
+      outline: none;
+    }
+    .date-input { width: 112px; padding: 0 9px; }
+    .combo { position: relative; width: 300px; }
+    .combo.book { width: 370px; }
+    .combo-input { width: 100%; padding: 0 62px 0 34px; }
+    .combo-input::placeholder { color: #98a2b3; }
+    .combo-input:focus { border-color: var(--focus); box-shadow: 0 0 0 3px rgba(28,100,209,.14); }
+    .combo-icon { position: absolute; top: 8px; left: 10px; color: #667085; font-size: 15px; pointer-events: none; }
+    .combo-state {
+      position: absolute; top: 7px; right: 8px;
+      padding: 2px 6px; border-radius: 10px;
+      color: #667085; background: #f2f4f7; font-size: 11px;
+      pointer-events: none;
+    }
+    .combo.is-selected .combo-input { border-color: #419261; background: #f6fff9; }
+    .combo.is-selected .combo-state { color: #176b37; background: #dff4e6; }
+    .combo.has-error .combo-input { border-color: var(--danger); }
+    .field-help { margin-top: 5px; color: var(--muted); font-size: 11px; }
+    .field-help.error { color: var(--danger); }
+
+    .suggestions {
+      position: absolute;
+      top: 38px;
+      left: 0;
+      right: 0;
+      display: none;
+      max-height: 265px;
+      overflow: auto;
+      border: 1px solid #9eacbd;
+      border-radius: 4px;
+      background: #fff;
+      box-shadow: 0 8px 24px rgba(31,41,55,.18);
+    }
+    .combo.open .suggestions { display: block; }
+    .suggestion-heading { padding: 8px 11px 5px; color: #667085; background: #f8fafc; font-size: 11px; }
+    .suggestion {
+      width: 100%; padding: 9px 11px;
+      border: 0; border-top: 1px solid #eef0f3;
+      background: #fff; text-align: left; cursor: pointer;
+    }
+    .suggestion:hover, .suggestion.active { background: var(--blue-soft); }
+    .suggestion-main { display: flex; align-items: center; gap: 7px; }
+    .suggestion strong { color: #172b4d; font-size: 13px; }
+    .suggestion-code {
+      padding: 1px 5px; border: 1px solid #cad4e2; border-radius: 3px;
+      color: #53657b; background: #f8fafc; font-size: 10px;
+    }
+    .suggestion-meta { margin-top: 3px; color: #667085; font-size: 11px; }
+    mark { padding: 0; color: inherit; background: #fff0a8; }
+    .no-result { padding: 18px 12px; color: #667085; text-align: center; }
+
+    .search-button {
+      height: 34px; margin-top: 0; padding: 0 19px;
+      border: 1px solid #1f477f; border-radius: 3px;
+      color: #fff; background: var(--blue); font-weight: 700; cursor: pointer;
+    }
+    .search-button:hover { background: #1f477f; }
+    .checkbox-wrap { display: flex; align-items: center; gap: 4px; height: 34px; color: #176286; white-space: nowrap; }
+
+    .selected-summary {
+      display: none;
+      align-items: center;
+      gap: 7px;
+      min-height: 39px;
+      padding: 6px 10px;
+      border: 1px solid #d9e4f2;
+      border-top: 0;
+      background: #f8fbff;
+    }
+    .selected-summary.visible { display: flex; }
+    .summary-label { color: #53657b; font-weight: 700; }
+    .chip {
+      display: inline-flex; align-items: center; gap: 5px;
+      padding: 4px 6px 4px 9px;
+      border: 1px solid #b8cae2; border-radius: 14px;
+      color: #234a80; background: #fff;
+    }
+    .chip small { color: #738197; }
+    .chip button { border: 0; color: #667085; background: transparent; cursor: pointer; font-size: 15px; line-height: 1; }
+
+    .toolbar { display: flex; justify-content: space-between; align-items: center; height: 32px; }
+    .view-links a { color: #001b72; font-size: 14px; font-weight: 700; text-decoration: none; }
+    .view-links a + a::before { content: "|"; margin: 0 8px; color: #c4c4c4; }
+    .result-count strong { color: #073dd7; }
+
+    .result-table { width: 100%; border-collapse: collapse; table-layout: fixed; border-top: 2px solid #3183e2; }
+    .result-table th, .result-table td { height: 34px; padding: 5px 8px; border: 1px solid #dedede; text-align: center; }
+    .result-table th { color: #111; background: #f3f3f3; font-weight: 500; }
+    .result-table tbody tr:nth-child(odd) { background: #fafafa; }
+    .result-table tbody tr:hover { background: #ffff88; }
+    .result-table td.store, .result-table td.book-title { overflow: hidden; text-align: left; text-overflow: ellipsis; white-space: nowrap; }
+    .result-table .muted-cell { color: #98a2b3; }
+    .quantity-link { color: #45452e; text-decoration: none; border-bottom: 1px solid #bfc0ad; }
+    .view-button { padding: 1px 5px; border: 1px solid #ff514f; border-radius: 2px; color: #ff3936; background: #fff; cursor: pointer; }
+    .empty-state { display: none; padding: 48px 20px !important; color: #667085; background: #fff; }
+
+    @media (max-width: 1250px) {
+      main { width: calc(100% - 30px); }
+      .search-panel { flex-wrap: wrap; }
+    }
+  </style>
+</head>
+<body>
+  <div class="top-line"></div>
+  <main>
+    <h1>도서 출고 및 반품 내역</h1>
+
+    <form id="searchForm" novalidate>
+      <div class="search-panel">
+        <div class="field-group">
+          <label class="field-label" for="startdate">발생일</label>
+          <div class="date-row">
+            <input class="date-input" id="startdate" type="text" value="2026-07-01" aria-label="시작일">
+            <span>~</span>
+            <input class="date-input" id="enddate" type="text" value="2026-07-15" aria-label="종료일">
+          </div>
+        </div>
+
+        <div class="field-group">
+          <label class="field-label" for="storeSearch">서점명</label>
+          <div>
+            <div class="combo" id="storeCombo">
+              <span class="combo-icon" aria-hidden="true">⌕</span>
+              <input class="combo-input" id="storeSearch" type="text" placeholder="서점명·코드·주소 검색" autocomplete="off" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="storeList">
+              <span class="combo-state">선택 전</span>
+              <div class="suggestions" id="storeList" role="listbox"></div>
+            </div>
+            <div class="field-help" id="storeHelp">목록에서 정확한 거래 서점을 선택하세요.</div>
+          </div>
+        </div>
+
+        <div class="field-group">
+          <label class="field-label" for="bookSearch">도서명</label>
+          <div>
+            <div class="combo book" id="bookCombo">
+              <span class="combo-icon" aria-hidden="true">⌕</span>
+              <input class="combo-input" id="bookSearch" type="text" placeholder="도서명·ISBN·저자 검색" autocomplete="off" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="bookList">
+              <span class="combo-state">선택 전</span>
+              <div class="suggestions" id="bookList" role="listbox"></div>
+            </div>
+            <div class="field-help" id="bookHelp">동명 도서는 ISBN과 저자·출판사로 구분합니다.</div>
+          </div>
+        </div>
+
+        <button class="search-button" type="submit">검색</button>
+        <label class="checkbox-wrap"><input type="checkbox"> 도서별 보기</label>
+      </div>
+
+      <div class="selected-summary" id="selectedSummary" aria-live="polite">
+        <span class="summary-label">선택한 검색 조건</span>
+        <span id="selectedChips"></span>
+      </div>
+    </form>
+
+    <div class="toolbar">
+      <nav class="view-links" aria-label="기간별 보기">
+        <a href="#">일별보기</a><a href="#">월별보기</a><a href="#">분기별보기</a><a href="#">반기별보기</a><a href="#">연도별보기</a>
+      </nav>
+      <span class="result-count">검색: <strong id="resultCount">8</strong> 건</span>
+    </div>
+
+    <table class="result-table">
+      <colgroup>
+        <col style="width:5%"><col style="width:10%"><col style="width:14%"><col style="width:23%">
+        <col style="width:9%"><col style="width:9%"><col style="width:9%"><col style="width:14%"><col style="width:7%">
+      </colgroup>
+      <thead>
+        <tr><th>No</th><th>입력시점</th><th>서점명</th><th>도서명</th><th>출고수량</th><th>반품수량</th><th>판매수량</th><th>판매금액(천)</th><th>관리</th></tr>
+      </thead>
+      <tbody id="resultBody"></tbody>
+    </table>
+  </main>
+
+  <script>
+    const stores = [
+      { id: 'S0012', name: '교보문고', branch: '광화문점', address: '서울 종로구 종로 1' },
+      { id: 'S0018', name: '교보문고', branch: '강남점', address: '서울 서초구 강남대로 465' },
+      { id: 'S0041', name: '영풍문고', branch: '종각종로본점', address: '서울 종로구 청계천로 41' },
+      { id: 'S0057', name: '영풍문고', branch: '스타필드 코엑스몰점', address: '서울 강남구 영동대로 513' },
+      { id: 'S0074', name: '알라딘 중고서점', branch: '신촌점', address: '서울 서대문구 연세로 21' },
+      { id: 'S0083', name: '알라딘 중고서점', branch: '부산서면점', address: '부산 부산진구 중앙대로 704' }
+    ];
+
+    const books = [
+      { id: 'B1041', title: '소년이 온다', isbn: '9788936434120', author: '한강', publisher: '창비' },
+      { id: 'B1173', title: '작별하지 않는다', isbn: '9788954682152', author: '한강', publisher: '문학동네' },
+      { id: 'B1208', title: '채식주의자', isbn: '9788936434595', author: '한강', publisher: '창비' },
+      { id: 'B2012', title: '모순', isbn: '9788998441012', author: '양귀자', publisher: '쓰다' },
+      { id: 'B2095', title: '모순', isbn: '9788982817334', author: '양귀자', publisher: '살림' },
+      { id: 'B3022', title: '초역 부처의 말', isbn: '9791193506202', author: '코이케 류노스케', publisher: '포레스트북스' }
+    ];
+
+    const rows = [
+      { no: 4215, date: '2026-07-15', storeId: 'S0012', bookId: 'B1041', out: 294, back: 1, sales: 293, amount: '3,563' },
+      { no: 4214, date: '2026-07-14', storeId: 'S0018', bookId: 'B1173', out: 518, back: 127, sales: 391, amount: '5,297' },
+      { no: 4213, date: '2026-07-13', storeId: 'S0041', bookId: 'B1041', out: 605, back: 0, sales: 605, amount: '7,246' },
+      { no: 4212, date: '2026-07-10', storeId: 'S0057', bookId: 'B2012', out: 156, back: 0, sales: 156, amount: '1,921' },
+      { no: 4211, date: '2026-07-09', storeId: 'S0074', bookId: 'B1208', out: 422, back: 0, sales: 422, amount: '5,037' },
+      { no: 4210, date: '2026-07-08', storeId: 'S0083', bookId: 'B2095', out: 408, back: 0, sales: 408, amount: '4,596' },
+      { no: 4209, date: '2026-07-07', storeId: 'S0012', bookId: 'B3022', out: 235, back: 165, sales: 70, amount: '781' },
+      { no: 4208, date: '2026-07-06', storeId: 'S0041', bookId: 'B2012', out: 272, back: 0, sales: 272, amount: '3,307' }
+    ];
+
+    let selectedStore = null;
+    let selectedBook = null;
+
+    function escapeHtml(value) {
+      return String(value).replace(/[&<>'"]/g, char => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', "'":'&#39;', '"':'&quot;' }[char]));
+    }
+
+    function highlight(value, query) {
+      const safe = escapeHtml(value);
+      if (!query) return safe;
+      const escaped = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      return safe.replace(new RegExp(`(${escaped})`, 'ig'), '<mark>$1</mark>');
+    }
+
+    function setupCombo(config) {
+      const combo = document.getElementById(config.comboId);
+      const input = document.getElementById(config.inputId);
+      const list = document.getElementById(config.listId);
+      const help = document.getElementById(config.helpId);
+      const defaultHelp = help.textContent;
+      let activeIndex = -1;
+      let filtered = [];
+
+      function getSelected() { return config.type === 'store' ? selectedStore : selectedBook; }
+      function setSelected(value) {
+        if (config.type === 'store') selectedStore = value;
+        else selectedBook = value;
+      }
+      function label(item) { return config.type === 'store' ? `${item.name} ${item.branch}` : item.title; }
+      function searchText(item) { return config.type === 'store' ? `${item.name} ${item.branch} ${item.address} ${item.id}` : `${item.title} ${item.isbn} ${item.author} ${item.publisher}`; }
+
+      function draw(query = '') {
+        const normalized = query.trim().toLowerCase();
+        filtered = config.items.filter(item => !normalized || searchText(item).toLowerCase().includes(normalized));
+        activeIndex = -1;
+        const heading = normalized ? `‘${escapeHtml(query.trim())}’ 검색 결과 ${filtered.length}건` : '최근 선택 · 전체 목록';
+        list.innerHTML = `<div class="suggestion-heading">${heading}</div>` + (filtered.length ? filtered.map((item, index) => {
+          if (config.type === 'store') {
+            return `<button class="suggestion" type="button" role="option" data-index="${index}"><span class="suggestion-main"><strong>${highlight(item.name, query)} ${highlight(item.branch, query)}</strong><span class="suggestion-code">${highlight(item.id, query)}</span></span><span class="suggestion-meta">${highlight(item.address, query)}</span></button>`;
+          }
+          return `<button class="suggestion" type="button" role="option" data-index="${index}"><span class="suggestion-main"><strong>${highlight(item.title, query)}</strong><span class="suggestion-code">ISBN ${highlight(item.isbn, query)}</span></span><span class="suggestion-meta">${highlight(item.author, query)} · ${highlight(item.publisher, query)}</span></button>`;
+        }).join('') : '<div class="no-result">일치하는 항목이 없습니다.<br>코드나 ISBN으로 다시 검색해 보세요.</div>');
+      }
+
+      function open() { draw(input.value); combo.classList.add('open'); input.setAttribute('aria-expanded', 'true'); }
+      function close() { combo.classList.remove('open'); input.setAttribute('aria-expanded', 'false'); activeIndex = -1; }
+      function choose(item) {
+        setSelected(item);
+        input.value = label(item);
+        combo.classList.remove('has-error');
+        combo.classList.add('is-selected');
+        combo.querySelector('.combo-state').textContent = '선택됨';
+        help.classList.remove('error');
+        help.textContent = config.type === 'store' ? `${item.id} · ${item.address}` : `ISBN ${item.isbn} · ${item.author} · ${item.publisher}`;
+        close();
+        updateSummary();
+      }
+      function clearSelection(keepText = true) {
+        setSelected(null);
+        if (!keepText) input.value = '';
+        combo.classList.remove('is-selected');
+        combo.querySelector('.combo-state').textContent = '선택 전';
+        help.textContent = defaultHelp;
+        updateSummary();
+      }
+      function invalidate() {
+        combo.classList.add('has-error');
+        help.classList.add('error');
+        help.textContent = '입력한 항목을 자동완성 목록에서 선택해 주세요.';
+      }
+
+      input.addEventListener('focus', open);
+      input.addEventListener('input', () => { if (getSelected()) clearSelection(true); open(); });
+      input.addEventListener('keydown', event => {
+        const options = [...list.querySelectorAll('.suggestion')];
+        if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+          event.preventDefault();
+          if (!combo.classList.contains('open')) open();
+          activeIndex = event.key === 'ArrowDown' ? Math.min(activeIndex + 1, options.length - 1) : Math.max(activeIndex - 1, 0);
+          options.forEach((option, index) => option.classList.toggle('active', index === activeIndex));
+          options[activeIndex]?.scrollIntoView({ block: 'nearest' });
+        } else if (event.key === 'Enter' && combo.classList.contains('open') && activeIndex >= 0) {
+          event.preventDefault(); choose(filtered[activeIndex]);
+        } else if (event.key === 'Escape') close();
+      });
+      list.addEventListener('mousedown', event => {
+        const option = event.target.closest('.suggestion');
+        if (option) { event.preventDefault(); choose(filtered[Number(option.dataset.index)]); }
+      });
+      document.addEventListener('mousedown', event => { if (!combo.contains(event.target)) close(); });
+
+      return { input, clearSelection, invalidate, getSelected };
+    }
+
+    const storeControl = setupCombo({ type:'store', comboId:'storeCombo', inputId:'storeSearch', listId:'storeList', helpId:'storeHelp', items:stores });
+    const bookControl = setupCombo({ type:'book', comboId:'bookCombo', inputId:'bookSearch', listId:'bookList', helpId:'bookHelp', items:books });
+
+    function updateSummary() {
+      const summary = document.getElementById('selectedSummary');
+      const chips = document.getElementById('selectedChips');
+      const content = [];
+      if (selectedStore) content.push(`<span class="chip">서점: <strong>${escapeHtml(selectedStore.name)} ${escapeHtml(selectedStore.branch)}</strong> <small>${selectedStore.id}</small><button type="button" data-clear="store" aria-label="선택한 서점 삭제">×</button></span>`);
+      if (selectedBook) content.push(`<span class="chip">도서: <strong>${escapeHtml(selectedBook.title)}</strong> <small>${selectedBook.isbn}</small><button type="button" data-clear="book" aria-label="선택한 도서 삭제">×</button></span>`);
+      chips.innerHTML = content.join(' ');
+      summary.classList.toggle('visible', content.length > 0);
+    }
+
+    document.getElementById('selectedChips').addEventListener('click', event => {
+      const button = event.target.closest('button[data-clear]');
+      if (!button) return;
+      if (button.dataset.clear === 'store') storeControl.clearSelection(false);
+      else bookControl.clearSelection(false);
+      renderRows();
+    });
+
+    function renderRows(filter = false) {
+      const body = document.getElementById('resultBody');
+      const visibleRows = rows.filter(row => (!filter || !selectedStore || row.storeId === selectedStore.id) && (!filter || !selectedBook || row.bookId === selectedBook.id));
+      body.innerHTML = visibleRows.map(row => {
+        const store = stores.find(item => item.id === row.storeId);
+        const book = books.find(item => item.id === row.bookId);
+        return `<tr><td>${row.no}</td><td>${row.date}</td><td class="store" title="${escapeHtml(store.address)}">${escapeHtml(store.name)} ${escapeHtml(store.branch)}</td><td class="book-title" title="ISBN ${book.isbn} · ${escapeHtml(book.author)}">${escapeHtml(book.title)}</td><td><a class="quantity-link" href="#">${row.out}</a></td><td>${row.back ? `<a class="quantity-link" href="#">${row.back}</a>` : '<span class="muted-cell">-</span>'}</td><td>${row.sales}</td><td>${row.amount}</td><td><button class="view-button" type="button">보기</button></td></tr>`;
+      }).join('') || '<tr><td class="empty-state" colspan="9" style="display:table-cell">선택한 조건에 해당하는 목업 데이터가 없습니다.</td></tr>';
+      document.getElementById('resultCount').textContent = visibleRows.length;
+    }
+
+    document.getElementById('searchForm').addEventListener('submit', event => {
+      event.preventDefault();
+      let invalid = false;
+      if (storeControl.input.value.trim() && !selectedStore) { storeControl.invalidate(); invalid = true; }
+      if (bookControl.input.value.trim() && !selectedBook) { bookControl.invalidate(); invalid = true; }
+      if (!invalid) renderRows(true);
+    });
+
+    renderRows();
+  </script>
+</body>
+</html>
