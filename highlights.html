@@ -1,0 +1,449 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>프로젝트 최신글 · 답변 보류 개선 목업</title>
+  <style>
+    * { box-sizing: border-box; }
+    :root {
+      --blue: #5d9bc3;
+      --blue-dark: #285784;
+      --line: #c9e0ee;
+      --text: #263746;
+      --muted: #657b8c;
+      --important: #fff1a8;
+      --important-line: #e2a700;
+      --important-strong: #9a5a00;
+      --danger: #b42318;
+    }
+    body {
+      margin: 0;
+      min-width: 1180px;
+      background: #f5f8fa;
+      color: var(--text);
+      font: 14px/1.45 "Malgun Gothic", "Apple SD Gothic Neo", Arial, sans-serif;
+    }
+    button, input, textarea, select { font: inherit; }
+    button { cursor: pointer; }
+    .topbar {
+      height: 42px;
+      display: flex;
+      align-items: center;
+      padding: 0 24px;
+      color: white;
+      background: linear-gradient(135deg, #315f91, #234b78);
+      font-size: 17px;
+      font-weight: 700;
+    }
+    .page { padding: 14px 16px 28px; }
+    .summary {
+      display: flex;
+      gap: 12px;
+      align-items: stretch;
+      margin-bottom: 14px;
+    }
+    .summary-card {
+      width: 140px;
+      height: 58px;
+      border: 1px solid #bed7e7;
+      background: white;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 16px;
+      color: #334e68;
+    }
+    .summary-card strong { font-size: 22px; color: #264e80; }
+    .summary-card.wait { background: #fff3f3; }
+    .summary-card.wait strong { color: #d52a2a; }
+    .summary-card.doing { background: #fff8eb; }
+    .summary-card.doing strong { color: #e18b00; }
+    .summary-card.mine { background: #ecfaf4; }
+    .summary-card.mine strong { color: #078a53; }
+    .summary-card.important {
+      width: 174px;
+      border: 2px solid var(--important-line);
+      background: #fff9dc;
+      color: #754d00;
+      box-shadow: 0 2px 8px rgba(193, 137, 0, .12);
+    }
+    .summary-card.important strong { color: var(--important-strong); }
+    .summary-card.active { box-shadow: inset 0 0 0 2px #fff, 0 0 0 2px #315f91; }
+    .search {
+      margin-left: auto;
+      min-width: 490px;
+      border: 1px solid #bed7e7;
+      background: #eaf5fb;
+      padding: 10px;
+      display: flex;
+      gap: 7px;
+      align-items: center;
+    }
+    .search select, .search input {
+      height: 34px;
+      border: 1px solid #adbfcc;
+      background: white;
+      padding: 0 9px;
+    }
+    .search input { flex: 1; }
+    .btn-search { height: 34px; border: 0; background: #315f91; color: white; padding: 0 17px; font-weight: 700; }
+    .toolbar {
+      min-height: 40px;
+      border: 1px solid #b7d4e5;
+      background: #eaf6fb;
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      padding: 6px 10px;
+      white-space: nowrap;
+    }
+    .toolbar select { width: 185px; height: 27px; border: 1px solid #afc3d1; color: #285784; }
+    .toolbar a { color: #001a8a; font-weight: 700; text-decoration: none; }
+    .toolbar .write { color: #a33a00; }
+    .toolbar .sep { color: #a9bbc6; }
+    .toolbar .history-link { margin-left: auto; color: #6d4b00; }
+    table { width: 100%; border-collapse: collapse; table-layout: fixed; background: white; }
+    thead th {
+      height: 38px;
+      background: var(--blue);
+      color: #f2fbff;
+      border-right: 1px solid #80b1cf;
+      font-weight: 400;
+    }
+    tbody tr { height: 51px; border-bottom: 1px solid var(--line); }
+    tbody tr:nth-child(even) { background: #fafafa; }
+    tbody tr.hidden { display: none; }
+    tbody tr.is-important {
+      background: var(--important);
+      box-shadow: inset 5px 0 0 var(--important-line);
+    }
+    td { padding: 7px 8px; text-align: center; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    td.title { text-align: left; }
+    .title-main { display: flex; align-items: center; gap: 7px; min-width: 0; }
+    .title-main .subject { overflow: hidden; text-overflow: ellipsis; }
+    .category, .project { text-decoration: underline; text-decoration-color: #b9c6ce; text-underline-offset: 3px; }
+    .author { color: #2868bf; font-weight: 700; }
+    .row-select { width: 96%; height: 31px; border: 1px solid #b7cad7; color: #265c99; background: white; }
+    .importance-btn {
+      width: 42px;
+      height: 27px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid #8799a5;
+      background: white;
+      color: #526473;
+      border-radius: 3px;
+      font-size: 12px;
+      font-weight: 700;
+    }
+    .importance-btn:hover { border-color: #d09200; background: #fff8d5; color: #6d4b00; }
+    .is-important .importance-btn {
+      border-color: #c88800;
+      background: #fff;
+      color: #754b00;
+      font-weight: 700;
+    }
+    .important-note {
+      display: block;
+      margin-top: 3px;
+      color: #754b00;
+      font-size: 12px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .delay { color: #d92d20; font-weight: 700; }
+    col.no { width: 5%; } col.deadline { width: 5%; } col.category { width: 7%; }
+    col.title { width: 40%; } col.project { width: 11%; }
+    col.state { width: 10%; } col.writer { width: 9%; } col.reply { width: 10%; } col.delay { width: 6%; }
+    .overlay {
+      position: fixed; inset: 0; z-index: 20; display: none;
+      align-items: center; justify-content: center;
+      background: rgba(20, 35, 48, .48);
+    }
+    .overlay.show { display: flex; }
+    .modal {
+      width: 550px;
+      border-radius: 8px;
+      background: white;
+      box-shadow: 0 18px 50px rgba(0,0,0,.25);
+      overflow: hidden;
+    }
+    .modal-head {
+      display: flex; align-items: center; gap: 9px;
+      padding: 18px 22px; border-bottom: 1px solid #dde6ec;
+    }
+    .modal-head .icon { color: #e29900; font-size: 25px; }
+    .modal-head h2 { margin: 0; font-size: 19px; }
+    .modal-head p { margin: 3px 0 0; color: var(--muted); font-size: 12px; }
+    .close { margin-left: auto; border: 0; background: transparent; color: #687987; font-size: 24px; }
+    .modal-body { padding: 20px 22px 18px; }
+    .target {
+      margin-bottom: 17px; padding: 11px 12px; border: 1px solid #e0e8ed; background: #f7f9fa;
+      color: #465b69; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    }
+    .field { margin-top: 15px; }
+    .field label { display: block; margin-bottom: 7px; font-weight: 700; }
+    .required { color: #d92d20; }
+    textarea {
+      width: 100%; min-height: 100px; resize: vertical;
+      border: 1px solid #aebfca; border-radius: 3px; padding: 11px;
+    }
+    textarea:focus { outline: 2px solid #9ac7e3; border-color: #4c91bd; }
+    .counter { text-align: right; color: #7b8c98; font-size: 12px; }
+    .meta-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .meta-box { border: 1px solid #d6e0e6; background: #f8fafb; padding: 10px 12px; }
+    .meta-box small { display: block; color: #728491; margin-bottom: 3px; }
+    .archive-hint {
+      margin-top: 15px; padding: 10px 12px; background: #eef7fb; color: #446778; font-size: 12px;
+    }
+    .error { min-height: 18px; margin-top: 5px; color: var(--danger); font-size: 12px; }
+    .modal-actions {
+      display: flex; justify-content: flex-end; gap: 8px;
+      padding: 14px 22px; border-top: 1px solid #dde6ec; background: #f8fafb;
+    }
+    .modal-actions button { min-width: 86px; height: 36px; border-radius: 3px; }
+    .btn-cancel { border: 1px solid #aebdc7; background: white; color: #4b5e6b; }
+    .btn-primary { border: 1px solid #a86d00; background: #d58b00; color: white; font-weight: 700; }
+    .btn-end { border: 1px solid #a23a32; background: #b5473e; color: white; font-weight: 700; }
+    .history {
+      position: fixed; top: 0; right: -480px; z-index: 30; width: 480px; height: 100vh;
+      background: white; box-shadow: -10px 0 28px rgba(0,0,0,.18); transition: right .22s ease;
+      display: flex; flex-direction: column;
+    }
+    .history.show { right: 0; }
+    .history-head { display: flex; align-items: center; padding: 18px 20px; background: #315f91; color: white; }
+    .history-head h2 { margin: 0; font-size: 18px; }
+    .history-head button { margin-left: auto; border: 0; background: transparent; color: white; font-size: 24px; }
+    .history-body { padding: 18px; overflow: auto; }
+    .history-item { border: 1px solid #dce5ea; border-left: 4px solid #8ea3af; margin-bottom: 12px; padding: 13px; }
+    .history-item.active { border-left-color: #d58b00; background: #fffaf0; }
+    .history-item .badge { display: inline-block; padding: 2px 7px; border-radius: 10px; background: #e8edf0; font-size: 11px; }
+    .history-item.active .badge { background: #ffe7a1; color: #754b00; }
+    .history-item h3 { margin: 8px 0 5px; font-size: 14px; }
+    .history-item p { margin: 5px 0; color: #4d6170; }
+    .history-item small { color: #778894; }
+    .toast {
+      position: fixed; left: 50%; bottom: 28px; z-index: 50; transform: translateX(-50%) translateY(20px);
+      opacity: 0; pointer-events: none; padding: 11px 18px; border-radius: 4px;
+      background: #243746; color: white; transition: .2s ease;
+    }
+    .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+  </style>
+</head>
+<body>
+  <header class="topbar">프로젝트 최신글</header>
+  <main class="page">
+    <section class="summary" aria-label="처리 현황">
+      <button class="summary-card wait"><span>답변대기</span><strong>2</strong></button>
+      <button class="summary-card doing"><span>처리중</span><strong>1</strong></button>
+      <button class="summary-card"><span>수신미확인</span><strong>1</strong></button>
+      <button class="summary-card wait"><span>3일 이상</span><strong>0</strong></button>
+      <button class="summary-card mine"><span>내 담당</span><strong>0</strong></button>
+      <button class="summary-card important" id="importantFilter" aria-pressed="false">
+        <span>⏸ 답변 보류</span><strong id="importantCount">1</strong>
+      </button>
+      <form class="search" onsubmit="return false">
+        <select aria-label="검색 범위"><option>제목</option><option>내용</option><option>작성자</option></select>
+        <input type="search" aria-label="검색어">
+        <button class="btn-search">검색</button>
+      </form>
+    </section>
+
+    <nav class="toolbar">
+      <select aria-label="태그"><option>:: 태그 ::</option></select>
+      <a href="#">전체목록</a><span class="sep">|</span>
+      <a class="write" href="#">✎ 글쓰기</a><span class="sep">|</span>
+      <a href="#">자주 쓰는 문구</a><span class="sep">|</span>
+      <a href="#">도서주문</a><span class="sep">|</span>
+      <a href="#">내가 쓴 글 보기</a><span class="sep">|</span>
+      <a href="#">내 프로젝트 게시물만 보기</a>
+      <a class="history-link" href="#" id="openHistory">답변 보류 기록 보기 ›</a>
+    </nav>
+
+    <table aria-label="프로젝트 최신글 목록">
+      <colgroup>
+        <col class="no"><col class="deadline"><col class="category"><col class="title">
+        <col class="project"><col class="state"><col class="writer"><col class="reply"><col class="delay">
+      </colgroup>
+      <thead><tr>
+        <th>번호</th><th>마감</th><th>분류</th><th>제목</th>
+        <th>프로젝트</th><th>상태</th><th>작성자(Age)</th><th>답변 상태</th><th>미답변</th>
+      </tr></thead>
+      <tbody id="boardRows">
+        <tr class="is-important" data-id="6477" data-reason="저자와 긴급 협의 중이니, 답글 달지 마세요." data-owner="홍길동" data-time="2026. 07. 17. 09:42">
+          <td>6477</td><td><button class="importance-btn" aria-label="6477번 게시물 답변 보류 종료">종료</button></td><td class="category">도서정가</td>
+          <td class="title"><div class="title-main"><span class="subject">도서 정가 20,000원으로 변경해 주세요.</span></div><span class="important-note">⏸ 답변 보류: 저자와 긴급 협의 중이니, 답글 달지 마세요. · 홍길동 09:42</span></td>
+          <td class="project">내 안의 하나님 나라</td><td><select class="row-select"><option>2차저자교정</option></select></td>
+          <td class="author">염규남(43)</td><td><select class="row-select"><option>답변완료</option></select></td><td></td>
+        </tr>
+        <tr data-id="6476">
+          <td>6476</td><td>즉시</td><td class="category">도서정가</td><td class="title">↳ Re: @염규남 도서 정가 20,000원으로 변경해 주세요.</td>
+          <td></td><td></td><td>이현수</td><td></td><td></td>
+        </tr>
+        <tr data-id="6475">
+          <td>6475</td><td><button class="importance-btn" aria-label="6475번 게시물 답변 보류">보류</button></td><td class="category">교정편집</td><td class="title">최종 완성파일 보내 주실수 있나요</td>
+          <td class="project">Writing Practice for ELT</td><td><select class="row-select"><option>완료</option></select></td>
+          <td class="author">전현선(62)</td><td><select class="row-select"><option>답변완료</option></select></td><td></td>
+        </tr>
+        <tr data-id="6474">
+          <td>6474</td><td>즉시</td><td class="category">교정편집</td><td class="title">↳ Re: @전현선 최종 완성파일 보내 주실수 있나요</td>
+          <td></td><td></td><td>이현수</td><td></td><td></td>
+        </tr>
+        <tr data-id="6473">
+          <td>6473</td><td>즉시</td><td class="category">교정편집</td><td class="title">@백성삼 본문 교정본 올려드립니다.</td>
+          <td class="project">휴머니즘 시대, 휴</td><td><select class="row-select"><option>1차저자교정</option></select></td>
+          <td>장하영</td><td></td><td></td>
+        </tr>
+        <tr data-id="6472">
+          <td>6472</td><td><button class="importance-btn" aria-label="6472번 게시물 답변 보류">보류</button></td><td class="category">교정편집</td><td class="title">↳ Re: 본문 교정본 올려드립니다.</td>
+          <td></td><td></td><td class="author">백성삼(82)</td><td><select class="row-select"><option>답변대기</option></select></td><td class="delay">미답변<br>1일</td>
+        </tr>
+      </tbody>
+    </table>
+  </main>
+
+  <div class="overlay" id="modalOverlay" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <section class="modal">
+      <header class="modal-head">
+        <span class="icon" id="modalIcon">⏸</span>
+        <div><h2 id="modalTitle">답변 보류</h2><p id="modalSubtitle">내부 협의가 끝날 때까지 답변을 보류합니다.</p></div>
+        <button class="close" id="closeModal" aria-label="닫기">×</button>
+      </header>
+      <div class="modal-body">
+        <div class="target" id="targetTitle"></div>
+        <div class="field">
+          <label for="reason">답변 보류 사유 <span class="required">*</span></label>
+          <textarea id="reason" maxlength="200" placeholder="예: 저자와 긴급 협의 중이니, 답글 달지 마세요."></textarea>
+          <div class="counter"><span id="charCount">0</span>/200</div>
+          <div class="error" id="reasonError"></div>
+        </div>
+        <div class="field meta-grid">
+          <div class="meta-box"><small>작성자(로그인 직원)</small><strong id="currentOwner">홍길동</strong></div>
+          <div class="meta-box"><small>작성 시각</small><strong id="currentTime"></strong></div>
+        </div>
+        <div class="archive-hint" id="archiveHint">보류를 종료해도 사유와 작성 정보는 기록에 보존됩니다.</div>
+      </div>
+      <footer class="modal-actions">
+        <button class="btn-cancel" id="cancelModal">취소</button>
+        <button class="btn-primary" id="saveImportant">답변 보류</button>
+      </footer>
+    </section>
+  </div>
+
+  <aside class="history" id="historyPanel" aria-label="답변 보류 기록">
+    <header class="history-head"><h2>답변 보류 기록</h2><button id="closeHistory" aria-label="닫기">×</button></header>
+    <div class="history-body" id="historyBody">
+      <article class="history-item active" data-history-id="6477">
+        <span class="badge">진행 중</span><h3>6477 · 도서 정가 20,000원으로 변경해 주세요.</h3>
+        <p>저자와 긴급 협의 중이니, 답글 달지 마세요.</p><small>홍길동 · 2026. 07. 17. 09:42 작성</small>
+      </article>
+      <article class="history-item">
+        <span class="badge">종료</span><h3>6421 · 표지 시안 최종 확인 요청</h3>
+        <p>저자 최종 승인 전까지 인쇄 발주를 보류해 주세요.</p><small>김지수 · 2026. 07. 15. 14:20 작성 · 07. 16. 11:05 종료</small>
+      </article>
+    </div>
+  </aside>
+  <div class="toast" id="toast" role="status"></div>
+
+  <script>
+    const overlay = document.getElementById("modalOverlay");
+    const reason = document.getElementById("reason");
+    const saveButton = document.getElementById("saveImportant");
+    const filterButton = document.getElementById("importantFilter");
+    const rows = [...document.querySelectorAll("#boardRows tr")];
+    let selectedRow = null;
+    let mode = "set";
+
+    const nowText = () => new Intl.DateTimeFormat("ko-KR", {
+      year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", hour12: false
+    }).format(new Date()).replace(/\. /g, ". ").replace(/\.$/, "");
+
+    function updateCount() {
+      document.getElementById("importantCount").textContent = document.querySelectorAll("tr.is-important").length;
+    }
+    function openModal(row) {
+      selectedRow = row;
+      mode = row.classList.contains("is-important") ? "end" : "set";
+      const subject = row.querySelector(".subject")?.textContent || row.querySelector(".title").childNodes[0].textContent.trim();
+      document.getElementById("targetTitle").textContent = `${row.dataset.id} · ${subject}`;
+      reason.value = row.dataset.reason || "";
+      document.getElementById("charCount").textContent = reason.value.length;
+      document.getElementById("reasonError").textContent = "";
+      document.getElementById("currentOwner").textContent = row.dataset.owner || "홍길동";
+      document.getElementById("currentTime").textContent = row.dataset.time || nowText();
+      document.getElementById("modalTitle").textContent = mode === "set" ? "답변 보류" : "답변 보류 종료";
+      document.getElementById("modalSubtitle").textContent = mode === "set" ? "내부 협의가 끝날 때까지 직원들의 답변을 방지합니다." : "내부 협의가 끝난 사안의 답변 보류를 종료합니다.";
+      reason.readOnly = mode === "end";
+      saveButton.textContent = mode === "set" ? "답변 보류" : "보류 종료";
+      saveButton.className = mode === "set" ? "btn-primary" : "btn-end";
+      document.getElementById("archiveHint").textContent = mode === "set"
+        ? "보류를 종료해도 사유와 작성 정보는 기록에 보존됩니다."
+        : "종료 후에도 이 사유와 작성자·작성 시각은 ‘답변 보류 기록’에 보존됩니다.";
+      overlay.classList.add("show");
+      setTimeout(() => (mode === "set" ? reason.focus() : saveButton.focus()), 0);
+    }
+    function closeModal() { overlay.classList.remove("show"); selectedRow = null; }
+    function toast(message) {
+      const el = document.getElementById("toast");
+      el.textContent = message; el.classList.add("show");
+      clearTimeout(window.toastTimer); window.toastTimer = setTimeout(() => el.classList.remove("show"), 2300);
+    }
+    function setImportant() {
+      const text = reason.value.trim();
+      if (!text) { document.getElementById("reasonError").textContent = "답변 보류 사유를 입력해 주세요."; reason.focus(); return; }
+      const owner = "홍길동", time = nowText();
+      selectedRow.dataset.reason = text; selectedRow.dataset.owner = owner; selectedRow.dataset.time = time;
+      selectedRow.classList.add("is-important");
+      const btn = selectedRow.querySelector(".importance-btn");
+      btn.textContent = "종료";
+      btn.setAttribute("aria-label", `${selectedRow.dataset.id}번 게시물 답변 보류 종료`);
+      const title = selectedRow.querySelector(".title");
+      let note = title.querySelector(".important-note");
+      if (!note) { note = document.createElement("span"); note.className = "important-note"; title.appendChild(note); }
+      note.textContent = `⏸ 답변 보류: ${text} · ${owner} 방금`;
+      const item = document.createElement("article");
+      item.className = "history-item active"; item.dataset.historyId = selectedRow.dataset.id;
+      item.innerHTML = `<span class="badge">진행 중</span><h3>${selectedRow.dataset.id} · ${title.childNodes[0].textContent.trim()}</h3><p></p><small>${owner} · ${time} 작성</small>`;
+      item.querySelector("p").textContent = text;
+      document.getElementById("historyBody").prepend(item);
+      closeModal(); updateCount(); toast("내부 협의를 위해 답변을 보류했습니다.");
+    }
+    function endImportant() {
+      const id = selectedRow.dataset.id;
+      selectedRow.classList.remove("is-important");
+      const btn = selectedRow.querySelector(".importance-btn");
+      btn.textContent = "보류";
+      btn.setAttribute("aria-label", `${selectedRow.dataset.id}번 게시물 답변 보류`);
+      selectedRow.querySelector(".important-note")?.remove();
+      const item = document.querySelector(`[data-history-id="${id}"]`);
+      if (item) {
+        item.classList.remove("active");
+        item.querySelector(".badge").textContent = "종료";
+        item.querySelector("small").textContent += ` · ${nowText()} 종료`;
+      }
+      closeModal(); updateCount(); toast("답변 보류를 종료했습니다. 이제 답변할 수 있습니다.");
+      if (filterButton.getAttribute("aria-pressed") === "true") selectedRow.classList.add("hidden");
+    }
+    rows.forEach(row => {
+      const button = row.querySelector(".importance-btn");
+      if (button) button.addEventListener("click", () => openModal(row));
+    });
+    reason.addEventListener("input", () => { document.getElementById("charCount").textContent = reason.value.length; document.getElementById("reasonError").textContent = ""; });
+    saveButton.addEventListener("click", () => mode === "set" ? setImportant() : endImportant());
+    document.getElementById("closeModal").addEventListener("click", closeModal);
+    document.getElementById("cancelModal").addEventListener("click", closeModal);
+    overlay.addEventListener("click", e => { if (e.target === overlay) closeModal(); });
+    document.addEventListener("keydown", e => { if (e.key === "Escape") { closeModal(); document.getElementById("historyPanel").classList.remove("show"); } });
+    filterButton.addEventListener("click", () => {
+      const active = filterButton.getAttribute("aria-pressed") !== "true";
+      filterButton.setAttribute("aria-pressed", String(active)); filterButton.classList.toggle("active", active);
+      rows.forEach(row => row.classList.toggle("hidden", active && !row.classList.contains("is-important")));
+    });
+    document.getElementById("openHistory").addEventListener("click", e => { e.preventDefault(); document.getElementById("historyPanel").classList.add("show"); });
+    document.getElementById("closeHistory").addEventListener("click", () => document.getElementById("historyPanel").classList.remove("show"));
+    updateCount();
+  </script>
+</body>
+</html>
