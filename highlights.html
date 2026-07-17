@@ -12,9 +12,9 @@
       --line: #c9e0ee;
       --text: #263746;
       --muted: #657b8c;
-      --important: #fff1a8;
-      --important-line: #e2a700;
-      --important-strong: #9a5a00;
+      --important: #aaffaa;
+      --important-line: #42b85a;
+      --important-strong: #176b2d;
       --danger: #b42318;
     }
     body {
@@ -126,29 +126,29 @@
     .author { color: #2868bf; font-weight: 700; }
     .row-select { width: 96%; height: 31px; border: 1px solid #b7cad7; color: #265c99; background: white; }
     .importance-btn {
-      width: 42px;
-      height: 27px;
+      width: 36px;
+      height: 22px;
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      border: 1px solid #8799a5;
-      background: white;
-      color: #526473;
-      border-radius: 3px;
+      border: 1px solid #7f9fc5;
+      background: #f8fbff;
+      color: #315f91;
+      border-radius: 1px;
       font-size: 12px;
       font-weight: 700;
     }
-    .importance-btn:hover { border-color: #d09200; background: #fff8d5; color: #6d4b00; }
+    .importance-btn:hover { border-color: #315f91; background: #eaf3ff; color: #173f72; }
     .is-important .importance-btn {
-      border-color: #c88800;
-      background: #fff;
-      color: #754b00;
+      border-color: #7f9fc5;
+      background: #f8fbff;
+      color: #315f91;
       font-weight: 700;
     }
     .important-note {
       display: block;
       margin-top: 3px;
-      color: #754b00;
+      color: #176b2d;
       font-size: 12px;
       overflow: hidden;
       text-overflow: ellipsis;
@@ -241,9 +241,6 @@
       <button class="summary-card"><span>수신미확인</span><strong>1</strong></button>
       <button class="summary-card wait"><span>3일 이상</span><strong>0</strong></button>
       <button class="summary-card mine"><span>내 담당</span><strong>0</strong></button>
-      <button class="summary-card important" id="importantFilter" aria-pressed="false">
-        <span>⏸ 답변 보류</span><strong id="importantCount">1</strong>
-      </button>
       <form class="search" onsubmit="return false">
         <select aria-label="검색 범위"><option>제목</option><option>내용</option><option>작성자</option></select>
         <input type="search" aria-label="검색어">
@@ -273,7 +270,7 @@
       </tr></thead>
       <tbody id="boardRows">
         <tr class="is-important" data-id="6477" data-reason="저자와 긴급 협의 중이니, 답글 달지 마세요." data-owner="홍길동" data-time="2026. 07. 17. 09:42">
-          <td>6477</td><td><button class="importance-btn" aria-label="6477번 게시물 답변 보류 종료">종료</button></td><td class="category">도서정가</td>
+          <td>6477</td><td><button class="importance-btn" aria-label="6477번 게시물 답변 보류 종결">종결</button></td><td class="category">도서정가</td>
           <td class="title"><div class="title-main"><span class="subject">도서 정가 20,000원으로 변경해 주세요.</span></div><span class="important-note">⏸ 답변 보류: 저자와 긴급 협의 중이니, 답글 달지 마세요. · 홍길동 09:42</span></td>
           <td class="project">내 안의 하나님 나라</td><td><select class="row-select"><option>2차저자교정</option></select></td>
           <td class="author">염규남(43)</td><td><select class="row-select"><option>답변완료</option></select></td><td></td>
@@ -314,8 +311,8 @@
       <div class="modal-body">
         <div class="target" id="targetTitle"></div>
         <div class="field">
-          <label for="reason">답변 보류 사유 <span class="required">*</span></label>
-          <textarea id="reason" maxlength="200" placeholder="예: 저자와 긴급 협의 중이니, 답글 달지 마세요."></textarea>
+          <label for="reason">답변 보류 사유</label>
+          <textarea id="reason" maxlength="200" placeholder="저자와 긴급 협의 중이니, 답글 달지 마세요."></textarea>
           <div class="counter"><span id="charCount">0</span>/200</div>
           <div class="error" id="reasonError"></div>
         </div>
@@ -323,7 +320,7 @@
           <div class="meta-box"><small>작성자(로그인 직원)</small><strong id="currentOwner">홍길동</strong></div>
           <div class="meta-box"><small>작성 시각</small><strong id="currentTime"></strong></div>
         </div>
-        <div class="archive-hint" id="archiveHint">보류를 종료해도 사유와 작성 정보는 기록에 보존됩니다.</div>
+        <div class="archive-hint" id="archiveHint">보류를 종결해도 사유와 작성 정보는 기록에 보존됩니다.</div>
       </div>
       <footer class="modal-actions">
         <button class="btn-cancel" id="cancelModal">취소</button>
@@ -340,8 +337,8 @@
         <p>저자와 긴급 협의 중이니, 답글 달지 마세요.</p><small>홍길동 · 2026. 07. 17. 09:42 작성</small>
       </article>
       <article class="history-item">
-        <span class="badge">종료</span><h3>6421 · 표지 시안 최종 확인 요청</h3>
-        <p>저자 최종 승인 전까지 인쇄 발주를 보류해 주세요.</p><small>김지수 · 2026. 07. 15. 14:20 작성 · 07. 16. 11:05 종료</small>
+        <span class="badge">종결</span><h3>6421 · 표지 시안 최종 확인 요청</h3>
+        <p>저자 최종 승인 전까지 인쇄 발주를 보류해 주세요.</p><small>김지수 · 2026. 07. 15. 14:20 작성 · 07. 16. 11:05 종결</small>
       </article>
     </div>
   </aside>
@@ -351,7 +348,6 @@
     const overlay = document.getElementById("modalOverlay");
     const reason = document.getElementById("reason");
     const saveButton = document.getElementById("saveImportant");
-    const filterButton = document.getElementById("importantFilter");
     const rows = [...document.querySelectorAll("#boardRows tr")];
     let selectedRow = null;
     let mode = "set";
@@ -360,9 +356,6 @@
       year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", hour12: false
     }).format(new Date()).replace(/\. /g, ". ").replace(/\.$/, "");
 
-    function updateCount() {
-      document.getElementById("importantCount").textContent = document.querySelectorAll("tr.is-important").length;
-    }
     function openModal(row) {
       selectedRow = row;
       mode = row.classList.contains("is-important") ? "end" : "set";
@@ -373,14 +366,14 @@
       document.getElementById("reasonError").textContent = "";
       document.getElementById("currentOwner").textContent = row.dataset.owner || "홍길동";
       document.getElementById("currentTime").textContent = row.dataset.time || nowText();
-      document.getElementById("modalTitle").textContent = mode === "set" ? "답변 보류" : "답변 보류 종료";
-      document.getElementById("modalSubtitle").textContent = mode === "set" ? "내부 협의가 끝날 때까지 직원들의 답변을 방지합니다." : "내부 협의가 끝난 사안의 답변 보류를 종료합니다.";
+      document.getElementById("modalTitle").textContent = mode === "set" ? "답변 보류" : "답변 보류 종결";
+      document.getElementById("modalSubtitle").textContent = mode === "set" ? "내부 협의가 끝날 때까지 직원들의 답변을 방지합니다." : "내부 협의가 끝난 사안의 답변 보류를 종결합니다.";
       reason.readOnly = mode === "end";
-      saveButton.textContent = mode === "set" ? "답변 보류" : "보류 종료";
+      saveButton.textContent = mode === "set" ? "답변 보류" : "보류 종결";
       saveButton.className = mode === "set" ? "btn-primary" : "btn-end";
       document.getElementById("archiveHint").textContent = mode === "set"
-        ? "보류를 종료해도 사유와 작성 정보는 기록에 보존됩니다."
-        : "종료 후에도 이 사유와 작성자·작성 시각은 ‘답변 보류 기록’에 보존됩니다.";
+        ? "보류를 종결해도 사유와 작성 정보는 기록에 보존됩니다."
+        : "종결 후에도 이 사유와 작성자·작성 시각은 ‘답변 보류 기록’에 보존됩니다.";
       overlay.classList.add("show");
       setTimeout(() => (mode === "set" ? reason.focus() : saveButton.focus()), 0);
     }
@@ -391,14 +384,13 @@
       clearTimeout(window.toastTimer); window.toastTimer = setTimeout(() => el.classList.remove("show"), 2300);
     }
     function setImportant() {
-      const text = reason.value.trim();
-      if (!text) { document.getElementById("reasonError").textContent = "답변 보류 사유를 입력해 주세요."; reason.focus(); return; }
+      const text = reason.value.trim() || "저자와 긴급 협의 중이니, 답글 달지 마세요.";
       const owner = "홍길동", time = nowText();
       selectedRow.dataset.reason = text; selectedRow.dataset.owner = owner; selectedRow.dataset.time = time;
       selectedRow.classList.add("is-important");
       const btn = selectedRow.querySelector(".importance-btn");
-      btn.textContent = "종료";
-      btn.setAttribute("aria-label", `${selectedRow.dataset.id}번 게시물 답변 보류 종료`);
+      btn.textContent = "종결";
+      btn.setAttribute("aria-label", `${selectedRow.dataset.id}번 게시물 답변 보류 종결`);
       const title = selectedRow.querySelector(".title");
       let note = title.querySelector(".important-note");
       if (!note) { note = document.createElement("span"); note.className = "important-note"; title.appendChild(note); }
@@ -408,7 +400,7 @@
       item.innerHTML = `<span class="badge">진행 중</span><h3>${selectedRow.dataset.id} · ${title.childNodes[0].textContent.trim()}</h3><p></p><small>${owner} · ${time} 작성</small>`;
       item.querySelector("p").textContent = text;
       document.getElementById("historyBody").prepend(item);
-      closeModal(); updateCount(); toast("내부 협의를 위해 답변을 보류했습니다.");
+      closeModal(); toast("내부 협의를 위해 답변을 보류했습니다.");
     }
     function endImportant() {
       const id = selectedRow.dataset.id;
@@ -420,11 +412,10 @@
       const item = document.querySelector(`[data-history-id="${id}"]`);
       if (item) {
         item.classList.remove("active");
-        item.querySelector(".badge").textContent = "종료";
-        item.querySelector("small").textContent += ` · ${nowText()} 종료`;
+        item.querySelector(".badge").textContent = "종결";
+        item.querySelector("small").textContent += ` · ${nowText()} 종결`;
       }
-      closeModal(); updateCount(); toast("답변 보류를 종료했습니다. 이제 답변할 수 있습니다.");
-      if (filterButton.getAttribute("aria-pressed") === "true") selectedRow.classList.add("hidden");
+      closeModal(); toast("답변 보류를 종결했습니다. 이제 답변할 수 있습니다.");
     }
     rows.forEach(row => {
       const button = row.querySelector(".importance-btn");
@@ -436,14 +427,8 @@
     document.getElementById("cancelModal").addEventListener("click", closeModal);
     overlay.addEventListener("click", e => { if (e.target === overlay) closeModal(); });
     document.addEventListener("keydown", e => { if (e.key === "Escape") { closeModal(); document.getElementById("historyPanel").classList.remove("show"); } });
-    filterButton.addEventListener("click", () => {
-      const active = filterButton.getAttribute("aria-pressed") !== "true";
-      filterButton.setAttribute("aria-pressed", String(active)); filterButton.classList.toggle("active", active);
-      rows.forEach(row => row.classList.toggle("hidden", active && !row.classList.contains("is-important")));
-    });
     document.getElementById("openHistory").addEventListener("click", e => { e.preventDefault(); document.getElementById("historyPanel").classList.add("show"); });
     document.getElementById("closeHistory").addEventListener("click", () => document.getElementById("historyPanel").classList.remove("show"));
-    updateCount();
   </script>
 </body>
 </html>
