@@ -1,0 +1,118 @@
+<!-- ==================== 에세이 출판비 셀프 계산기 섹션 ==================== -->
+<section id="essay-calculator-section" style="padding: 60px 20px; background: #f9f8f5; display: flex; justify-content: center;">
+  <div style="background: #ffffff; max-width: 520px; width: 100%; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.06); border: 1px solid #e2e8f0; overflow: hidden; font-family: 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;">
+    
+    <!-- 헤더 -->
+    <div style="background: #1a3b5d; color: #ffffff; padding: 24px; text-align: center;">
+      <span style="display: inline-block; background: rgba(232, 194, 135, 0.25); color: #f6e05e; font-size: 11px; font-weight: 600; padding: 3px 10px; border-radius: 20px; margin-bottom: 8px;">
+        북랩 공식 에세이 출판 패키지
+      </span>
+      <h3 style="font-size: 20px; font-weight: 700; margin-bottom: 6px; letter-spacing: -0.5px;">에세이 출판 비용 셀프 계산기</h3>
+      <p style="font-size: 13px; color: #cbd5e0; margin: 0;">원고 분량과 옵션만 입력하면 실시간으로 예상 제작비가 산출됩니다.</p>
+    </div>
+
+    <!-- 폼 본문 -->
+    <div style="padding: 24px;">
+      <!-- 원고 유형 -->
+      <div style="margin-bottom: 20px;">
+        <label style="display: block; font-size: 14px; font-weight: 600; color: #2d3748; margin-bottom: 8px;">원고 유형</label>
+        <div style="display: flex; gap: 10px;">
+          <label style="flex: 1; display: flex; align-items: center; justify-content: center; gap: 6px; padding: 10px; border: 1px solid #cbd5e0; border-radius: 8px; cursor: pointer; font-size: 13px; font-weight: 500;">
+            <input type="radio" name="essayType" value="text_only" checked onchange="calcEssayCost()"> 텍스트 중심 에세이
+          </label>
+          <label style="flex: 1; display: flex; align-items: center; justify-content: center; gap: 6px; padding: 10px; border: 1px solid #cbd5e0; border-radius: 8px; cursor: pointer; font-size: 13px; font-weight: 500;">
+            <input type="radio" name="essayType" value="with_images" onchange="calcEssayCost()"> 사진·일러스트 에세이
+          </label>
+        </div>
+        <p style="font-size: 11px; color: #718096; margin-top: 6px;">※ 베스트셀러 프리미엄 단일 기준 적용 (별도 사진/도표 추가비 면제)</p>
+      </div>
+
+      <!-- 페이지 수 입력 -->
+      <div style="margin-bottom: 20px; display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+        <div>
+          <label for="calcTotalPages" style="display: block; font-size: 14px; font-weight: 600; color: #2d3748; margin-bottom: 6px;">예상 총 페이지 수</label>
+          <input type="number" id="calcTotalPages" value="200" min="50" step="10" oninput="calcEssayCost()"
+                 style="width: 100%; box-sizing: border-box; padding: 10px 12px; border: 1px solid #cbd5e0; border-radius: 8px; font-size: 14px;">
+          <p style="font-size: 11px; color: #718096; margin-top: 4px;">기본 200쪽 포함 (초과 시 5천원/쪽)</p>
+        </div>
+        <div>
+          <label for="calcColorPages" style="display: block; font-size: 14px; font-weight: 600; color: #2d3748; margin-bottom: 6px;">컬러 페이지 수</label>
+          <input type="number" id="calcColorPages" value="0" min="0" step="2" oninput="calcEssayCost()"
+                 style="width: 100%; box-sizing: border-box; padding: 10px 12px; border: 1px solid #cbd5e0; border-radius: 8px; font-size: 14px;">
+          <p style="font-size: 11px; color: #718096; margin-top: 4px;">컬러 인쇄 쪽당 10,000원</p>
+        </div>
+      </div>
+
+      <!-- 후가공 옵션 -->
+      <div style="margin-bottom: 24px;">
+        <label for="calcEpoxy" style="display: block; font-size: 14px; font-weight: 600; color: #2d3748; margin-bottom: 6px;">표지 에폭시(부분 입체 코팅)</label>
+        <select id="calcEpoxy" onchange="calcEssayCost()" style="width: 100%; box-sizing: border-box; padding: 10px 12px; border: 1px solid #cbd5e0; border-radius: 8px; font-size: 14px; background: #fff;">
+          <option value="no" selected>선택 안 함 (고급 무광/유광 코팅 기본 제공)</option>
+          <option value="yes">표지 에폭시 추가 (+500,000원)</option>
+        </select>
+      </div>
+
+      <!-- 견적 결과 카드 -->
+      <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 18px;">
+        <div style="display: flex; justify-content: space-between; align-items: baseline; padding-bottom: 12px; border-bottom: 1px solid #e2e8f0;">
+          <span style="font-size: 13px; color: #4a5568; font-weight: 600;">총 예상 출판비 (VAT 별도)</span>
+          <span id="calcFinalPrice" style="font-size: 22px; font-weight: 800; color: #1a3b5d;">1,800,000원</span>
+        </div>
+        <div id="calcBreakdown" style="margin-top: 10px; font-size: 12px; color: #4a5568; line-height: 1.8;">
+          <!-- 실시간 내역 -->
+        </div>
+      </div>
+
+      <!-- CTA 링크 -->
+      <a href="https://www.book.co.kr/essay_ver2/publish/advice.php" target="_blank"
+         style="display: block; width: 100%; box-sizing: border-box; margin-top: 20px; padding: 14px; background: #1a3b5d; color: #ffffff; text-align: center; border-radius: 8px; font-size: 15px; font-weight: 600; text-decoration: none;">
+        이 견적으로 출판 상담 신청하기 →
+      </a>
+      <div style="margin-top: 10px; text-align: center; font-size: 12px; color: #718096;">
+        전화 상담 문의: (주)북랩 02-2026-5566
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 계산 스크립트 -->
+<script>
+  function calcEssayCost() {
+    const basePrice = 1800000;
+    const basePages = 200;
+    const bwRate = 5000;
+    const colorRate = 10000;
+
+    const totalPages = Math.max(0, parseInt(document.getElementById('calcTotalPages').value) || 0);
+    const colorPages = Math.max(0, parseInt(document.getElementById('calcColorPages').value) || 0);
+    const isEpoxy = document.getElementById('calcEpoxy').value === 'yes';
+
+    const extraPages = Math.max(0, totalPages - basePages);
+    const bwExtraCost = extraPages * bwRate;
+    const colorCost = colorPages * colorRate;
+    const epoxyCost = isEpoxy ? 500000 : 0;
+
+    const total = basePrice + bwExtraCost + colorCost + epoxyCost;
+
+    document.getElementById('calcFinalPrice').innerText = total.toLocaleString() + '원';
+
+    let items = [];
+    items.push('<div style="display:flex; justify-content:space-between;"><span>· 기본 출판비 (베스트셀러 프리미엄 / 200쪽 포함)</span><span>' + basePrice.toLocaleString() + '원</span></div>');
+    if (extraPages > 0) {
+      items.push('<div style="display:flex; justify-content:space-between;"><span>· 흑백 추가 분량 (' + extraPages + '쪽 × 5,000원)</span><span>+' + bwExtraCost.toLocaleString() + '원</span></div>');
+    }
+    if (colorPages > 0) {
+      items.push('<div style="display:flex; justify-content:space-between;"><span>· 컬러 페이지 (' + colorPages + '쪽 × 10,000원)</span><span>+' + colorCost.toLocaleString() + '원</span></div>');
+    }
+    if (isEpoxy) {
+      items.push('<div style="display:flex; justify-content:space-between;"><span>· 표지 에폭시 부분 코팅</span><span>+500,000원</span></div>');
+    }
+    items.push('<div style="display:flex; justify-content:space-between; color:#718096; margin-top:4px;"><span>· 사진/도표 추가 작업비</span><span><del>200,000원</del> <strong style="color:#2c588d;">0원 (면제)</strong></span></div>');
+
+    document.getElementById('calcBreakdown').innerHTML = items.join('');
+  }
+
+  // 페이지 로드 시 초기 계산 실행
+  document.addEventListener('DOMContentLoaded', calcEssayCost);
+</script>
+<!-- ==================== // 에세이 출판비 셀프 계산기 섹션 끝 ==================== -->
